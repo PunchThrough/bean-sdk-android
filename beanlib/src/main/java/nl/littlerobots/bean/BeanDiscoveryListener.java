@@ -24,8 +24,19 @@
 
 package nl.littlerobots.bean;
 
+/**
+ * Callback for discovery events
+ */
 public interface BeanDiscoveryListener {
+    /**
+     * Called when a bean is found
+     *
+     * @param bean the bean
+     */
     public void onBeanDiscovered(Bean bean);
 
+    /**
+     * Called when the discovery is completed.
+     */
     public void onDiscoveryComplete();
 }

@@ -239,13 +239,11 @@ public class GattSerialTransport {
         mHandler.post(mDequeueRunnable);
     }
 
+    // This listener is only for communicating with the Bean class
     public static interface Listener {
         public void onConnected();
-
         public void onConnectionFailed();
-
         public void onDisconnected();
-
         public void onMessageReceived(byte[] data);
     }
 }

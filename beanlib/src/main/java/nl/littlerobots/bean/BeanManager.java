@@ -37,6 +37,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * A thin wrapper to discover nearby beans.
+ */
 public class BeanManager {
     private static final String TAG = "BeanManager";
     private static final UUID BEAN_UUID = UUID.fromString("a495ff10-c5b1-4b44-b512-1370f02d74de");
@@ -76,10 +79,23 @@ public class BeanManager {
     private BeanManager() {
     }
 
+    /**
+     * Get the {@link nl.littlerobots.bean.BeanManager} instance
+     *
+     * @return the instance
+     */
     public static BeanManager getInstance() {
         return sInstance;
     }
 
+    /**
+     * Start a discovery. If a discovery is in progress, it will be canceled. A discovery will run for a limited time after which
+     * {@link BeanDiscoveryListener#onDiscoveryComplete()} will be called.
+     *
+     * @param listener the listener for reporting progress
+     * @return true if the discovery started, false otherwise. False may be returned if the Bluetooth stack is unable
+     *         to start the scan.
+     */
     public boolean startDiscovery(BeanDiscoveryListener listener) {
         if (listener == null) {
             throw new NullPointerException("Listener cannot be null");
@@ -97,6 +113,9 @@ public class BeanManager {
         return false;
     }
 
+    /**
+     * Cancel an ongoing scan. If not scanning, does nothing.
+     */
     public void cancelDiscovery() {
         if (mScanning) {
             BluetoothAdapter.getDefaultAdapter().stopLeScan(mCallback);
@@ -104,7 +123,16 @@ public class BeanManager {
         }
     }
 
-    public void completeDiscovery() {
+    /**
+     * Return the beans found since the last scan started
+     *
+     * @return a collections of beans found
+     */
+    public Collection<Bean> getBeans() {
+        return new ArrayList<>(mBeans.values());
+    }
+
+    private void completeDiscovery() {
         if (mScanning) {
             BluetoothAdapter.getDefaultAdapter().stopLeScan(mCallback);
             mScanning = false;
@@ -164,9 +192,5 @@ public class BeanManager {
         }
 
         return uuids;
-    }
-
-    public Collection<Bean> getBeans() {
-        return new ArrayList<>(mBeans.values());
     }
 }

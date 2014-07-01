@@ -24,13 +24,32 @@
 
 package nl.littlerobots.bean;
 
+/**
+ * Listener for communicating with the Bean
+ */
 public interface BeanListener {
 
+    /**
+     * Called when the bean is connected. Connected means that a Bluetooth GATT connection is made and the
+     * setup for the Bean serial protocol is complete.
+     */
     public void onConnected();
 
+    /**
+     * Called when the connection could not be established. This could either be because the bean could not be connected,
+     * or the serial connection could not be established.
+     */
     public void onConnectionFailed();
 
+    /**
+     * Called when the bean has been disconnected.
+     */
     public void onDisconnected();
 
+    /**
+     * Called when a serial message is received form the bean, e.g. a <code>Serial.write()</code> from Arduino code.
+     *
+     * @param data the data that was sent from th bean
+     */
     public void onSerialMessageReceived(byte[] data);
 }

@@ -63,6 +63,9 @@ import static nl.littlerobots.bean.internal.Protocol.MSG_ID_CC_LED_WRITE_ALL;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_CC_TEMP_READ;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_SERIAL_DATA;
 
+/**
+ * Interacts with the Punch Through Design Bean hardware.
+ */
 public class Bean implements Parcelable {
     public static final Creator<Bean> CREATOR = new Creator<Bean>() {
         @Override
@@ -102,6 +105,7 @@ public class Bean implements Parcelable {
             Log.w(TAG, "onSerialMessageReceived after disconnect from device " + getDevice().getAddress());
         }
     };
+
     private BeanListener mBeanListener = mInternalBeanListener;
     private final BluetoothDevice mDevice;
     private GattSerialTransport mTransport;
@@ -109,6 +113,12 @@ public class Bean implements Parcelable {
     private HashMap<Integer, List<Callback<?>>> mCallbacks = new HashMap<>(16);
     private Handler mHandler = new Handler(Looper.getMainLooper());
 
+    /**
+     * Create a Bean using it's {@link android.bluetooth.BluetoothDevice}
+     * The bean will not be connected until {@link #connect(android.content.Context, BeanListener)} is called.
+     *
+     * @param device the device
+     */
     public Bean(BluetoothDevice device) {
         mDevice = device;
         Listener transportListener = new Listener() {
@@ -159,10 +169,19 @@ public class Bean implements Parcelable {
         mTransport = new GattSerialTransport(transportListener, device);
     }
 
+    /**
+     * Check if the bean is connected
+     * @return true if connected, false otherwise
+     */
     public boolean isConnected() {
         return mConnected;
     }
 
+    /**
+     * Attempt to connect to the Bean
+     * @param context the context used for connection
+     * @param listener the bean listener
+     */
     public void connect(Context context, BeanListener listener) {
         if (mConnected) {
             return;
@@ -171,20 +190,37 @@ public class Bean implements Parcelable {
         mTransport.connect(context);
     }
 
+    /**
+     * Disconnect the bean
+     */
     public void disconnect() {
         mTransport.disconnect();
         mBeanListener = mInternalBeanListener;
     }
 
+    /**
+     * Return the {@link android.bluetooth.BluetoothDevice} for this bean
+     * @return the device
+     */
     public BluetoothDevice getDevice() {
         return mDevice;
     }
 
+    /**
+     * Request the {@link nl.littlerobots.bean.message.RadioConfig}
+     * @param callback the callback for the result
+     */
     public void readRadioConfig(Callback<RadioConfig> callback) {
         addCallback(MSG_ID_BT_GET_CONFIG, callback);
         sendMessageWithoutPayload(MSG_ID_BT_GET_CONFIG);
     }
 
+    /**
+     * Set the led values
+     * @param r red value
+     * @param g green value
+     * @param b blue value
+     */
     public void setLed(int r, int g, int b) {
         Buffer buffer = new Buffer();
         buffer.writeByte(r);
@@ -193,32 +229,57 @@ public class Bean implements Parcelable {
         sendMessage(MSG_ID_CC_LED_WRITE_ALL, buffer);
     }
 
+    /**
+     * Read the led state
+     * @param callback the callback for the result
+     */
     public void readLed(Callback<Led> callback) {
         addCallback(MSG_ID_CC_LED_READ_ALL, callback);
         sendMessageWithoutPayload(MSG_ID_CC_LED_READ_ALL);
     }
 
+    /**
+     * Set the advertising flag (note: does not appear to work at this time)
+     * @param enable true to enable, false otherwise
+     */
     public void setAdvertising(boolean enable) {
         Buffer buffer = new Buffer();
         buffer.writeByte(enable ? 1 : 0);
         sendMessage(MSG_ID_BT_ADV_ONOFF, buffer);
     }
 
+    /**
+     * Request a temperature reading
+     * @param callback the callback for the result
+     */
     public void readTemperature(Callback<Integer> callback) {
         addCallback(MSG_ID_CC_TEMP_READ, callback);
         sendMessageWithoutPayload(MSG_ID_CC_TEMP_READ);
     }
 
+    /**
+     * Request an acceleration sensor reading
+     * @param callback the callback for the result
+     */
     public void readAcceleration(Callback<Acceleration> callback) {
         addCallback(MSG_ID_CC_ACCEL_READ, callback);
         sendMessageWithoutPayload(MSG_ID_CC_ACCEL_READ);
     }
 
+    /**
+     * Request the sketch metadata
+     * @param callback the callback for the result
+     */
     public void readSketchMetaData(Callback<SketchMetaData> callback) {
         addCallback(MSG_ID_BL_GET_META, callback);
         sendMessageWithoutPayload(MSG_ID_BL_GET_META);
     }
 
+    /**
+     * Request a scratch bank data value
+     * @param number the scratch bank number, must be in the range 1-5 (inclusive)
+     * @param callback the callback for the result
+     */
     public void readScratchData(int number, Callback<ScratchData> callback) {
         addCallback(MSG_ID_BT_GET_SCRATCH, callback);
         Buffer buffer = new Buffer();
@@ -229,26 +290,49 @@ public class Bean implements Parcelable {
         sendMessage(MSG_ID_BT_GET_SCRATCH, buffer);
     }
 
+    /**
+     * Set a scratch bank data value
+     * @param number the scratch bank number, must be in the range 1-5 (inclusive)
+     * @param data the data to write
+     */
     public void setScratchData(int number, byte[] data) {
         ScratchData sd = ScratchData.create(number, data);
         sendMessage(MSG_ID_BT_SET_SCRATCH, sd);
     }
 
+    /**
+     * Set a scratch bank data value.
+     * @param number the scratch bank number, must be in the range 1-5 (inclusive)
+     * @param data the string data
+     */
     public void setScratchData(int number, String data) {
         ScratchData sd = ScratchData.create(number, data);
         sendMessage(MSG_ID_BT_SET_SCRATCH, sd);
     }
 
-    public void updateRadioConfig(RadioConfig config) {
+    /**
+     * Set the {@link nl.littlerobots.bean.message.RadioConfig}
+     *
+     * @param config the configuration to set
+     */
+    public void setRadioConfig(RadioConfig config) {
         sendMessage(MSG_ID_BT_SET_CONFIG, config);
     }
 
+    /**
+     * Send a serial message
+     * @param value the message payload
+     */
     public void sendSerialMessage(byte[] value) {
         Buffer buffer = new Buffer();
         buffer.write(value);
         sendMessage(MSG_ID_SERIAL_DATA, buffer);
     }
 
+    /**
+     * Send a serial message.
+     * @param value the message which will be converted to UTF-8 bytes.
+     */
     public void sendSerialMessage(String value) {
         Buffer buffer = new Buffer();
         try {
