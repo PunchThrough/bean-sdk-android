@@ -1,0 +1,96 @@
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+def isReleaseBuild() {
+    return !version.contains("SNAPSHOT")
+}
+
+def sonatypeRepositoryUrl
+
+if (isReleaseBuild()) {
+    println 'RELEASE BUILD'
+    sonatypeRepositoryUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+} else {
+    println 'DEBUG BUILD'
+    sonatypeRepositoryUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
+}
+
+ext {
+    nexusUsername = ext.has('nexusUsername') ? ext.nexusUsername : 'not-set'
+    nexusPassword = ext.has('nexusPassword') ? ext.nexusPassword : 'not-set'
+}
+
+afterEvaluate { project ->
+    uploadArchives {
+        repositories {
+            mavenDeployer {
+                beforeDeployment { deployment -> signing.signPom(deployment) }
+
+                pom.packaging = "aar"
+
+                repository(url: sonatypeRepositoryUrl) {
+                    authentication(userName: nexusUsername, password: nexusPassword)
+                }
+
+                pom.project {
+                    parent {
+                        groupId = "org.sonatype.oss"
+                        artifactId = "oss-parent"
+                        version = "7"
+                    }
+
+                    name 'Beanlib'
+                    packaging 'aar'
+                    description 'Unofficial SDK to work with the Punch Through Design Bean hardware on Android'
+                    url 'https://bitbucket.org/littlerobots/beanlib'
+
+                    scm {
+                        url "https://bitbucket.org/littlerobots/beanlib"
+                        connection "ssh://hg@bitbucket.org/littlerobots/beanlib"
+                    }
+
+                    licenses {
+                        license {
+                            name "MIT"
+                            url "http://opensource.org/licenses/MIT"
+                            distribution "http://opensource.org/licenses/MIT"
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id "hvisser"
+                            name "Hugo Visser"
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    signing {
+        required { isReleaseBuild() && gradle.taskGraph.hasTask("uploadArchives") }
+        sign configurations.archives
+    }
+
+    task androidJavadocs(type: Javadoc) {
+        source = android.sourceSets.main.java
+        exclude '**/internal/**'
+    }
+
+    task androidJavadocsJar(type: Jar) {
+        classifier = 'javadoc'
+        from androidJavadocs.outputs
+    }
+
+    task androidSourcesJar(type: Jar) {
+        classifier = 'sources'
+        from android.sourceSets.main.java
+    }
+    // package both aar and jar
+    artifacts {
+        archives packageReleaseJar
+        archives androidSourcesJar
+        archives androidJavadocsJar
+    }
+}

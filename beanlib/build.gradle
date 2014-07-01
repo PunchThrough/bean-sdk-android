@@ -2,7 +2,7 @@ apply plugin: 'android-library'
 apply plugin: 'android-apt'
 
 group = 'nl.littlerobots.bean'
-version = 0.1
+version = "0.9"
 
 android {
     compileSdkVersion 19
@@ -35,3 +35,5 @@ dependencies {
     compile 'com.github.frankiesardo:auto-parcel:0.2'
     apt 'com.github.frankiesardo:auto-parcel-processor:0.2'
 }
+
+apply from: '../maven-publish.gradle'
