@@ -89,7 +89,7 @@ afterEvaluate { project ->
     }
     // package both aar and jar
     artifacts {
-        archives packageReleaseJar
+        archives bundleRelease
         archives androidSourcesJar
         archives androidJavadocsJar
     }

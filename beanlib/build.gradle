@@ -1,8 +1,8 @@
-apply plugin: 'android-library'
+apply plugin: 'com.android.library'
 apply plugin: 'android-apt'
 
 group = 'nl.littlerobots.bean'
-version = "0.9"
+version = "0.9-SNAPSHOT"
 
 android {
     compileSdkVersion 19
