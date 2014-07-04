@@ -10,7 +10,7 @@ Add the library as a dependency to your project. When using Android Studio and G
 ```
 #!groovy
 
-compile 'nl.littlerobots.bean:beanlib:0.9.0'
+compile 'nl.littlerobots.bean:beanlib:0.9.1'
 ```
 
 ## Examples ##
