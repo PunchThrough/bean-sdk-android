@@ -194,23 +194,25 @@ public class GattSerialTransport {
         public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
             super.onDescriptorWrite(gatt, descriptor, status);
             Log.d(TAG, "Wrote descriptor " + descriptor.getUuid());
-            if (descriptor.getCharacteristic() == mSerialCharacteristic) {
-                if (status != BluetoothGatt.GATT_SUCCESS) {
-                    abort();
-                } else {
-                    // connection has completed
-                    mReadyToSend = true;
-                    mOutgoingMessageCount = 0;
-
-                    Log.i(TAG, "Setup complete");
-
-                    Listener listener = mListener.get();
-                    if (listener != null) {
-                        Log.d(TAG, "Invoke listener");
-                        listener.onConnected();
+            if (Arrays.equals(descriptor.getValue(), BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)) {
+                if (descriptor.getCharacteristic() == mSerialCharacteristic) {
+                    if (status != BluetoothGatt.GATT_SUCCESS) {
+                        abort();
                     } else {
-                        Log.d(TAG, "Listener is null, disconnect!");
-                        disconnect();
+                        // connection has completed
+                        mReadyToSend = true;
+                        mOutgoingMessageCount = 0;
+
+                        Log.i(TAG, "Setup complete");
+
+                        Listener listener = mListener.get();
+                        if (listener != null) {
+                            Log.d(TAG, "Invoke listener");
+                            listener.onConnected();
+                        } else {
+                            Log.d(TAG, "Listener is null, disconnect!");
+                            disconnect();
+                        }
                     }
                 }
             }
@@ -252,29 +254,27 @@ public class GattSerialTransport {
     }
 
     private void abort() {
+        boolean wasConnected = mSerialCharacteristic != null;
+        disconnect();
         Listener listener = mListener.get();
         if (listener != null) {
-            if (mSerialCharacteristic != null) {
+            if (wasConnected) {
                 listener.onDisconnected();
             } else {
                 listener.onConnectionFailed();
             }
         }
-        disconnect();
     }
 
     public void disconnect() {
+        mReadyToSend = false;
+        mPendingPackets.clear();
+        mHandler.removeCallbacksAndMessages(null);
         if (mGatt != null) {
-            if (mSerialCharacteristic != null) {
-                for (BluetoothGattDescriptor descriptor : mSerialCharacteristic.getDescriptors()) {
-                    descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
-                    mGatt.writeDescriptor(descriptor);
-                }
-                mGatt.setCharacteristicNotification(mSerialCharacteristic, false);
-            }
             mGatt.close();
-            mGatt = null;
         }
+        mSerialCharacteristic = null;
+        mGatt = null;
     }
 
     public void sendMessage(Buffer message) {
