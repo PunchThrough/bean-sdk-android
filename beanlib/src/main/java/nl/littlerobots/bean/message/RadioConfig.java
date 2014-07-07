@@ -35,24 +35,49 @@ import okio.Buffer;
 @AutoParcel
 public abstract class RadioConfig implements Parcelable, Message {
 
-    public static RadioConfig create(String name, int advertisementInterval, int connectionInterval, TX_POWER power) {
+    public static RadioConfig create(String name,
+                                     int advertisementInterval,
+                                     int connectionInterval,
+                                     TxPower power,
+                                     AdvertisementMode mode,
+                                     int beaconUuid,
+                                     int beaconMajor,
+                                     int beaconMinor) {
         if (TextUtils.isEmpty(name)) {
             throw new IllegalArgumentException("Name must not be empty");
         }
         if (name.length() > 20) {
             throw new IllegalArgumentException("Name must be max 20 characters");
         }
-        return new AutoParcel_RadioConfig(name, advertisementInterval, connectionInterval, power);
+        return new AutoParcel_RadioConfig(name,
+                advertisementInterval,
+                connectionInterval,
+                power,
+                mode,
+                beaconUuid,
+                beaconMajor,
+                beaconMinor);
     }
 
     public static RadioConfig fromPayload(Buffer buffer) {
         int advertisementInterval = buffer.readShortLe() & 0xffff;
         int connectionInterval = buffer.readShortLe() & 0xffff;
         int power = buffer.readByte() & 0xff;
+        int mode = buffer.readByte() & 0xff;
+        int beaconUuid = buffer.readShortLe() & 0xffff;
+        int beaconMajor = buffer.readShortLe() & 0xffff;
+        int beaconMinor = buffer.readShortLe() & 0xffff;
         String localName = buffer.readString(buffer.size() - 1, Charset.forName("UTF-8"));
         int size = buffer.readByte() & 0xff;
         localName = localName.substring(0, size);
-        return new AutoParcel_RadioConfig(localName, advertisementInterval, connectionInterval, TX_POWER.values()[power]);
+        return new AutoParcel_RadioConfig(localName,
+                advertisementInterval,
+                connectionInterval,
+                TxPower.values()[power],
+                AdvertisementMode.values()[mode],
+                beaconUuid,
+                beaconMajor,
+                beaconMinor);
     }
 
     public abstract String name();
@@ -61,7 +86,15 @@ public abstract class RadioConfig implements Parcelable, Message {
 
     public abstract int connectionInterval();
 
-    public abstract TX_POWER power();
+    public abstract TxPower power();
+
+    public abstract AdvertisementMode advertisementMode();
+
+    public abstract int beaconUuid();
+
+    public abstract int beaconMajor();
+
+    public abstract int beaconMinor();
 
     @Override
     public byte[] toPayload() {
@@ -69,6 +102,10 @@ public abstract class RadioConfig implements Parcelable, Message {
         buffer.writeShortLe(advertisementInterval() & 0xffff);
         buffer.writeShortLe(connectionInterval() & 0xffff);
         buffer.writeByte(power().ordinal() & 0xff);
+        buffer.writeByte(advertisementMode().ordinal() & 0xff);
+        buffer.writeShortLe(beaconUuid() & 0xffff);
+        buffer.writeShortLe(beaconMajor() & 0xffff);
+        buffer.writeShortLe(beaconMinor() & 0xffff);
         StringBuilder sb = new StringBuilder(name());
         sb.setLength(20);
         buffer.writeString(sb.toString(), Charset.forName("UTF-8"));
@@ -76,5 +113,7 @@ public abstract class RadioConfig implements Parcelable, Message {
         return buffer.readByteArray();
     }
 
-    public enum TX_POWER {TX_4DB, TX_0DB, TX_NEG6DB, TX_NEG23DB}
+    public enum TxPower {TX_NEG23DB, TX_NEG6DB, TX_0DB, TX_4DB}
+
+    public enum AdvertisementMode {STANDARD, IBEACON}
 }
