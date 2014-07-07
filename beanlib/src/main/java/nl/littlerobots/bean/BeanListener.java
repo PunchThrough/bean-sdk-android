@@ -52,4 +52,12 @@ public interface BeanListener {
      * @param data the data that was sent from th bean
      */
     public void onSerialMessageReceived(byte[] data);
+
+    /**
+     * Called when one of the scratch characteristics of the bean has an updated value
+     *
+     * @param bank  the bank number, 0-4
+     * @param value the value
+     */
+    public void onScratchValueChanged(int bank, byte[] value);
 }

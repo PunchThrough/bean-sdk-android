@@ -34,12 +34,12 @@ import okio.Buffer;
 @AutoParcel
 public abstract class ScratchData implements Parcelable, Message {
     public static ScratchData fromPayload(Buffer buffer) {
-        return new AutoParcel_ScratchData(buffer.readByte() & 0xff, buffer.readByteArray());
+        return new AutoParcel_ScratchData((buffer.readByte() & 0xff) - 1, buffer.readByteArray());
     }
 
     public static ScratchData create(int number, byte[] data) {
-        if (number < 0 || number > 5) {
-            throw new IllegalArgumentException("Scratch number needs to be 1 - 5");
+        if (number < 0 || number > 4) {
+            throw new IllegalArgumentException("Scratch number needs to be 0 - 4");
         }
         return new AutoParcel_ScratchData(number, data);
     }
@@ -67,7 +67,7 @@ public abstract class ScratchData implements Parcelable, Message {
     @Override
     public byte[] toPayload() {
         Buffer buffer = new Buffer();
-        buffer.writeByte(number() & 0xff);
+        buffer.writeByte((number() + 1) & 0xff);
         buffer.write(data());
         return buffer.readByteArray();
     }

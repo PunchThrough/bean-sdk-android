@@ -105,9 +105,13 @@ public class Bean implements Parcelable {
         public void onSerialMessageReceived(byte[] data) {
             Log.w(TAG, "onSerialMessageReceived after disconnect from device " + getDevice().getAddress());
         }
-    };
 
+        @Override
+        public void onScratchValueChanged(int bank, byte[] value) {
+        }
+    };
     private BeanListener mBeanListener = mInternalBeanListener;
+    private final Listener mTransportListener;
     private final BluetoothDevice mDevice;
     private GattSerialTransport mTransport;
     private boolean mConnected;
@@ -122,7 +126,7 @@ public class Bean implements Parcelable {
      */
     public Bean(BluetoothDevice device) {
         mDevice = device;
-        Listener transportListener = new Listener() {
+        mTransportListener = new Listener() {
             @Override
             public void onConnected() {
                 mConnected = true;
@@ -166,8 +170,18 @@ public class Bean implements Parcelable {
                     }
                 });
             }
+
+            @Override
+            public void onScratchValueChanged(final int bank, final byte[] value) {
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mBeanListener.onScratchValueChanged(bank, value);
+                    }
+                });
+            }
         };
-        mTransport = new GattSerialTransport(transportListener, device);
+        mTransport = new GattSerialTransport(mTransportListener, device);
     }
 
     /**
@@ -278,22 +292,22 @@ public class Bean implements Parcelable {
 
     /**
      * Request a scratch bank data value
-     * @param number the scratch bank number, must be in the range 1-5 (inclusive)
+     * @param number the scratch bank number, must be in the range 0-4 (inclusive)
      * @param callback the callback for the result
      */
     public void readScratchData(int number, Callback<ScratchData> callback) {
         addCallback(MSG_ID_BT_GET_SCRATCH, callback);
         Buffer buffer = new Buffer();
         if (number < 0 || number > 5) {
-            throw new IllegalArgumentException("Scratch bank must be in the range of 1-5");
+            throw new IllegalArgumentException("Scratch bank must be in the range of 0-4");
         }
-        buffer.writeByte(number & 0xff);
+        buffer.writeByte((number + 1) & 0xff);
         sendMessage(MSG_ID_BT_GET_SCRATCH, buffer);
     }
 
     /**
      * Set a scratch bank data value
-     * @param number the scratch bank number, must be in the range 1-5 (inclusive)
+     * @param number the scratch bank number, must be in the range 0-4 (inclusive)
      * @param data the data to write
      */
     public void setScratchData(int number, byte[] data) {
@@ -303,7 +317,7 @@ public class Bean implements Parcelable {
 
     /**
      * Set a scratch bank data value.
-     * @param number the scratch bank number, must be in the range 1-5 (inclusive)
+     * @param number the scratch bank number, must be in the range 0-4 (inclusive)
      * @param data the string data
      */
     public void setScratchData(int number, String data) {
