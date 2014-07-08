@@ -71,7 +71,9 @@ public class GattSerialTransport {
                     mReadyToSend = false;
                     GattSerialPacket packet = mPendingPackets.remove(0);
                     mSerialCharacteristic.setValue(packet.getPacketData());
-                    logWritten(mSerialCharacteristic.getValue());
+                    if (BuildConfig.DEBUG) {
+                        logWritten(mSerialCharacteristic.getValue());
+                    }
                     mGatt.writeCharacteristic(mSerialCharacteristic);
                 }
                 mHandler.postDelayed(this, 150);
@@ -157,11 +159,12 @@ public class GattSerialTransport {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             super.onCharacteristicChanged(gatt, characteristic);
-            Log.d(TAG, "onCharacteristicChanged");
             if (characteristic == mSerialCharacteristic) {
                 byte[] data = mMessageAssembler.assemble(new GattSerialPacket(characteristic.getValue()));
                 if (data != null) {
-                    Log.d(TAG, "Received data");
+                    if (BuildConfig.DEBUG) {
+                        Log.d(TAG, "Received data");
+                    }
                     Listener listener = mListener.get();
                     if (listener != null) {
                         listener.onMessageReceived(data);
@@ -173,6 +176,9 @@ public class GattSerialTransport {
                 // scratch
                 int index = BEAN_SCRATCH_UUIDS.indexOf(characteristic.getUuid());
                 if (index > -1) {
+                    if (BuildConfig.DEBUG) {
+                        Log.d(TAG, "Received scratch bank update (" + index + ")");
+                    }
                     Listener listener = mListener.get();
                     if (listener != null) {
                         listener.onScratchValueChanged(index, characteristic.getValue());
@@ -184,16 +190,8 @@ public class GattSerialTransport {
         }
 
         @Override
-        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            super.onCharacteristicRead(gatt, characteristic, status);
-            Log.d(TAG, "onCharacteristicRead");
-        }
-
-
-        @Override
         public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
             super.onDescriptorWrite(gatt, descriptor, status);
-            Log.d(TAG, "Wrote descriptor " + descriptor.getUuid());
             if (Arrays.equals(descriptor.getValue(), BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)) {
                 if (descriptor.getCharacteristic() == mSerialCharacteristic) {
                     if (status != BluetoothGatt.GATT_SUCCESS) {
@@ -203,14 +201,15 @@ public class GattSerialTransport {
                         mReadyToSend = true;
                         mOutgoingMessageCount = 0;
 
-                        Log.i(TAG, "Setup complete");
+                        if (BuildConfig.DEBUG) {
+                            Log.i(TAG, "Setup complete");
+                        }
 
                         Listener listener = mListener.get();
                         if (listener != null) {
-                            Log.d(TAG, "Invoke listener");
                             listener.onConnected();
                         } else {
-                            Log.d(TAG, "Listener is null, disconnect!");
+                            Log.e(TAG, "No listener, this must be a stale connection --> disconnect");
                             disconnect();
                         }
                     }
@@ -231,7 +230,7 @@ public class GattSerialTransport {
             sb.append(Integer.toHexString(b & 0xff));
             sb.append(" ");
         }
-        Log.i(TAG, "Write: " + sb.toString());
+        Log.d(TAG, "Write: " + sb.toString());
     }
 
     private void discoverServices() {
@@ -299,7 +298,6 @@ public class GattSerialTransport {
         public void onConnectionFailed();
         public void onDisconnected();
         public void onMessageReceived(byte[] data);
-
         public void onScratchValueChanged(int bank, byte[] value);
     }
 }
