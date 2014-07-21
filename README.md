@@ -4,13 +4,15 @@ This is an unofficial SDK for the [Punch Through Design Bean][1]. The library al
 
 ### Getting started ###
 
+Make sure your beans are running the latest firmware!
+
 Add the library as a dependency to your project. When using Android Studio and Gradle it's as easy as adding this dependency:
 
 
 ```
 #!groovy
 
-compile 'nl.littlerobots.bean:beanlib:0.9.1'
+compile 'nl.littlerobots.bean:beanlib:0.9.2'
 ```
 
 ## Examples ##
