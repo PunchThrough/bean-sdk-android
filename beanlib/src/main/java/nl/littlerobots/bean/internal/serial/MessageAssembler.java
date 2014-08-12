@@ -78,4 +78,8 @@ public class MessageAssembler {
             throw new RuntimeException(e);
         }
     }
+
+    public void reset() {
+        mFirstPacket = true;
+    }
 }

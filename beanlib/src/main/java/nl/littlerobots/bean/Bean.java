@@ -38,11 +38,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import nl.littlerobots.bean.internal.ble.GattClient;
+import nl.littlerobots.bean.internal.device.DeviceProfile.DeviceInfoCallback;
 import nl.littlerobots.bean.internal.serial.GattSerialMessage;
-import nl.littlerobots.bean.internal.serial.GattSerialTransport;
-import nl.littlerobots.bean.internal.serial.GattSerialTransport.Listener;
+import nl.littlerobots.bean.internal.serial.GattSerialTransportProfile;
 import nl.littlerobots.bean.message.Acceleration;
 import nl.littlerobots.bean.message.Callback;
+import nl.littlerobots.bean.message.DeviceInfo;
 import nl.littlerobots.bean.message.Led;
 import nl.littlerobots.bean.message.Message;
 import nl.littlerobots.bean.message.RadioConfig;
@@ -111,9 +113,9 @@ public class Bean implements Parcelable {
         }
     };
     private BeanListener mBeanListener = mInternalBeanListener;
-    private final Listener mTransportListener;
+    private final GattClient mGattClient;
+    private final GattSerialTransportProfile.Listener mTransportListener;
     private final BluetoothDevice mDevice;
-    private GattSerialTransport mTransport;
     private boolean mConnected;
     private HashMap<Integer, List<Callback<?>>> mCallbacks = new HashMap<>(16);
     private Handler mHandler = new Handler(Looper.getMainLooper());
@@ -126,7 +128,7 @@ public class Bean implements Parcelable {
      */
     public Bean(BluetoothDevice device) {
         mDevice = device;
-        mTransportListener = new Listener() {
+        mTransportListener = new GattSerialTransportProfile.Listener() {
             @Override
             public void onConnected() {
                 mConnected = true;
@@ -181,11 +183,14 @@ public class Bean implements Parcelable {
                 });
             }
         };
-        mTransport = new GattSerialTransport(mTransportListener, device);
+        //mTransport = new GattSerialTransport(mTransportListener, device);
+        mGattClient = new GattClient();
+        mGattClient.getSerialProfile().setListener(mTransportListener);
     }
 
     /**
      * Check if the bean is connected
+     *
      * @return true if connected, false otherwise
      */
     public boolean isConnected() {
@@ -194,7 +199,8 @@ public class Bean implements Parcelable {
 
     /**
      * Attempt to connect to the Bean
-     * @param context the context used for connection
+     *
+     * @param context  the context used for connection
      * @param listener the bean listener
      */
     public void connect(Context context, BeanListener listener) {
@@ -202,19 +208,22 @@ public class Bean implements Parcelable {
             return;
         }
         mBeanListener = listener;
-        mTransport.connect(context);
+        //mTransport.connect(context);
+        mGattClient.connect(context, mDevice);
     }
 
     /**
      * Disconnect the bean
      */
     public void disconnect() {
-        mTransport.disconnect();
+        mGattClient.disconnect();
+        mGattClient.close();
         mBeanListener = mInternalBeanListener;
     }
 
     /**
      * Return the {@link android.bluetooth.BluetoothDevice} for this bean
+     *
      * @return the device
      */
     public BluetoothDevice getDevice() {
@@ -223,6 +232,7 @@ public class Bean implements Parcelable {
 
     /**
      * Request the {@link nl.littlerobots.bean.message.RadioConfig}
+     *
      * @param callback the callback for the result
      */
     public void readRadioConfig(Callback<RadioConfig> callback) {
@@ -232,6 +242,7 @@ public class Bean implements Parcelable {
 
     /**
      * Set the led values
+     *
      * @param r red value
      * @param g green value
      * @param b blue value
@@ -246,6 +257,7 @@ public class Bean implements Parcelable {
 
     /**
      * Read the led state
+     *
      * @param callback the callback for the result
      */
     public void readLed(Callback<Led> callback) {
@@ -255,6 +267,7 @@ public class Bean implements Parcelable {
 
     /**
      * Set the advertising flag (note: does not appear to work at this time)
+     *
      * @param enable true to enable, false otherwise
      */
     public void setAdvertising(boolean enable) {
@@ -265,6 +278,7 @@ public class Bean implements Parcelable {
 
     /**
      * Request a temperature reading
+     *
      * @param callback the callback for the result
      */
     public void readTemperature(Callback<Integer> callback) {
@@ -274,6 +288,7 @@ public class Bean implements Parcelable {
 
     /**
      * Request an acceleration sensor reading
+     *
      * @param callback the callback for the result
      */
     public void readAcceleration(Callback<Acceleration> callback) {
@@ -283,6 +298,7 @@ public class Bean implements Parcelable {
 
     /**
      * Request the sketch metadata
+     *
      * @param callback the callback for the result
      */
     public void readSketchMetaData(Callback<SketchMetaData> callback) {
@@ -292,7 +308,8 @@ public class Bean implements Parcelable {
 
     /**
      * Request a scratch bank data value
-     * @param number the scratch bank number, must be in the range 0-4 (inclusive)
+     *
+     * @param number   the scratch bank number, must be in the range 0-4 (inclusive)
      * @param callback the callback for the result
      */
     public void readScratchData(int number, Callback<ScratchData> callback) {
@@ -307,8 +324,9 @@ public class Bean implements Parcelable {
 
     /**
      * Set a scratch bank data value
+     *
      * @param number the scratch bank number, must be in the range 0-4 (inclusive)
-     * @param data the data to write
+     * @param data   the data to write
      */
     public void setScratchData(int number, byte[] data) {
         ScratchData sd = ScratchData.create(number, data);
@@ -317,8 +335,9 @@ public class Bean implements Parcelable {
 
     /**
      * Set a scratch bank data value.
+     *
      * @param number the scratch bank number, must be in the range 0-4 (inclusive)
-     * @param data the string data
+     * @param data   the string data
      */
     public void setScratchData(int number, String data) {
         ScratchData sd = ScratchData.create(number, data);
@@ -336,6 +355,7 @@ public class Bean implements Parcelable {
 
     /**
      * Send a serial message
+     *
      * @param value the message payload
      */
     public void sendSerialMessage(byte[] value) {
@@ -346,6 +366,7 @@ public class Bean implements Parcelable {
 
     /**
      * Send a serial message.
+     *
      * @param value the message which will be converted to UTF-8 bytes.
      */
     public void sendSerialMessage(String value) {
@@ -356,6 +377,15 @@ public class Bean implements Parcelable {
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void readDeviceInfo(final Callback<DeviceInfo> callback) {
+        mGattClient.getDeviceProfile().getDeviceInfo(new DeviceInfoCallback() {
+            @Override
+            public void onDeviceInfo(DeviceInfo info) {
+                callback.onResult(info);
+            }
+        });
     }
 
     private void handleMessage(byte[] data) {
@@ -462,7 +492,7 @@ public class Bean implements Parcelable {
         buffer.writeByte(type & 0xff);
         buffer.write(message.toPayload());
         GattSerialMessage serialMessage = GattSerialMessage.fromPayload(buffer.readByteArray());
-        mTransport.sendMessage(serialMessage.getBuffer());
+        mGattClient.getSerialProfile().sendMessage(serialMessage.getBuffer());
     }
 
     private void sendMessage(int type, Buffer payload) {
@@ -477,7 +507,7 @@ public class Bean implements Parcelable {
             }
         }
         GattSerialMessage serialMessage = GattSerialMessage.fromPayload(buffer.readByteArray());
-        mTransport.sendMessage(serialMessage.getBuffer());
+        mGattClient.getSerialProfile().sendMessage(serialMessage.getBuffer());
     }
 
     private void sendMessageWithoutPayload(int type) {
