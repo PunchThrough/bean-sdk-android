@@ -26,7 +26,7 @@ Use the `BeanManager` singleton to scan for available beans like this:
 // create a listener
 BeanDiscoveryListener listener = ...;
 // Assuming "this" is an activity or service:
-BeanManager.getInstance().startDiscovery(this, listener);
+BeanManager.getInstance().startDiscovery(listener);
 
 ```
 When beans are found, the `onBeanDiscovered` will be fired in your listener.
