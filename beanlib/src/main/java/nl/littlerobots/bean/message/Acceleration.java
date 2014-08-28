@@ -32,10 +32,12 @@ import okio.Buffer;
 @AutoParcel
 public abstract class Acceleration implements Parcelable {
     public static Acceleration fromPayload(Buffer buffer) {
-        return new AutoParcel_Acceleration(
-                (buffer.readByte() & 0xff) * 0.00391,
-                (buffer.readByte() & 0xff) * 0.00391,
-                (buffer.readByte() & 0xff) * 0.00391);
+        int x = buffer.readShortLe();
+        int y = buffer.readShortLe();
+        int z = buffer.readShortLe();
+        int sensitivity = buffer.readByte() & 0xff;
+        double lsbGConversionFactor = sensitivity / 512.0;
+        return new AutoParcel_Acceleration(x * lsbGConversionFactor, y * lsbGConversionFactor, z * lsbGConversionFactor);
     }
 
     public abstract double x();

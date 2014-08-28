@@ -59,7 +59,9 @@ import static nl.littlerobots.bean.internal.Protocol.MSG_ID_BT_GET_CONFIG;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_BT_GET_SCRATCH;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_BT_SET_CONFIG;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_BT_SET_SCRATCH;
+import static nl.littlerobots.bean.internal.Protocol.MSG_ID_CC_ACCEL_GET_RANGE;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_CC_ACCEL_READ;
+import static nl.littlerobots.bean.internal.Protocol.MSG_ID_CC_ACCEL_SET_RANGE;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_CC_LED_READ_ALL;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_CC_LED_WRITE;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_CC_LED_WRITE_ALL;
@@ -323,6 +325,29 @@ public class Bean implements Parcelable {
     }
 
     /**
+     * Set accelerometer range.
+     * @param range the range in G's, must be 2, 4, 8 or 16
+     */
+    public void setAccelerometerRange(int range) {
+        Buffer buffer = new Buffer();
+        if (range != 2 && range != 4 && range != 8 && range != 16) {
+            throw new IllegalArgumentException("Sensitivity value must be 2, 4, 8 or 16");
+        }
+        buffer.writeByte(range & 0xff);
+        sendMessage(MSG_ID_CC_ACCEL_SET_RANGE, buffer);
+    }
+
+    /**
+     * Read the accelerometer range in G's
+     *
+     * @param callback the callback for the result
+     */
+    public void readAccelerometerRange(Callback<Integer> callback) {
+        addCallback(MSG_ID_CC_ACCEL_GET_RANGE, callback);
+        sendMessageWithoutPayload(MSG_ID_CC_ACCEL_GET_RANGE);
+    }
+
+    /**
      * Set a scratch bank data value
      *
      * @param number the scratch bank number, must be in the range 0-4 (inclusive)
@@ -414,6 +439,9 @@ public class Bean implements Parcelable {
             case MSG_ID_CC_ACCEL_READ:
                 returnAcceleration(buffer);
                 break;
+            case MSG_ID_CC_ACCEL_GET_RANGE:
+                returnAccelerometerRange(buffer);
+                break;
             case MSG_ID_CC_LED_WRITE:
                 // ignore this response, it appears to be only an ack
                 break;
@@ -421,6 +449,13 @@ public class Bean implements Parcelable {
                 Log.e(TAG, "Received message of unknown type " + Integer.toHexString(type));
                 disconnect();
                 break;
+        }
+    }
+
+    private void returnAccelerometerRange(Buffer buffer) {
+        Callback<Integer> callback = getFirstCallback(MSG_ID_CC_ACCEL_GET_RANGE);
+        if (callback != null) {
+            callback.onResult(buffer.readByte() & 0xff);
         }
     }
 
