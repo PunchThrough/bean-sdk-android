@@ -28,6 +28,8 @@ import java.io.IOException;
 
 import okio.Buffer;
 
+import static nl.littlerobots.bean.internal.serial.GattSerialTransportProfile.PACKET_TX_MAX_PAYLOAD_LENGTH;
+
 public class GattSerialPacket {
     private final boolean mFirstPacket;
     private final int mMessageCount;
@@ -41,7 +43,7 @@ public class GattSerialPacket {
 
         Buffer buffer = new Buffer();
         buffer.writeByte((startBit ? 0x80 : 0) | ((outgoingMessageCount << 5) & 0x60) | ((pendingPacketCount & 0x1f)));
-        int size = (int) Math.min(GattSerialTransport.PACKET_TX_MAX_PAYLOAD_LENGTH, message.size());
+        int size = (int) Math.min(PACKET_TX_MAX_PAYLOAD_LENGTH, message.size());
         try {
             message.readFully(buffer, size);
             mPacket = buffer.readByteArray();
