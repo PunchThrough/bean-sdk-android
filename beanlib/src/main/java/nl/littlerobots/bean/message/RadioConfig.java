@@ -59,6 +59,22 @@ public abstract class RadioConfig implements Parcelable, Message {
                 beaconMinor);
     }
 
+    private static AdvertisementMode adverismentModeFromPayload(int b) {
+        switch (b) {
+            case 0x00:
+                return AdvertisementMode.STANDARD;
+            case 0x01:
+                return AdvertisementMode.IBEACON;
+            case 0x80:
+                return AdvertisementMode.STANDARD_AUTHENTICATED;
+            case 0x81:
+                return AdvertisementMode.IBEACON_AUTHENTICATED;
+            default:
+                throw new IllegalArgumentException("Invalid value for advertisment mode: " + Integer.toHexString(b));
+        }
+    }
+
+
     public static RadioConfig fromPayload(Buffer buffer) {
         int advertisementInterval = buffer.readShortLe() & 0xffff;
         int connectionInterval = buffer.readShortLe() & 0xffff;
@@ -74,7 +90,7 @@ public abstract class RadioConfig implements Parcelable, Message {
                 advertisementInterval,
                 connectionInterval,
                 TxPower.values()[power],
-                AdvertisementMode.values()[mode],
+                adverismentModeFromPayload(mode),
                 beaconUuid,
                 beaconMajor,
                 beaconMinor);
@@ -102,7 +118,20 @@ public abstract class RadioConfig implements Parcelable, Message {
         buffer.writeShortLe(advertisementInterval() & 0xffff);
         buffer.writeShortLe(connectionInterval() & 0xffff);
         buffer.writeByte(power().ordinal() & 0xff);
-        buffer.writeByte(advertisementMode().ordinal() & 0xff);
+        switch (advertisementMode()) {
+            case STANDARD:
+                buffer.writeByte(0x00);
+                break;
+            case STANDARD_AUTHENTICATED:
+                buffer.writeByte(0x80);
+                break;
+            case IBEACON:
+                buffer.writeByte(0x01);
+                break;
+            case IBEACON_AUTHENTICATED:
+                buffer.writeByte(0x81);
+                break;
+        }
         buffer.writeShortLe(beaconUuid() & 0xffff);
         buffer.writeShortLe(beaconMajor() & 0xffff);
         buffer.writeShortLe(beaconMinor() & 0xffff);
@@ -115,5 +144,7 @@ public abstract class RadioConfig implements Parcelable, Message {
 
     public enum TxPower {TX_NEG23DB, TX_NEG6DB, TX_0DB, TX_4DB}
 
-    public enum AdvertisementMode {STANDARD, IBEACON}
+    public enum AdvertisementMode {
+        STANDARD, IBEACON, STANDARD_AUTHENTICATED, IBEACON_AUTHENTICATED
+    }
 }
