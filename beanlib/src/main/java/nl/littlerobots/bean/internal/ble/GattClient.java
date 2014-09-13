@@ -37,6 +37,7 @@ public class GattClient {
             Log.d(TAG, "onConnectionStateChange " + newState);
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 disconnect();
+                return;
             }
             if (newState == BluetoothGatt.STATE_CONNECTED) {
                 mReconnect = true;
@@ -52,6 +53,7 @@ public class GattClient {
             mDiscoveringServices = false;
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 disconnect();
+                return;
             }
             fireServicesDiscovered();
         }
@@ -61,6 +63,7 @@ public class GattClient {
             Log.d(TAG, "onCharacteristicRead");
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 disconnect();
+                return;
             }
             fireCharacteristicsRead(characteristic);
             executeNextOperation();
@@ -71,6 +74,7 @@ public class GattClient {
             Log.d(TAG, "onCharacteristicWrite");
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 disconnect();
+                return;
             }
             fireCharacteristicWrite(characteristic);
             executeNextOperation();
@@ -85,6 +89,7 @@ public class GattClient {
         public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 disconnect();
+                return;
             }
             fireDescriptorRead(descriptor);
             executeNextOperation();
@@ -94,6 +99,7 @@ public class GattClient {
         public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 disconnect();
+                return;
             }
             fireDescriptorWrite(descriptor);
             executeNextOperation();
@@ -103,6 +109,7 @@ public class GattClient {
         public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 disconnect();
+                return;
             }
         }
     };
