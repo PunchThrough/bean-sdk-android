@@ -58,6 +58,7 @@ import static nl.littlerobots.bean.internal.Protocol.MSG_ID_BT_ADV_ONOFF;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_BT_GET_CONFIG;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_BT_GET_SCRATCH;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_BT_SET_CONFIG;
+import static nl.littlerobots.bean.internal.Protocol.MSG_ID_BT_SET_PIN;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_BT_SET_SCRATCH;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_CC_ACCEL_GET_RANGE;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_CC_ACCEL_READ;
@@ -387,6 +388,19 @@ public class Bean implements Parcelable {
         Buffer buffer = new Buffer();
         buffer.write(value);
         sendMessage(MSG_ID_SERIAL_DATA, buffer);
+    }
+
+    /**
+     * Set the pin code
+     *
+     * @param pin    the 6 digit pin as a number, for example <code>123456</code>
+     * @param active true to enable authenticated mode, false to disable the current pin
+     */
+    public void setPin(int pin, boolean active) {
+        Buffer buffer = new Buffer();
+        buffer.writeIntLe(pin);
+        buffer.writeByte(active ? 1 : 0);
+        sendMessage(MSG_ID_BT_SET_PIN, buffer);
     }
 
     /**
