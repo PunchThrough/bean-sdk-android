@@ -73,6 +73,12 @@ import static nl.littlerobots.bean.internal.Protocol.MSG_ID_SERIAL_DATA;
  * Interacts with the Punch Through Design Bean hardware.
  */
 public class Bean implements Parcelable {
+    public static final int SCRATCH_BANK_1 = 0;
+    public static final int SCRATCH_BANK_2 = 1;
+    public static final int SCRATCH_BANK_3 = 2;
+    public static final int SCRATCH_BANK_4 = 3;
+    public static final int SCRATCH_BANK_5 = 4;
+
     public static final Creator<Bean> CREATOR = new Creator<Bean>() {
         @Override
         public Bean createFromParcel(Parcel source) {
@@ -353,6 +359,11 @@ public class Bean implements Parcelable {
      *
      * @param number the scratch bank number, must be in the range 0-4 (inclusive)
      * @param data   the data to write
+     * @see #SCRATCH_BANK_1
+     * @see #SCRATCH_BANK_2
+     * @see #SCRATCH_BANK_3
+     * @see #SCRATCH_BANK_4
+     * @see #SCRATCH_BANK_5
      */
     public void setScratchData(int number, byte[] data) {
         ScratchData sd = ScratchData.create(number, data);
@@ -364,6 +375,11 @@ public class Bean implements Parcelable {
      *
      * @param number the scratch bank number, must be in the range 0-4 (inclusive)
      * @param data   the string data
+     * @see #SCRATCH_BANK_1
+     * @see #SCRATCH_BANK_2
+     * @see #SCRATCH_BANK_3
+     * @see #SCRATCH_BANK_4
+     * @see #SCRATCH_BANK_5
      */
     public void setScratchData(int number, String data) {
         ScratchData sd = ScratchData.create(number, data);

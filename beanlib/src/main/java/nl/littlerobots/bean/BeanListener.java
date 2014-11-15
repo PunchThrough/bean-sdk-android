@@ -56,8 +56,13 @@ public interface BeanListener {
     /**
      * Called when one of the scratch characteristics of the bean has an updated value
      *
-     * @param bank  the bank number, 0-4
+     * @param bank  the bank number, 0-4 or one of the SCRATCH_BANK_* constants.
      * @param value the value
+     * @see nl.littlerobots.bean.Bean#SCRATCH_BANK_1
+     * @see nl.littlerobots.bean.Bean#SCRATCH_BANK_2
+     * @see nl.littlerobots.bean.Bean#SCRATCH_BANK_3
+     * @see nl.littlerobots.bean.Bean#SCRATCH_BANK_4
+     * @see nl.littlerobots.bean.Bean#SCRATCH_BANK_5
      */
     public void onScratchValueChanged(int bank, byte[] value);
 }
