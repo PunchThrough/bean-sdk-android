@@ -448,6 +448,11 @@ public class Bean implements Parcelable {
         }
     }
 
+    /**
+     * Read the device information (hardware / software version)
+     *
+     * @param callback the callback for the result
+     */
     public void readDeviceInfo(final Callback<DeviceInfo> callback) {
         mGattClient.getDeviceProfile().getDeviceInfo(new DeviceInfoCallback() {
             @Override
