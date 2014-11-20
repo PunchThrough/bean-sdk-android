@@ -58,6 +58,7 @@ import static nl.littlerobots.bean.internal.Protocol.MSG_ID_BT_ADV_ONOFF;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_BT_GET_CONFIG;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_BT_GET_SCRATCH;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_BT_SET_CONFIG;
+import static nl.littlerobots.bean.internal.Protocol.MSG_ID_BT_SET_CONFIG_NOSAVE;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_BT_SET_PIN;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_BT_SET_SCRATCH;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_CC_ACCEL_GET_RANGE;
@@ -389,10 +390,23 @@ public class Bean implements Parcelable {
     /**
      * Set the {@link nl.littlerobots.bean.message.RadioConfig}
      *
+     * This is equivalent to calling {@link #setRadioConfig(nl.littlerobots.bean.message.RadioConfig, boolean)} with true for the
+     * save parameter.
+     *
      * @param config the configuration to set
      */
     public void setRadioConfig(RadioConfig config) {
-        sendMessage(MSG_ID_BT_SET_CONFIG, config);
+        setRadioConfig(config, true);
+    }
+
+    /**
+     * Set the {@link nl.littlerobots.bean.message.RadioConfig}
+     *
+     * @param config the configuration to set
+     * @param save   true to save the config in non-volatile storage, false otherwise.
+     */
+    public void setRadioConfig(RadioConfig config, boolean save) {
+        sendMessage(save ? MSG_ID_BT_SET_CONFIG : MSG_ID_BT_SET_CONFIG_NOSAVE, config);
     }
 
     /**

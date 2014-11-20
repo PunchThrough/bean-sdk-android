@@ -35,6 +35,7 @@ public interface Protocol {
     int MSG_ID_BT_SET_TX_PWR = 0x0508;
     int MSG_ID_BT_GET_CONFIG = 0x0510;
     int MSG_ID_BT_SET_CONFIG = 0x0511;
+    int MSG_ID_BT_SET_CONFIG_NOSAVE = 0x0540;
     int MSG_ID_BT_ADV_ONOFF = 0x0512;
     int MSG_ID_BT_SET_SCRATCH = 0x0514;
     int MSG_ID_BT_GET_SCRATCH = 0x0515;
