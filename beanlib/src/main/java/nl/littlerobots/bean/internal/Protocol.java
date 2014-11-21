@@ -50,6 +50,8 @@ public interface Protocol {
     int MSG_ID_CC_ACCEL_READ = 0x2010;
     int MSG_ID_CC_TEMP_READ = 0x2011;
     int MSG_ID_CC_BATT_READ = 0x2015;
+    int MSG_ID_CC_POWER_ARDUINO = 0x2020;
+    int MSG_ID_CC_GET_AR_POWER = 0x2021;
     int MSG_ID_CC_ACCEL_GET_RANGE = 0x2030;
     int MSG_ID_CC_ACCEL_SET_RANGE = 0x2035;
     int MSG_ID_AR_SLEEP = 0x3000;

@@ -64,9 +64,11 @@ import static nl.littlerobots.bean.internal.Protocol.MSG_ID_BT_SET_SCRATCH;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_CC_ACCEL_GET_RANGE;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_CC_ACCEL_READ;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_CC_ACCEL_SET_RANGE;
+import static nl.littlerobots.bean.internal.Protocol.MSG_ID_CC_GET_AR_POWER;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_CC_LED_READ_ALL;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_CC_LED_WRITE;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_CC_LED_WRITE_ALL;
+import static nl.littlerobots.bean.internal.Protocol.MSG_ID_CC_POWER_ARDUINO;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_CC_TEMP_READ;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_SERIAL_DATA;
 
@@ -462,6 +464,27 @@ public class Bean implements Parcelable {
         });
     }
 
+    /**
+     * Enable or disable the Arduino
+     *
+     * @param enable true to enable, false otherwise
+     */
+    public void setArduinoEnabled(boolean enable) {
+        Buffer buffer = new Buffer();
+        buffer.writeByte(enable ? 1 : 0);
+        sendMessage(MSG_ID_CC_POWER_ARDUINO, buffer);
+    }
+
+    /**
+     * Read the Arduino power state
+     *
+     * @param callback the callback for the result, true if the Arduino is enabled, false otherwise.
+     */
+    public void readArduinoPowerState(final Callback<Boolean> callback) {
+        addCallback(MSG_ID_CC_GET_AR_POWER, callback);
+        sendMessageWithoutPayload(MSG_ID_CC_GET_AR_POWER);
+    }
+
     private void handleMessage(byte[] data) {
         Buffer buffer = new Buffer();
         buffer.write(data);
@@ -494,10 +517,20 @@ public class Bean implements Parcelable {
             case MSG_ID_CC_LED_WRITE:
                 // ignore this response, it appears to be only an ack
                 break;
+            case MSG_ID_CC_GET_AR_POWER:
+                returnArduinoPowerState(buffer);
+                break;
             default:
                 Log.e(TAG, "Received message of unknown type " + Integer.toHexString(type));
                 disconnect();
                 break;
+        }
+    }
+
+    private void returnArduinoPowerState(Buffer buffer) {
+        Callback<Boolean> callback = getFirstCallback(MSG_ID_CC_GET_AR_POWER);
+        if (callback != null) {
+            callback.onResult((buffer.readByte() & 0xff) == 1);
         }
     }
 
