@@ -28,6 +28,7 @@ import android.util.Log;
 
 import java.io.IOException;
 
+import nl.littlerobots.beanlib.BuildConfig;
 import okio.Buffer;
 
 public class MessageAssembler {
@@ -38,7 +39,9 @@ public class MessageAssembler {
     private int mPacketIndex;
 
     public byte[] assemble(GattSerialPacket packet) {
-        Log.d(TAG, "assemble: First packet = " + packet.isFirstPacket() + ", index = " + packet.getMessageCount() + " pending = " + packet.getPendingCount());
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "assemble: First packet = " + packet.isFirstPacket() + ", index = " + packet.getMessageCount() + " pending = " + packet.getPendingCount());
+        }
         if (packet.isFirstPacket()) {
             if (mFirstPacket) {
                 mFirstPacket = false;
