@@ -7,7 +7,6 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.content.Context;
-import android.util.Log;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -30,11 +29,9 @@ public class GattClient {
     private boolean mConnected = false;
     private boolean mDiscoveringServices = false;
     private boolean mReconnect = false;
-
     private final BluetoothGattCallback mBluetoothGattCallback = new BluetoothGattCallback() {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-            Log.d(TAG, "onConnectionStateChange " + newState);
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 disconnect();
                 return;
@@ -60,7 +57,6 @@ public class GattClient {
 
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            Log.d(TAG, "onCharacteristicRead");
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 disconnect();
                 return;
@@ -71,7 +67,6 @@ public class GattClient {
 
         @Override
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            Log.d(TAG, "onCharacteristicWrite");
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 disconnect();
                 return;
@@ -109,7 +104,6 @@ public class GattClient {
         public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 disconnect();
-                return;
             }
         }
     };
@@ -226,10 +220,12 @@ public class GattClient {
     }
 
     public synchronized boolean writeCharacteristic(final BluetoothGattCharacteristic characteristic) {
+        final byte[] value = characteristic.getValue();
         queueOperation(new Runnable() {
             @Override
             public void run() {
                 if (mGatt != null) {
+                    characteristic.setValue(value);
                     mGatt.writeCharacteristic(characteristic);
                 }
             }
@@ -250,10 +246,12 @@ public class GattClient {
     }
 
     public boolean writeDescriptor(final BluetoothGattDescriptor descriptor) {
+        final byte[] value = descriptor.getValue();
         queueOperation(new Runnable() {
             @Override
             public void run() {
                 if (mGatt != null) {
+                    descriptor.setValue(value);
                     mGatt.writeDescriptor(descriptor);
                 }
             }
@@ -270,7 +268,6 @@ public class GattClient {
     }
 
     private boolean connect() {
-        Log.d(TAG, "connect");
         return mGatt != null && mGatt.connect();
     }
 
