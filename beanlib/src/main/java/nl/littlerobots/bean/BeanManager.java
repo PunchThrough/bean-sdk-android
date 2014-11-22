@@ -57,19 +57,16 @@ public class BeanManager {
     private final LeScanCallback mCallback = new LeScanCallback() {
         @Override
         public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
-            if (!mBeans.containsKey(device.getAddress())) {
+            if (!mBeans.containsKey(device.getAddress()) && isBean(scanRecord)) {
                 mHandler.removeCallbacks(mCompleteDiscoveryCallback);
-                List<UUID> uuids = parseUUIDs(scanRecord);
-                if (uuids.contains(BEAN_UUID)) {
-                    final Bean bean = new Bean(device);
-                    mBeans.put(device.getAddress(), bean);
-                    mHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            mListener.onBeanDiscovered(bean);
-                        }
-                    });
-                }
+                final Bean bean = new Bean(device);
+                mBeans.put(device.getAddress(), bean);
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mListener.onBeanDiscovered(bean);
+                    }
+                });
                 mHandler.postDelayed(mCompleteDiscoveryCallback, SCAN_TIMEOUT / 2);
             }
         }
@@ -143,6 +140,11 @@ public class BeanManager {
                 }
             });
         }
+    }
+
+    private boolean isBean(byte[] scanRecord) {
+        List<UUID> uuids = parseUUIDs(scanRecord);
+        return uuids.contains(BEAN_UUID);
     }
 
     private List<UUID> parseUUIDs(final byte[] advertisedData) {
