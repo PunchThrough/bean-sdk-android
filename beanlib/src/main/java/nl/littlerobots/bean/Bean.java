@@ -103,21 +103,24 @@ public class Bean implements Parcelable {
         @Override
         public void onConnected() {
             Log.w(TAG, "onConnected after disconnect from device " + getDevice().getAddress());
+            mGattClient.disconnect();
         }
 
         @Override
         public void onConnectionFailed() {
             Log.w(TAG, "onConnectionFailed after disconnect from device " + getDevice().getAddress());
+            mGattClient.close();
         }
 
         @Override
         public void onDisconnected() {
-            Log.w(TAG, "onDisconnected after disconnect from device " + getDevice().getAddress());
+            mGattClient.close();
         }
 
         @Override
         public void onSerialMessageReceived(byte[] data) {
             Log.w(TAG, "onSerialMessageReceived after disconnect from device " + getDevice().getAddress());
+            mGattClient.disconnect();
         }
 
         @Override
@@ -228,9 +231,9 @@ public class Bean implements Parcelable {
      * Disconnect the bean
      */
     public void disconnect() {
-        mGattClient.disconnect();
-        mGattClient.close();
         mBeanListener = mInternalBeanListener;
+        mGattClient.disconnect();
+        mConnected = false;
     }
 
     /**
