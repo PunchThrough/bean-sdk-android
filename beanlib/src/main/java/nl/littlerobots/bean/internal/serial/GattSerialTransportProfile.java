@@ -176,6 +176,7 @@ public class GattSerialTransportProfile extends BaseProfile {
                 listener.onConnectionFailed();
             }
         }
+        mGattClient.disconnect();
     }
 
     public void sendMessage(Buffer message) {

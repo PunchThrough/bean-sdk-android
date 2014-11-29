@@ -14,21 +14,21 @@ import java.util.List;
 import java.util.Queue;
 import java.util.UUID;
 
+import nl.littlerobots.bean.internal.battery.BatteryProfile;
 import nl.littlerobots.bean.internal.device.DeviceProfile;
 import nl.littlerobots.bean.internal.serial.GattSerialTransportProfile;
 
 public class GattClient {
-    private static final byte[] sLock = new byte[0];
     private static final String TAG = "GattClient";
     private final GattSerialTransportProfile mSerialProfile;
     private final DeviceProfile mDeviceProfile;
+    private final BatteryProfile mBatteryProfile;
     private BluetoothGatt mGatt;
     private List<BaseProfile> mProfiles = new ArrayList<>(10);
     private Queue<Runnable> mOperationsQueue = new ArrayDeque<>(32);
     private boolean mOperationInProgress = false;
     private boolean mConnected = false;
     private boolean mDiscoveringServices = false;
-    private boolean mReconnect = false;
     private final BluetoothGattCallback mBluetoothGattCallback = new BluetoothGattCallback() {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
@@ -36,13 +36,7 @@ public class GattClient {
                 disconnect();
                 return;
             }
-            if (newState == BluetoothGatt.STATE_CONNECTED) {
-                mReconnect = true;
-            }
             fireConnectionStateChange(newState);
-            if (newState == BluetoothGatt.STATE_DISCONNECTED && mReconnect) {
-                connect();
-            }
         }
 
         @Override
@@ -111,8 +105,10 @@ public class GattClient {
     public GattClient() {
         mSerialProfile = new GattSerialTransportProfile(this);
         mDeviceProfile = new DeviceProfile(this);
+        mBatteryProfile = new BatteryProfile(this);
         mProfiles.add(mSerialProfile);
         mProfiles.add(mDeviceProfile);
+        mProfiles.add(mBatteryProfile);
     }
 
     private void fireDescriptorRead(BluetoothGattDescriptor descriptor) {
@@ -144,7 +140,6 @@ public class GattClient {
             mGatt.close();
         }
         mConnected = false;
-        mReconnect = true;
         mGatt = device.connectGatt(context, false, mBluetoothGattCallback);
     }
 
@@ -272,7 +267,6 @@ public class GattClient {
     }
 
     public void disconnect() {
-        mReconnect = false;
         if (mGatt != null) {
             mGatt.disconnect();
         }
@@ -291,5 +285,9 @@ public class GattClient {
 
     public DeviceProfile getDeviceProfile() {
         return mDeviceProfile;
+    }
+
+    public BatteryProfile getBatteryProfile() {
+        return mBatteryProfile;
     }
 }

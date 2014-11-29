@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import nl.littlerobots.bean.internal.battery.BatteryProfile.BatteryLevelCallback;
 import nl.littlerobots.bean.internal.ble.GattClient;
 import nl.littlerobots.bean.internal.device.DeviceProfile.DeviceInfoCallback;
 import nl.littlerobots.bean.internal.serial.GattSerialMessage;
@@ -103,24 +104,19 @@ public class Bean implements Parcelable {
         @Override
         public void onConnected() {
             Log.w(TAG, "onConnected after disconnect from device " + getDevice().getAddress());
-            mGattClient.disconnect();
         }
 
         @Override
         public void onConnectionFailed() {
             Log.w(TAG, "onConnectionFailed after disconnect from device " + getDevice().getAddress());
-            mGattClient.close();
         }
 
         @Override
         public void onDisconnected() {
-            mGattClient.close();
         }
 
         @Override
         public void onSerialMessageReceived(byte[] data) {
-            Log.w(TAG, "onSerialMessageReceived after disconnect from device " + getDevice().getAddress());
-            mGattClient.disconnect();
         }
 
         @Override
@@ -170,6 +166,7 @@ public class Bean implements Parcelable {
             public void onDisconnected() {
                 mCallbacks.clear();
                 mConnected = false;
+                mGattClient.close();
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -198,7 +195,6 @@ public class Bean implements Parcelable {
                 });
             }
         };
-        //mTransport = new GattSerialTransport(mTransportListener, device);
         mGattClient = new GattClient();
         mGattClient.getSerialProfile().setListener(mTransportListener);
     }
@@ -223,7 +219,6 @@ public class Bean implements Parcelable {
             return;
         }
         mBeanListener = listener;
-        //mTransport.connect(context);
         mGattClient.connect(context, mDevice);
     }
 
@@ -232,7 +227,7 @@ public class Bean implements Parcelable {
      */
     public void disconnect() {
         mBeanListener = mInternalBeanListener;
-        mGattClient.disconnect();
+        mGattClient.close();
         mConnected = false;
     }
 
@@ -486,6 +481,20 @@ public class Bean implements Parcelable {
     public void readArduinoPowerState(final Callback<Boolean> callback) {
         addCallback(MSG_ID_CC_GET_AR_POWER, callback);
         sendMessageWithoutPayload(MSG_ID_CC_GET_AR_POWER);
+    }
+
+    /**
+     * Read the battery level
+     *
+     * @param callback the callback for the result, the battery level in the range of 0-100%
+     */
+    public void readBatteryLevel(final Callback<Integer> callback) {
+        mGattClient.getBatteryProfile().getBatteryLevel(new BatteryLevelCallback() {
+            @Override
+            public void onBatteryLevel(int percentage) {
+                callback.onResult(percentage);
+            }
+        });
     }
 
     private void handleMessage(byte[] data) {
