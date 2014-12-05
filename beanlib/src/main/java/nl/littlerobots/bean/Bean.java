@@ -166,7 +166,6 @@ public class Bean implements Parcelable {
             public void onDisconnected() {
                 mCallbacks.clear();
                 mConnected = false;
-                mGattClient.close();
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -227,7 +226,7 @@ public class Bean implements Parcelable {
      */
     public void disconnect() {
         mBeanListener = mInternalBeanListener;
-        mGattClient.close();
+        mGattClient.disconnect();
         mConnected = false;
     }
 
@@ -334,6 +333,7 @@ public class Bean implements Parcelable {
 
     /**
      * Set accelerometer range.
+     *
      * @param range the range in G's, must be 2, 4, 8 or 16
      */
     public void setAccelerometerRange(int range) {
@@ -389,7 +389,7 @@ public class Bean implements Parcelable {
 
     /**
      * Set the {@link nl.littlerobots.bean.message.RadioConfig}
-     *
+     * <p/>
      * This is equivalent to calling {@link #setRadioConfig(nl.littlerobots.bean.message.RadioConfig, boolean)} with true for the
      * save parameter.
      *

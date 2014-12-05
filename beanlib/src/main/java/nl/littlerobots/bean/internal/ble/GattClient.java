@@ -33,8 +33,12 @@ public class GattClient {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             if (status != BluetoothGatt.GATT_SUCCESS) {
+                fireConnectionStateChange(BluetoothGatt.STATE_DISCONNECTED);
                 disconnect();
                 return;
+            }
+            if (newState == BluetoothGatt.STATE_CONNECTED) {
+                mConnected = true;
             }
             fireConnectionStateChange(newState);
         }
@@ -267,12 +271,10 @@ public class GattClient {
     }
 
     public void disconnect() {
-        if (mGatt != null) {
-            mGatt.disconnect();
-        }
+        close();
     }
 
-    public void close() {
+    private void close() {
         if (mGatt != null) {
             mGatt.close();
         }
