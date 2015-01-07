@@ -274,7 +274,7 @@ public class GattClient {
         close();
     }
 
-    private void close() {
+    private synchronized void close() {
         if (mGatt != null) {
             mGatt.close();
         }
