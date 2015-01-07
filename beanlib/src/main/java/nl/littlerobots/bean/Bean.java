@@ -56,6 +56,7 @@ import okio.Buffer;
 import static nl.littlerobots.bean.internal.Protocol.APP_MSG_RESPONSE_BIT;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_BL_GET_META;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_BT_ADV_ONOFF;
+import static nl.littlerobots.bean.internal.Protocol.MSG_ID_BT_END_GATE;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_BT_GET_CONFIG;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_BT_GET_SCRATCH;
 import static nl.littlerobots.bean.internal.Protocol.MSG_ID_BT_SET_CONFIG;
@@ -495,6 +496,10 @@ public class Bean implements Parcelable {
                 callback.onResult(percentage);
             }
         });
+    }
+
+    public void endSerialGate() {
+        sendMessageWithoutPayload(MSG_ID_BT_END_GATE);
     }
 
     private void handleMessage(byte[] data) {
