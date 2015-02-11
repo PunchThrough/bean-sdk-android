@@ -29,15 +29,21 @@ import android.os.Parcelable;
 import auto.parcel.AutoParcel;
 import okio.Buffer;
 
+import static com.punchthrough.bean.sdk.internal.utility.Misc.clampToUInt8;
+
 @AutoParcel
 public abstract class LedColor implements Parcelable {
+
+    public abstract int red();
+    public abstract int green();
+    public abstract int blue();
+
+    public static LedColor create(int red, int green, int blue) {
+        return new AutoParcel_LedColor(clampToUInt8(red), clampToUInt8(green), clampToUInt8(blue));
+    }
+
     public static LedColor fromPayload(Buffer buffer) {
         return new AutoParcel_LedColor(buffer.readByte() & 0xff, buffer.readByte() & 0xff, buffer.readByte() & 0xff);
     }
-
-    public abstract int red();
-
-    public abstract int green();
-
-    public abstract int blue();
+    
 }
