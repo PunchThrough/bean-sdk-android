@@ -38,6 +38,7 @@ import com.punchthrough.bean.sdk.internal.device.DeviceProfile.DeviceInfoCallbac
 import com.punchthrough.bean.sdk.internal.serial.GattSerialMessage;
 import com.punchthrough.bean.sdk.internal.serial.GattSerialTransportProfile;
 import com.punchthrough.bean.sdk.message.Acceleration;
+import com.punchthrough.bean.sdk.message.AccelerometerRange;
 import com.punchthrough.bean.sdk.message.BatteryLevel;
 import com.punchthrough.bean.sdk.message.Callback;
 import com.punchthrough.bean.sdk.message.DeviceInfo;
@@ -338,12 +339,9 @@ public class Bean implements Parcelable {
      *
      * @param range the range in G's, must be 2, 4, 8 or 16
      */
-    public void setAccelerometerRange(int range) {
+    public void setAccelerometerRange(AccelerometerRange range) {
         Buffer buffer = new Buffer();
-        if (range != 2 && range != 4 && range != 8 && range != 16) {
-            throw new IllegalArgumentException("Sensitivity value must be 2, 4, 8 or 16");
-        }
-        buffer.writeByte(range & 0xff);
+        buffer.writeByte(range.getRawRange());
         sendMessage(MSG_ID_CC_ACCEL_SET_RANGE, buffer);
     }
 
