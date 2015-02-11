@@ -44,6 +44,7 @@ import com.punchthrough.bean.sdk.message.DeviceInfo;
 import com.punchthrough.bean.sdk.message.LedColor;
 import com.punchthrough.bean.sdk.message.Message;
 import com.punchthrough.bean.sdk.message.RadioConfig;
+import com.punchthrough.bean.sdk.message.ScratchBank;
 import com.punchthrough.bean.sdk.message.ScratchData;
 import com.punchthrough.bean.sdk.message.SketchMetaData;
 
@@ -357,34 +358,34 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Set a scratch bank data value
+     * Set a scratch bank data value.
      *
-     * @param number the scratch bank number, must be in the range 0-4 (inclusive)
-     * @param data   the data to write
+     * @param bank The scratch bank being set
+     * @param data The bytes to write into the scratch bank
      * @see #SCRATCH_BANK_1
      * @see #SCRATCH_BANK_2
      * @see #SCRATCH_BANK_3
      * @see #SCRATCH_BANK_4
      * @see #SCRATCH_BANK_5
      */
-    public void setScratchData(int number, byte[] data) {
-        ScratchData sd = ScratchData.create(number, data);
+    public void setScratchData(ScratchBank bank, byte[] data) {
+        ScratchData sd = ScratchData.create(bank, data);
         sendMessage(MSG_ID_BT_SET_SCRATCH, sd);
     }
 
     /**
      * Set a scratch bank data value.
      *
-     * @param number the scratch bank number, must be in the range 0-4 (inclusive)
-     * @param data   the string data
+     * @param bank The scratch bank being set
+     * @param data The string data to write into the scratch bank
      * @see #SCRATCH_BANK_1
      * @see #SCRATCH_BANK_2
      * @see #SCRATCH_BANK_3
      * @see #SCRATCH_BANK_4
      * @see #SCRATCH_BANK_5
      */
-    public void setScratchData(int number, String data) {
-        ScratchData sd = ScratchData.create(number, data);
+    public void setScratchData(ScratchBank bank, String data) {
+        ScratchData sd = ScratchData.create(bank, data);
         sendMessage(MSG_ID_BT_SET_SCRATCH, sd);
     }
 

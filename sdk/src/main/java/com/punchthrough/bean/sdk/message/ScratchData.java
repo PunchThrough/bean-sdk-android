@@ -37,16 +37,14 @@ public abstract class ScratchData implements Parcelable, Message {
         return new AutoParcel_ScratchData((buffer.readByte() & 0xff) - 1, buffer.readByteArray());
     }
 
-    public static ScratchData create(int number, byte[] data) {
-        if (number < 0 || number > 4) {
-            throw new IllegalArgumentException("Scratch number needs to be 0 - 4");
-        }
-        return new AutoParcel_ScratchData(number, data);
+    public static ScratchData create(ScratchBank bank, byte[] data) {
+        int bankNumber = bank.getRawBankNumber();
+        return new AutoParcel_ScratchData(bankNumber, data);
     }
 
-    public static ScratchData create(int number, String data) {
+    public static ScratchData create(ScratchBank bank, String data) {
         try {
-            return create(number, data == null ? new byte[0] : data.getBytes("UTF-8"));
+            return create(bank, data == null ? new byte[0] : data.getBytes("UTF-8"));
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
