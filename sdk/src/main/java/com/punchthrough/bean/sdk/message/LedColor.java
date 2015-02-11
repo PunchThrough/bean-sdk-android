@@ -45,5 +45,17 @@ public abstract class LedColor implements Parcelable {
     public static LedColor fromPayload(Buffer buffer) {
         return new AutoParcel_LedColor(buffer.readByte() & 0xff, buffer.readByte() & 0xff, buffer.readByte() & 0xff);
     }
-    
+
+    @Override
+    public boolean equals(Object o) {
+
+        if ( ! (o instanceof LedColor) ) {
+            return false;
+        }
+        LedColor c = (LedColor) o;
+
+        return (c.red() == this.red() &&
+                c.green() == this.green() &&
+                c.blue() == this.blue());
+    }
 }
