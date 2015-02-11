@@ -243,7 +243,7 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Request the {@link com.punchthrough.bean.message.RadioConfig}
+     * Request the {@link com.punchthrough.bean.sdk.message.RadioConfig}
      *
      * @param callback the callback for the result
      */
