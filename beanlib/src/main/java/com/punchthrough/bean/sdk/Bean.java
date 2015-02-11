@@ -38,6 +38,7 @@ import com.punchthrough.bean.sdk.internal.device.DeviceProfile.DeviceInfoCallbac
 import com.punchthrough.bean.sdk.internal.serial.GattSerialMessage;
 import com.punchthrough.bean.sdk.internal.serial.GattSerialTransportProfile;
 import com.punchthrough.bean.sdk.message.Acceleration;
+import com.punchthrough.bean.sdk.message.BatteryLevel;
 import com.punchthrough.bean.sdk.message.Callback;
 import com.punchthrough.bean.sdk.message.DeviceInfo;
 import com.punchthrough.bean.sdk.message.Led;
@@ -490,11 +491,11 @@ public class Bean implements Parcelable {
      *
      * @param callback the callback for the result, the battery level in the range of 0-100%
      */
-    public void readBatteryLevel(final Callback<Integer> callback) {
+    public void readBatteryLevel(final Callback<BatteryLevel> callback) {
         mGattClient.getBatteryProfile().getBatteryLevel(new BatteryLevelCallback() {
             @Override
             public void onBatteryLevel(int percentage) {
-                callback.onResult(percentage);
+                callback.onResult(new BatteryLevel(percentage));
             }
         });
     }
