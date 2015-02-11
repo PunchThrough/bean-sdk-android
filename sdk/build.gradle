@@ -1,7 +1,7 @@
 apply plugin: 'com.android.library'
 apply plugin: 'com.neenbedankt.android-apt'
 
-group = 'nl.littlerobots.bean'
+group = 'com.punchthrough.bean.sdk'
 version = "0.9.5-SNAPSHOT"
 
 android {

@@ -26,9 +26,10 @@ package com.punchthrough.bean.sdk.internal.serial;
 
 import android.util.Log;
 
+import com.punchthrough.bean.sdk.BuildConfig;
+
 import java.io.IOException;
 
-import com.punchthrough.beanlib.BuildConfig;
 import okio.Buffer;
 
 public class MessageAssembler {

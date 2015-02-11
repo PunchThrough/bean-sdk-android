@@ -8,15 +8,16 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import com.punchthrough.bean.sdk.BuildConfig;
+import com.punchthrough.bean.sdk.internal.ble.BaseProfile;
+import com.punchthrough.bean.sdk.internal.ble.GattClient;
+
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-import com.punchthrough.bean.sdk.internal.ble.BaseProfile;
-import com.punchthrough.bean.sdk.internal.ble.GattClient;
-import com.punchthrough.beanlib.BuildConfig;
 import okio.Buffer;
 
 public class GattSerialTransportProfile extends BaseProfile {
