@@ -391,10 +391,11 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Set the {@link com.punchthrough.bean.message.RadioConfig}
+     * Set the {@link com.punchthrough.bean.sdk.message.RadioConfig}
      * <p/>
-     * This is equivalent to calling {@link #setRadioConfig(com.punchthrough.bean.message.RadioConfig, boolean)} with true for the
-     * save parameter.
+     * This is equivalent to calling
+     * {@link #setRadioConfig(com.punchthrough.bean.sdk.message.RadioConfig, boolean)}
+     * with true for the save parameter.
      *
      * @param config the configuration to set
      */
@@ -403,7 +404,7 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Set the {@link com.punchthrough.bean.message.RadioConfig}
+     * Set the {@link com.punchthrough.bean.sdk.message.RadioConfig}
      *
      * @param config the configuration to set
      * @param save   true to save the config in non-volatile storage, false otherwise.
