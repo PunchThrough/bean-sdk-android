@@ -41,7 +41,7 @@ import com.punchthrough.bean.sdk.message.Acceleration;
 import com.punchthrough.bean.sdk.message.BatteryLevel;
 import com.punchthrough.bean.sdk.message.Callback;
 import com.punchthrough.bean.sdk.message.DeviceInfo;
-import com.punchthrough.bean.sdk.message.Led;
+import com.punchthrough.bean.sdk.message.LedColor;
 import com.punchthrough.bean.sdk.message.Message;
 import com.punchthrough.bean.sdk.message.RadioConfig;
 import com.punchthrough.bean.sdk.message.ScratchData;
@@ -255,15 +255,13 @@ public class Bean implements Parcelable {
     /**
      * Set the led values
      *
-     * @param r red value
-     * @param g green value
-     * @param b blue value
+     * @param color The color being sent to the LED
      */
-    public void setLed(int r, int g, int b) {
+    public void setLed(LedColor color) {
         Buffer buffer = new Buffer();
-        buffer.writeByte(r);
-        buffer.writeByte(g);
-        buffer.writeByte(b);
+        buffer.writeByte(color.red());
+        buffer.writeByte(color.green());
+        buffer.writeByte(color.blue());
         sendMessage(MSG_ID_CC_LED_WRITE_ALL, buffer);
     }
 
@@ -272,7 +270,7 @@ public class Bean implements Parcelable {
      *
      * @param callback the callback for the result
      */
-    public void readLed(Callback<Led> callback) {
+    public void readLed(Callback<LedColor> callback) {
         addCallback(MSG_ID_CC_LED_READ_ALL, callback);
         sendMessageWithoutPayload(MSG_ID_CC_LED_READ_ALL);
     }
@@ -569,9 +567,9 @@ public class Bean implements Parcelable {
     }
 
     private void returnLed(Buffer buffer) {
-        Callback<Led> callback = getFirstCallback(MSG_ID_CC_LED_READ_ALL);
+        Callback<LedColor> callback = getFirstCallback(MSG_ID_CC_LED_READ_ALL);
         if (callback != null) {
-            callback.onResult(Led.fromPayload(buffer));
+            callback.onResult(LedColor.fromPayload(buffer));
         }
     }
 

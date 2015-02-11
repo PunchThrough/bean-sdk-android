@@ -30,9 +30,9 @@ import auto.parcel.AutoParcel;
 import okio.Buffer;
 
 @AutoParcel
-public abstract class Led implements Parcelable {
-    public static Led fromPayload(Buffer buffer) {
-        return new AutoParcel_Led(buffer.readByte() & 0xff, buffer.readByte() & 0xff, buffer.readByte() & 0xff);
+public abstract class LedColor implements Parcelable {
+    public static LedColor fromPayload(Buffer buffer) {
+        return new AutoParcel_LedColor(buffer.readByte() & 0xff, buffer.readByte() & 0xff, buffer.readByte() & 0xff);
     }
 
     public abstract int red();
