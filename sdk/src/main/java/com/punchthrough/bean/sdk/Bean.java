@@ -32,6 +32,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
 
+import com.punchthrough.bean.sdk.internal.MessageID;
 import com.punchthrough.bean.sdk.internal.battery.BatteryProfile.BatteryLevelCallback;
 import com.punchthrough.bean.sdk.internal.ble.GattClient;
 import com.punchthrough.bean.sdk.internal.device.DeviceProfile.DeviceInfoCallback;
@@ -58,25 +59,6 @@ import java.util.List;
 import okio.Buffer;
 
 import static com.punchthrough.bean.sdk.internal.Protocol.APP_MSG_RESPONSE_BIT;
-import static com.punchthrough.bean.sdk.internal.Protocol.MSG_ID_BL_GET_META;
-import static com.punchthrough.bean.sdk.internal.Protocol.MSG_ID_BT_ADV_ONOFF;
-import static com.punchthrough.bean.sdk.internal.Protocol.MSG_ID_BT_END_GATE;
-import static com.punchthrough.bean.sdk.internal.Protocol.MSG_ID_BT_GET_CONFIG;
-import static com.punchthrough.bean.sdk.internal.Protocol.MSG_ID_BT_GET_SCRATCH;
-import static com.punchthrough.bean.sdk.internal.Protocol.MSG_ID_BT_SET_CONFIG;
-import static com.punchthrough.bean.sdk.internal.Protocol.MSG_ID_BT_SET_CONFIG_NOSAVE;
-import static com.punchthrough.bean.sdk.internal.Protocol.MSG_ID_BT_SET_PIN;
-import static com.punchthrough.bean.sdk.internal.Protocol.MSG_ID_BT_SET_SCRATCH;
-import static com.punchthrough.bean.sdk.internal.Protocol.MSG_ID_CC_ACCEL_GET_RANGE;
-import static com.punchthrough.bean.sdk.internal.Protocol.MSG_ID_CC_ACCEL_READ;
-import static com.punchthrough.bean.sdk.internal.Protocol.MSG_ID_CC_ACCEL_SET_RANGE;
-import static com.punchthrough.bean.sdk.internal.Protocol.MSG_ID_CC_GET_AR_POWER;
-import static com.punchthrough.bean.sdk.internal.Protocol.MSG_ID_CC_LED_READ_ALL;
-import static com.punchthrough.bean.sdk.internal.Protocol.MSG_ID_CC_LED_WRITE;
-import static com.punchthrough.bean.sdk.internal.Protocol.MSG_ID_CC_LED_WRITE_ALL;
-import static com.punchthrough.bean.sdk.internal.Protocol.MSG_ID_CC_POWER_ARDUINO;
-import static com.punchthrough.bean.sdk.internal.Protocol.MSG_ID_CC_TEMP_READ;
-import static com.punchthrough.bean.sdk.internal.Protocol.MSG_ID_SERIAL_DATA;
 
 /**
  * Interacts with the Punch Through Design Bean hardware.
@@ -133,7 +115,7 @@ public class Bean implements Parcelable {
     private final GattSerialTransportProfile.Listener mTransportListener;
     private final BluetoothDevice mDevice;
     private boolean mConnected;
-    private HashMap<Integer, List<Callback<?>>> mCallbacks = new HashMap<>(16);
+    private HashMap<MessageID, List<Callback<?>>> mCallbacks = new HashMap<>(16);
     private Handler mHandler = new Handler(Looper.getMainLooper());
 
     /**
@@ -601,7 +583,7 @@ public class Bean implements Parcelable {
         }
     }
 
-    private void addCallback(int type, Callback<?> callback) {
+    private void addCallback(MessageID type, Callback<?> callback) {
         List<Callback<?>> callbacks = mCallbacks.get(type);
         if (callbacks == null) {
             callbacks = new ArrayList<>(16);
@@ -611,7 +593,7 @@ public class Bean implements Parcelable {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> Callback<T> getFirstCallback(int type) {
+    private <T> Callback<T> getFirstCallback(MessageID type) {
         List<Callback<?>> callbacks = mCallbacks.get(type);
         if (callbacks == null || callbacks.isEmpty()) {
             Log.w(TAG, "Got response without callback!");
@@ -620,19 +602,19 @@ public class Bean implements Parcelable {
         return (Callback<T>) callbacks.remove(0);
     }
 
-    private void sendMessage(int type, Message message) {
+    private void sendMessage(MessageID type, Message message) {
         Buffer buffer = new Buffer();
-        buffer.writeByte((type >> 8) & 0xff);
-        buffer.writeByte(type & 0xff);
+        buffer.writeByte((type.getRawID() >> 8) & 0xff);
+        buffer.writeByte(type.getRawID() & 0xff);
         buffer.write(message.toPayload());
         GattSerialMessage serialMessage = GattSerialMessage.fromPayload(buffer.readByteArray());
         mGattClient.getSerialProfile().sendMessage(serialMessage.getBuffer());
     }
 
-    private void sendMessage(int type, Buffer payload) {
+    private void sendMessage(MessageID type, Buffer payload) {
         Buffer buffer = new Buffer();
-        buffer.writeByte((type >> 8) & 0xff);
-        buffer.writeByte(type & 0xff);
+        buffer.writeByte((type.getRawID() >> 8) & 0xff);
+        buffer.writeByte(type.getRawID() & 0xff);
         if (payload != null) {
             try {
                 buffer.writeAll(payload);
@@ -644,7 +626,7 @@ public class Bean implements Parcelable {
         mGattClient.getSerialProfile().sendMessage(serialMessage.getBuffer());
     }
 
-    private void sendMessageWithoutPayload(int type) {
+    private void sendMessageWithoutPayload(MessageID type) {
         sendMessage(type, (Buffer) null);
     }
 
