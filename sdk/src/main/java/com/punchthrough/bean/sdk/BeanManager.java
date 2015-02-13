@@ -43,7 +43,7 @@ import java.util.UUID;
 public class BeanManager {
     private static final String TAG = "BeanManager";
     private static final UUID BEAN_UUID = UUID.fromString("a495ff10-c5b1-4b44-b512-1370f02d74de");
-    private static final long DEFAULT_SCAN_TIMEOUT = 30000;
+    private static final long SCAN_TIMEOUT = 30000;
     private static BeanManager sInstance = new BeanManager();
     private Handler mHandler = new Handler();
     private BeanDiscoveryListener mListener;
@@ -67,7 +67,7 @@ public class BeanManager {
                         mListener.onBeanDiscovered(bean);
                     }
                 });
-                mHandler.postDelayed(mCompleteDiscoveryCallback, DEFAULT_SCAN_TIMEOUT / 2);
+                mHandler.postDelayed(mCompleteDiscoveryCallback, SCAN_TIMEOUT / 2);
             }
         }
     };
@@ -94,19 +94,6 @@ public class BeanManager {
      *         to start the scan.
      */
     public boolean startDiscovery(BeanDiscoveryListener listener) {
-        return startDiscovery(listener, DEFAULT_SCAN_TIMEOUT);
-    }
-
-    /**
-     * Start a discovery. If a discovery is in progress, it will be canceled. A discovery will run for a limited time after which
-     * {@link BeanDiscoveryListener#onDiscoveryComplete()} will be called.
-     *
-     * @param listener       The listener for reporting progress
-     * @param scanTimeMillis The time to scan for devices, in milliseconds
-     * @return true if the discovery started, false otherwise. False may be returned if the Bluetooth stack is unable
-     *         to start the scan.
-     */
-    public boolean startDiscovery(BeanDiscoveryListener listener, long scanTimeMillis) {
         if (listener == null) {
             throw new NullPointerException("Listener cannot be null");
         }
@@ -117,7 +104,7 @@ public class BeanManager {
         mListener = listener;
         mScanning = true;
         if (BluetoothAdapter.getDefaultAdapter().startLeScan(mCallback)) {
-            mHandler.postDelayed(mCompleteDiscoveryCallback, scanTimeMillis);
+            mHandler.postDelayed(mCompleteDiscoveryCallback, SCAN_TIMEOUT);
             return true;
         }
         return false;
