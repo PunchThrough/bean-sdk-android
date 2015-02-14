@@ -48,6 +48,7 @@ import com.punchthrough.bean.sdk.message.Message;
 import com.punchthrough.bean.sdk.message.RadioConfig;
 import com.punchthrough.bean.sdk.message.ScratchBank;
 import com.punchthrough.bean.sdk.message.ScratchData;
+import com.punchthrough.bean.sdk.message.SketchHex;
 import com.punchthrough.bean.sdk.message.SketchMetaData;
 
 import java.io.IOException;
@@ -489,6 +490,10 @@ public class Bean implements Parcelable {
      */
     public void endSerialGate() {
         sendMessageWithoutPayload(MessageID.BT_END_GATE);
+    }
+
+    public void programWithSketchHex(SketchHex hex) {
+
     }
 
     private void handleMessage(byte[] data) {
