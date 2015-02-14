@@ -1,11 +1,13 @@
 package com.punchthrough.bean.sdk.message;
 
 import com.punchthrough.bean.sdk.internal.exception.HexParsingException;
+import com.punchthrough.bean.sdk.internal.exception.NameLengthException;
 import com.punchthrough.bean.sdk.internal.intelhex.Line;
 import com.punchthrough.bean.sdk.internal.intelhex.LineRecordType;
 
 import org.apache.commons.codec.DecoderException;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ListIterator;
@@ -15,6 +17,11 @@ import static com.punchthrough.bean.sdk.internal.utility.Misc.bytesToInt;
 
 public class SketchHex {
 
+    private static final int MAX_SKETCH_NAME_LENGTH = 20;
+
+    private String sketchName;
+    private List<Line> lines = new ArrayList<>();
+
     /**
      * Initialize a SketchHex object with a string of Intel Hex data.
      * @param hexString The Intel Hex data as a string
@@ -23,14 +30,46 @@ public class SketchHex {
         parseHexString(hexString);
     }
 
-    private String sketchName;
-
+    /**
+     * Retrieve the name of the sketch.
+     * @return The name of the sketch
+     */
     public String getSketchName() {
         return sketchName;
     }
 
-    public void setSketchName(String sketchName) {
+    /**
+     * Set the name of this sketch for programming to a Bean.
+     * @param sketchName The new name of the sketch
+     */
+    public void setSketchName(String sketchName) throws NameLengthException {
+        if (sketchName.length() > MAX_SKETCH_NAME_LENGTH) {
+            throw new NameLengthException(String.format(
+                    "Sketch name must be %d characters or less", MAX_SKETCH_NAME_LENGTH));
+        }
         this.sketchName = sketchName;
+    }
+
+    public byte[] getBytes() {
+        List<Line> dataLines = new ArrayList<>();
+        int byteCount = 0;
+        for (Line line : lines) {
+            if (line.getRecordType() == LineRecordType.DATA) {
+                dataLines.add(line);
+                byteCount += line.getByteCount();
+            }
+        }
+
+        byte[] bytes = new byte[byteCount];
+        int i = 0;
+        for (Line line : dataLines) {
+            for (byte b : line.getData()) {
+                bytes[i] = b;
+                i++;
+            }
+        }
+
+        return bytes;
     }
 
     private void parseHexString(String hexString) throws HexParsingException {
@@ -48,9 +87,10 @@ public class SketchHex {
                         "Couldn't parse hex: line %d did not start with ':'", rawLineNum));
             }
 
+            // rawBytes: bytes of the string without the leading colon, parsed into hex
             byte[] rawBytes;
             try {
-                rawBytes = asciiHexToBytes(rawLine);
+                rawBytes = asciiHexToBytes(rawLine.substring(1));
             } catch (DecoderException e) {
                 throw new HexParsingException(String.format(
                         "Couldn't parse hex: line %d ASCII could not be parsed to byte array: %s",
@@ -58,10 +98,10 @@ public class SketchHex {
             }
 
             Line line = new Line();
-            line.setByteCount(rawBytes[1]);
-            line.setAddress(bytesToInt(rawBytes[2], rawBytes[3]));
+            line.setByteCount(rawBytes[0]);
+            line.setAddress(bytesToInt(rawBytes[1], rawBytes[2]));
 
-            byte rawRecordType = rawBytes[4];
+            byte rawRecordType = rawBytes[3];
             LineRecordType recordType;
             if (rawRecordType == 0) {
                 recordType = LineRecordType.DATA;
@@ -83,17 +123,12 @@ public class SketchHex {
             line.setRecordType(recordType);
 
             if (line.getByteCount() > 0) {
-                line.setData(Arrays.copyOfRange(rawBytes, 5, 5 + line.getByteCount()));
+                line.setData(Arrays.copyOfRange(rawBytes, 4, 4 + line.getByteCount()));
             }
 
-            line.setChecksum(rawBytes[5 + line.getByteCount()]);
+            line.setChecksum(rawBytes[4 + line.getByteCount()]);
 
-            if (line.getData().length != line.getByteCount()) {
-                throw new HexParsingException(String.format(
-                        "Couldn't parse hex: line %d had data length %d " +
-                                "but indicated byte count %d",
-                        rawLineNum, line.getData().length, line.getByteCount()));
-            }
+            lines.add(line);
 
         }
     }
