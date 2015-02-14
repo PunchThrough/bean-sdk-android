@@ -24,4 +24,8 @@ public class Misc {
         return ( (high & 0xFF) << 8 ) | ( low & 0xFF );
     }
 
+    public static byte intToByte(int i) {
+        return (byte) (i & 0xFF);
+    }
+
 }
