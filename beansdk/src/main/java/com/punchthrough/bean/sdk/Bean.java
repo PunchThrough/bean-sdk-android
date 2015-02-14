@@ -480,6 +480,13 @@ public class Bean implements Parcelable {
         });
     }
 
+    /**
+     * End the Arduino's serial gate, allowing serial data from the Arduino to be read by the
+     * connected Android client.
+     *
+     * The serial gate exists to prevent chatty sketches from interfering with the behavior of
+     * clients that want to send commands to the ATmega.
+     */
     public void endSerialGate() {
         sendMessageWithoutPayload(MessageID.BT_END_GATE);
     }
