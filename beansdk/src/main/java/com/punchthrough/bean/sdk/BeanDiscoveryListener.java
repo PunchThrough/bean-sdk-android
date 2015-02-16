@@ -32,8 +32,9 @@ public interface BeanDiscoveryListener {
      * Called when a Bean is found.
      *
      * @param bean the discovered Bean
+     * @param rssi the RSSI of the discovered Bean
      */
-    public void onBeanDiscovered(Bean bean);
+    public void onBeanDiscovered(Bean bean, int rssi);
 
     /**
      * Called when Bean discovery completes.

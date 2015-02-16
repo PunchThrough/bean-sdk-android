@@ -56,7 +56,7 @@ public class BeanManager {
     };
     private final LeScanCallback mCallback = new LeScanCallback() {
         @Override
-        public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
+        public void onLeScan(BluetoothDevice device, final int rssi, byte[] scanRecord) {
             if (!mBeans.containsKey(device.getAddress()) && isBean(scanRecord)) {
                 mHandler.removeCallbacks(mCompleteDiscoveryCallback);
                 final Bean bean = new Bean(device);
@@ -64,7 +64,7 @@ public class BeanManager {
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        mListener.onBeanDiscovered(bean);
+                        mListener.onBeanDiscovered(bean, rssi);
                     }
                 });
                 mHandler.postDelayed(mCompleteDiscoveryCallback, SCAN_TIMEOUT / 2);
