@@ -21,6 +21,7 @@ except OSError:
     pass
 
 os.chdir(OUTPUT_DIR_NAME)
+call_unsafe('rm *.jar')
 call_unsafe('cp ../beansdk/build/libs/*.jar .')
 
 commit = check_output(['git', 'rev-parse', 'HEAD'])[:7]
