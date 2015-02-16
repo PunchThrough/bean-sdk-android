@@ -16,10 +16,10 @@ public class SketchHexTest extends AndroidTestCase {
         String asciiHexData =
                 //        Bytes 1-8       Bytes 9-16
                 //        |...............|...............
-                ":10010000214601360121470136007EFE09D2190140\n" +
-                ":100110002146017E17C20001FF5F16002148011928\n" +
-                ":10012000194E79234623965778239EDA3F01B2CAA7\n" +
-                ":100130003F0156702B5E712B722B732146013421C7\n" +
+                ":10010000214601360121470136007EFE09D2190140\r\n" +
+                ":100110002146017E17C20001FF5F16002148011928\r\n" +
+                ":10012000194E79234623965778239EDA3F01B2CAA7\r\n" +
+                ":100130003F0156702B5E712B722B732146013421C7\r\n" +
                 ":00000001FF";
 
         // Produced from the above hex by http://hex2bin.sourceforge.net/

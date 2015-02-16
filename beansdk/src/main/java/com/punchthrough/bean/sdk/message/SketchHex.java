@@ -87,6 +87,8 @@ public class SketchHex {
                         "Couldn't parse hex: line %d did not start with ':'", rawLineNum));
             }
 
+            rawLine = rawLine.replaceAll("\r", "");
+
             // rawBytes: bytes of the string without the leading colon, parsed into hex
             byte[] rawBytes;
             try {
