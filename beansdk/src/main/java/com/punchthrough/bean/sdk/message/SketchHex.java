@@ -1,5 +1,8 @@
 package com.punchthrough.bean.sdk.message;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.punchthrough.bean.sdk.internal.exception.HexParsingException;
 import com.punchthrough.bean.sdk.internal.exception.NameLengthException;
 import com.punchthrough.bean.sdk.internal.intelhex.Line;
@@ -15,7 +18,7 @@ import java.util.ListIterator;
 import static com.punchthrough.bean.sdk.internal.utility.Misc.asciiHexToBytes;
 import static com.punchthrough.bean.sdk.internal.utility.Misc.bytesToInt;
 
-public class SketchHex {
+public class SketchHex implements Parcelable {
 
     private static final int MAX_SKETCH_NAME_LENGTH = 20;
 
@@ -134,4 +137,43 @@ public class SketchHex {
 
         }
     }
+
+    protected SketchHex(Parcel in) {
+        sketchName = in.readString();
+        if (in.readByte() == 0x01) {
+            lines = new ArrayList<Line>();
+            in.readList(lines, Line.class.getClassLoader());
+        } else {
+            lines = null;
+        }
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(sketchName);
+        if (lines == null) {
+            dest.writeByte((byte) (0x00));
+        } else {
+            dest.writeByte((byte) (0x01));
+            dest.writeList(lines);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static final Parcelable.Creator<SketchHex> CREATOR = new Parcelable.Creator<SketchHex>() {
+        @Override
+        public SketchHex createFromParcel(Parcel in) {
+            return new SketchHex(in);
+        }
+
+        @Override
+        public SketchHex[] newArray(int size) {
+            return new SketchHex[size];
+        }
+    };
 }
