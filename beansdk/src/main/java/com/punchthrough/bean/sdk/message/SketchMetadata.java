@@ -44,15 +44,15 @@ public abstract class SketchMetadata implements Parcelable {
     public abstract String hexName();
 
     public static SketchMetadata fromPayload(Buffer buffer) {
-        int size = buffer.readIntLe();
-        int crc = buffer.readIntLe();
+        int hexSize = buffer.readIntLe();
+        int hexCrc = buffer.readIntLe();
         long timestamp = (buffer.readIntLe() & 0xffffffffL) * 1000L;
-        int nameSize = buffer.readByte() & 0xff;
-        String name = "";
-        if (nameSize > 0 && nameSize <= 20) {
-            name = buffer.readString(nameSize, Charset.forName("UTF-8"));
+        int hexNameSize = buffer.readByte() & 0xff;
+        String hexName = "";
+        if (hexNameSize > 0 && hexNameSize <= 20) {
+            hexName = buffer.readString(hexNameSize, Charset.forName("UTF-8"));
         }
-        return new AutoParcel_SketchMetadata(size, crc, new Date(timestamp), name);
+        return new AutoParcel_SketchMetadata(hexSize, hexCrc, new Date(timestamp), hexName);
     }
 
 
