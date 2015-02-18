@@ -28,6 +28,7 @@ import android.os.Parcelable;
 
 import java.nio.charset.Charset;
 import java.util.Date;
+import java.util.zip.CRC32;
 
 import auto.parcel.AutoParcel;
 import okio.Buffer;
@@ -55,7 +56,19 @@ public abstract class SketchMetadata implements Parcelable {
         return new AutoParcel_SketchMetadata(hexSize, hexCrc, new Date(timestamp), hexName);
     }
 
+    public static SketchMetadata create(int hexSize, int hexCrc, Date timestamp, String hexName) {
+        return new AutoParcel_SketchMetadata(hexSize, hexCrc, timestamp, hexName);
+    }
 
+    public static SketchMetadata create(SketchHex hex, Date timestamp) {
+        int hexSize = hex.getBytes().length;
+        String hexName = hex.getSketchName();
 
+        CRC32 crc = new CRC32();
+        crc.update(hex.getBytes());
+        int hexCrc = (int) crc.getValue();
+
+        return SketchMetadata.create(hexSize, hexCrc, timestamp, hexName);
+    }
 
 }
