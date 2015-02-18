@@ -32,6 +32,10 @@ import java.util.zip.CRC32;
 
 import auto.parcel.AutoParcel;
 import okio.Buffer;
+import okio.ByteString;
+
+import static com.punchthrough.bean.sdk.internal.utility.Misc.intToByte;
+import static com.punchthrough.bean.sdk.internal.utility.Constants.MAX_SKETCH_NAME_LENGTH;
 
 @AutoParcel
 public abstract class SketchMetadata implements Parcelable {
@@ -57,6 +61,34 @@ public abstract class SketchMetadata implements Parcelable {
         int hexCrc = (int) crc.getValue();
 
         return SketchMetadata.create(hexSize, hexCrc, timestamp, hexName);
+    }
+
+    public Buffer toPayload() {
+        /* From AppMessages.h: BL_SKETCH_META_DATA_T struct
+         *
+         * {
+         *   PTD_UINT32 hexSize;
+         *   PTD_UINT32 hexCrc;
+         *   PTD_UINT32 timestamp;
+         *   PTD_UINT8 hexNameSize;
+         *   PTD_UINT8 hexName[MAX_SKETCH_NAME_SIZE];
+         * }
+         */
+        Buffer buffer = new Buffer();
+
+        // Pad name to 20 bytes to fill buffer completely. It will be truncated by the Bean.
+        String fullName = hexName();
+        while (fullName.length() < MAX_SKETCH_NAME_LENGTH) {
+            fullName += " ";
+        }
+
+        buffer.writeInt(hexSize());
+        buffer.writeInt(hexCrc());
+        buffer.writeInt((int) (new Date().getTime() / 1000));
+        buffer.writeByte(intToByte(hexName().length()));
+        buffer.write(ByteString.encodeUtf8(fullName));
+
+        return buffer;
     }
 
     public static SketchMetadata fromPayload(Buffer buffer) {
