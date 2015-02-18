@@ -49,7 +49,7 @@ import com.punchthrough.bean.sdk.message.RadioConfig;
 import com.punchthrough.bean.sdk.message.ScratchBank;
 import com.punchthrough.bean.sdk.message.ScratchData;
 import com.punchthrough.bean.sdk.message.SketchHex;
-import com.punchthrough.bean.sdk.message.SketchMetaData;
+import com.punchthrough.bean.sdk.message.SketchMD;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -296,7 +296,7 @@ public class Bean implements Parcelable {
      *
      * @param callback the callback for the result
      */
-    public void readSketchMetaData(Callback<SketchMetaData> callback) {
+    public void readSketchMetaData(Callback<SketchMD> callback) {
         addCallback(MessageID.BL_GET_META, callback);
         sendMessageWithoutPayload(MessageID.BL_GET_META);
     }
@@ -581,9 +581,9 @@ public class Bean implements Parcelable {
     }
 
     private void returnMetaData(Buffer buffer) {
-        Callback<SketchMetaData> callback = getFirstCallback(MessageID.BL_GET_META);
+        Callback<SketchMD> callback = getFirstCallback(MessageID.BL_GET_META);
         if (callback != null) {
-            callback.onResult(SketchMetaData.fromPayload(buffer));
+            callback.onResult(SketchMD.fromPayload(buffer));
         }
     }
 

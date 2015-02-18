@@ -33,8 +33,8 @@ import auto.parcel.AutoParcel;
 import okio.Buffer;
 
 @AutoParcel
-public abstract class SketchMetaData implements Parcelable {
-    public static SketchMetaData fromPayload(Buffer buffer) {
+public abstract class SketchMD implements Parcelable {
+    public static SketchMD fromPayload(Buffer buffer) {
         int size = buffer.readIntLe();
         int crc = buffer.readIntLe();
         long timestamp = (buffer.readIntLe() & 0xffffffffL) * 1000L;
@@ -43,7 +43,7 @@ public abstract class SketchMetaData implements Parcelable {
         if (nameSize > 0 && nameSize <= 20) {
             name = buffer.readString(nameSize, Charset.forName("UTF-8"));
         }
-        return new AutoParcel_SketchMetaData(size, crc, new Date(timestamp), name);
+        return new AutoParcel_SketchMD(size, crc, new Date(timestamp), name);
     }
 
     public abstract int size();
