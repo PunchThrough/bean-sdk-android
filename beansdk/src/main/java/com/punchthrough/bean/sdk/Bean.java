@@ -492,7 +492,15 @@ public class Bean implements Parcelable {
         sendMessageWithoutPayload(MessageID.BT_END_GATE);
     }
 
-    public void programWithSketchHex(SketchHex hex) {
+    /**
+     * Programs the Arduino on board the Bean with an Android sketch in hex form. The Bean's sketch
+     * name will be set from {@link com.punchthrough.bean.sdk.message.SketchHex#getSketchName()}.
+     *
+     * @param hex The sketch to be sent to the Bean
+     */
+    public void programWithSketch(SketchHex hex) {
+
+
 
     }
 
