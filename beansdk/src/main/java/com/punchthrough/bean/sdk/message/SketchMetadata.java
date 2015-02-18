@@ -44,18 +44,6 @@ public abstract class SketchMetadata implements Parcelable {
 
     public abstract String hexName();
 
-    public static SketchMetadata fromPayload(Buffer buffer) {
-        int hexSize = buffer.readIntLe();
-        int hexCrc = buffer.readIntLe();
-        long timestamp = (buffer.readIntLe() & 0xffffffffL) * 1000L;
-        int hexNameSize = buffer.readByte() & 0xff;
-        String hexName = "";
-        if (hexNameSize > 0 && hexNameSize <= 20) {
-            hexName = buffer.readString(hexNameSize, Charset.forName("UTF-8"));
-        }
-        return new AutoParcel_SketchMetadata(hexSize, hexCrc, new Date(timestamp), hexName);
-    }
-
     public static SketchMetadata create(int hexSize, int hexCrc, Date timestamp, String hexName) {
         return new AutoParcel_SketchMetadata(hexSize, hexCrc, timestamp, hexName);
     }
@@ -69,6 +57,18 @@ public abstract class SketchMetadata implements Parcelable {
         int hexCrc = (int) crc.getValue();
 
         return SketchMetadata.create(hexSize, hexCrc, timestamp, hexName);
+    }
+
+    public static SketchMetadata fromPayload(Buffer buffer) {
+        int hexSize = buffer.readIntLe();
+        int hexCrc = buffer.readIntLe();
+        long timestamp = (buffer.readIntLe() & 0xffffffffL) * 1000L;
+        int hexNameSize = buffer.readByte() & 0xff;
+        String hexName = "";
+        if (hexNameSize > 0 && hexNameSize <= 20) {
+            hexName = buffer.readString(hexNameSize, Charset.forName("UTF-8"));
+        }
+        return new AutoParcel_SketchMetadata(hexSize, hexCrc, new Date(timestamp), hexName);
     }
 
 }
