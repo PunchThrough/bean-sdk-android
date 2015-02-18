@@ -22,8 +22,13 @@ public class SketchHex implements Parcelable {
 
     private static final int MAX_SKETCH_NAME_LENGTH = 20;
 
-    private String sketchName;
+    private String sketchName = "";
     private List<Line> lines = new ArrayList<>();
+
+    /**
+     * Initialize a SketchHex object with no data.
+     */
+    public SketchHex() {}
 
     /**
      * Initialize a SketchHex object with a string of Intel Hex data.
