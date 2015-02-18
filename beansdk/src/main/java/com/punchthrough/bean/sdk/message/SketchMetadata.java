@@ -34,6 +34,15 @@ import okio.Buffer;
 
 @AutoParcel
 public abstract class SketchMetadata implements Parcelable {
+
+    public abstract int hexSize();
+
+    public abstract int hexCrc();
+
+    public abstract Date timestamp();
+
+    public abstract String hexName();
+
     public static SketchMetadata fromPayload(Buffer buffer) {
         int size = buffer.readIntLe();
         int crc = buffer.readIntLe();
@@ -46,11 +55,7 @@ public abstract class SketchMetadata implements Parcelable {
         return new AutoParcel_SketchMetadata(size, crc, new Date(timestamp), name);
     }
 
-    public abstract int size();
 
-    public abstract int crc();
 
-    public abstract Date timestamp();
 
-    public abstract String name();
 }
