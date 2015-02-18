@@ -54,6 +54,7 @@ import com.punchthrough.bean.sdk.message.SketchMetadata;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -499,9 +500,9 @@ public class Bean implements Parcelable {
      * @param hex The sketch to be sent to the Bean
      */
     public void programWithSketch(SketchHex hex) {
-
-
-
+        SketchMetadata metadata = SketchMetadata.create(hex, new Date());
+        Buffer payload = metadata.toPayload();
+        sendMessage(MessageID.BL_CMD_START, payload);
     }
 
     private void handleMessage(byte[] data) {
