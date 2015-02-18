@@ -29,14 +29,15 @@ package com.punchthrough.bean.sdk;
  */
 public interface BeanDiscoveryListener {
     /**
-     * Called when a bean is found
+     * Called when a Bean is found.
      *
-     * @param bean the bean
+     * @param bean the discovered Bean
+     * @param rssi the RSSI of the discovered Bean
      */
-    public void onBeanDiscovered(Bean bean);
+    public void onBeanDiscovered(Bean bean, int rssi);
 
     /**
-     * Called when the discovery is completed.
+     * Called when Bean discovery completes.
      */
     public void onDiscoveryComplete();
 }
