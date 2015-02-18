@@ -17,10 +17,9 @@ import java.util.ListIterator;
 
 import static com.punchthrough.bean.sdk.internal.utility.Misc.asciiHexToBytes;
 import static com.punchthrough.bean.sdk.internal.utility.Misc.bytesToInt;
+import static com.punchthrough.bean.sdk.internal.utility.Constants.MAX_SKETCH_NAME_LENGTH;
 
 public class SketchHex implements Parcelable {
-
-    private static final int MAX_SKETCH_NAME_LENGTH = 20;
 
     private String sketchName = "";
     private List<Line> lines = new ArrayList<>();
