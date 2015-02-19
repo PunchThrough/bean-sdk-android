@@ -36,7 +36,8 @@ public class Misc {
     public static <T extends Enum & RawValuable> T enumWithRawValue(Class<T> enumClass, int value)
             throws NoEnumFoundException {
 
-        for (T oneEnum : EnumSet.allOf(enumClass)) {
+        for (Object oneEnumRaw : EnumSet.allOf(enumClass)) {
+            T oneEnum = (T) oneEnumRaw;
             if (value == oneEnum.getRawValue()) {
                 return oneEnum;
             }
