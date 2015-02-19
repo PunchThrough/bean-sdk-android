@@ -41,19 +41,16 @@ public class SketchHexTest extends AndroidTestCase {
             i++;
         }
 
-        SketchHex sketchHex = new SketchHex(asciiHexData);
-
-        sketchHex.setSketchName("StairCar");
-        assertThat(sketchHex.getSketchName()).isEqualTo("StairCar");
+        assertThat(SketchHex.create("StairCar").sketchName()).isEqualTo("StairCar");
 
         try {
-            sketchHex.setSketchName("LongerThan20CharactersByQuiteABit_TheSequel_TurboEdition");
+            SketchHex.create("LongerThan20CharactersByQuiteABit_TheSequel_TurboEdition");
             fail();
         } catch (NameLengthException e) {
-            assertThat(e).hasMessage("Sketch name must be 20 characters or less");
+            assertThat(e).isNotNull();
         }
 
-        assertThat(sketchHex.getBytes()).isEqualTo(rawHexData);
+        assertThat(SketchHex.create("", asciiHexData).bytes()).isEqualTo(rawHexData);
     }
 
 }

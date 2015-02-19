@@ -6,6 +6,7 @@ import com.punchthrough.bean.sdk.internal.exception.HexParsingException;
 import com.punchthrough.bean.sdk.internal.exception.NameLengthException;
 import com.punchthrough.bean.sdk.internal.intelhex.Line;
 import com.punchthrough.bean.sdk.internal.intelhex.LineRecordType;
+import com.punchthrough.bean.sdk.internal.utility.Constants;
 
 import org.apache.commons.codec.DecoderException;
 
@@ -41,6 +42,13 @@ public abstract class SketchHex implements Parcelable {
      */
     public static SketchHex create(String sketchName, String hexString)
             throws HexParsingException, NameLengthException {
+
+        if (sketchName.length() > Constants.MAX_SKETCH_NAME_LENGTH) {
+            throw new NameLengthException(String.format(
+                    "Sketch name must be less than %d characters",
+                    Constants.MAX_SKETCH_NAME_LENGTH));
+        }
+
         List<Line> lines = parseHexStringToLines(hexString);
         byte[] bytes = convertLinesToBytes(lines);
         return new AutoParcel_SketchHex(sketchName, bytes);
