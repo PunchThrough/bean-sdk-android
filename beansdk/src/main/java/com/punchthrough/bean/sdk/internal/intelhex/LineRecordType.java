@@ -1,6 +1,8 @@
 package com.punchthrough.bean.sdk.internal.intelhex;
 
-public enum LineRecordType {
+import com.punchthrough.bean.sdk.internal.utility.RawValuable;
+
+public enum LineRecordType implements RawValuable {
     DATA(0),
     END_OF_FILE(1),
     EXTENDED_SEGMENT_ADDRESS(2),
@@ -14,7 +16,7 @@ public enum LineRecordType {
         this.value = value;
     }
 
-    public int getRawRecordTypeByte() {
+    public int getRawValue() {
         return value;
     }
 }

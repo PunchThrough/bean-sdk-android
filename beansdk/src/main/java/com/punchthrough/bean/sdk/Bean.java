@@ -325,7 +325,7 @@ public class Bean implements Parcelable {
      */
     public void setAccelerometerRange(AccelerometerRange range) {
         Buffer buffer = new Buffer();
-        buffer.writeByte(range.getRawRange());
+        buffer.writeByte(range.getRawValue());
         sendMessage(MessageID.CC_ACCEL_SET_RANGE, buffer);
     }
 
@@ -510,34 +510,37 @@ public class Bean implements Parcelable {
         buffer.write(data);
         int type = (buffer.readShort() & 0xffff) & ~(APP_MSG_RESPONSE_BIT);
 
-        if (type == MessageID.SERIAL_DATA.getRawID()) {
+        if (type == MessageID.SERIAL_DATA.getRawValue()) {
             mBeanListener.onSerialMessageReceived(buffer.readByteArray());
 
-        } else if (type == MessageID.BT_GET_CONFIG.getRawID()) {
+        } else if (type == MessageID.BT_GET_CONFIG.getRawValue()) {
             returnConfig(buffer);
 
-        } else if (type == MessageID.CC_TEMP_READ.getRawID()) {
+        } else if (type == MessageID.CC_TEMP_READ.getRawValue()) {
             returnTemperature(buffer);
 
-        } else if (type == MessageID.BL_GET_META.getRawID()) {
+        } else if (type == MessageID.BL_GET_META.getRawValue()) {
             returnMetaData(buffer);
 
-        } else if (type == MessageID.BT_GET_SCRATCH.getRawID()) {
+        } else if (type == MessageID.BT_GET_SCRATCH.getRawValue()) {
             returnScratchData(buffer);
 
-        } else if (type == MessageID.CC_LED_READ_ALL.getRawID()) {
+        } else if (type == MessageID.CC_LED_READ_ALL.getRawValue()) {
             returnLed(buffer);
 
-        } else if (type == MessageID.CC_ACCEL_READ.getRawID()) {
+        } else if (type == MessageID.CC_ACCEL_READ.getRawValue()) {
             returnAcceleration(buffer);
 
-        } else if (type == MessageID.CC_ACCEL_GET_RANGE.getRawID()) {
+        } else if (type == MessageID.CC_ACCEL_GET_RANGE.getRawValue()) {
             returnAccelerometerRange(buffer);
 
         // Ignore CC_LED_WRITE; it appears to be only an ack
 
-        } else if (type == MessageID.CC_GET_AR_POWER.getRawID()) {
+        } else if (type == MessageID.CC_GET_AR_POWER.getRawValue()) {
             returnArduinoPowerState(buffer);
+
+        } else if (type == MessageID.BL_STATUS.getRawValue()) {
+
 
         } else {
             Log.e(TAG, "Received message of unknown type " + Integer.toHexString(type));
@@ -624,8 +627,8 @@ public class Bean implements Parcelable {
 
     private void sendMessage(MessageID type, Message message) {
         Buffer buffer = new Buffer();
-        buffer.writeByte((type.getRawID() >> 8) & 0xff);
-        buffer.writeByte(type.getRawID() & 0xff);
+        buffer.writeByte((type.getRawValue() >> 8) & 0xff);
+        buffer.writeByte(type.getRawValue() & 0xff);
         buffer.write(message.toPayload());
         GattSerialMessage serialMessage = GattSerialMessage.fromPayload(buffer.readByteArray());
         mGattClient.getSerialProfile().sendMessage(serialMessage.getBuffer());
@@ -633,8 +636,8 @@ public class Bean implements Parcelable {
 
     private void sendMessage(MessageID type, Buffer payload) {
         Buffer buffer = new Buffer();
-        buffer.writeByte((type.getRawID() >> 8) & 0xff);
-        buffer.writeByte(type.getRawID() & 0xff);
+        buffer.writeByte((type.getRawValue() >> 8) & 0xff);
+        buffer.writeByte(type.getRawValue() & 0xff);
         if (payload != null) {
             try {
                 buffer.writeAll(payload);

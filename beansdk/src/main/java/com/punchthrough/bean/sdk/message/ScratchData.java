@@ -38,7 +38,7 @@ public abstract class ScratchData implements Parcelable, Message {
     }
 
     public static ScratchData create(ScratchBank bank, byte[] data) {
-        int bankNumber = bank.getRawBankNumber();
+        int bankNumber = bank.getRawValue();
         return new AutoParcel_ScratchData(bankNumber, data);
     }
 
