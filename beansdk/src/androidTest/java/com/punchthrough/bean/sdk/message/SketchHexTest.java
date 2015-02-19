@@ -34,6 +34,12 @@ public class SketchHexTest extends AndroidTestCase {
 
     final byte[] rawHexData = intArrayToByteArray(rawHexDataInts);
 
+    final SketchHex defaultHex;
+
+    public SketchHexTest() throws NameLengthException, HexParsingException {
+        defaultHex = SketchHex.create("", asciiHexData);
+    }
+
     public void testHexParsingAndSketchNaming() throws HexParsingException, NameLengthException {
 
         assertThat(SketchHex.create("StairCar").sketchName()).isEqualTo("StairCar");
@@ -45,32 +51,39 @@ public class SketchHexTest extends AndroidTestCase {
             assertThat(e).isNotNull();
         }
 
-        assertThat(SketchHex.create("", asciiHexData).bytes()).isEqualTo(rawHexData);
+        assertThat(defaultHex.bytes()).isEqualTo(rawHexData);
     }
 
     public void testGetBytesAndChunks() throws NameLengthException, HexParsingException {
 
-        SketchHex hex = SketchHex.create("", asciiHexData);
-
         // Queries that don't extend past the array boundary should work as expected
 
         // Chunk starting at 6 and ending at 7
-        assertThat(hex.getBytes(6, 2)).isEqualTo(intArrayToByteArray(
-                new int[]{ 0x47, 0x01 }));
+        assertThat(defaultHex.bytes(6, 2)).isEqualTo(intArrayToByteArray(
+                new int[]{0x47, 0x01}));
 
         // Chunk starting at 8 and ending at 11
-        assertThat(hex.getChunk(4, 2)).isEqualTo(intArrayToByteArray(
-                new int[]{ 0x36, 0x00, 0x7E, 0xFE }));
+        assertThat(defaultHex.chunk(4, 2)).isEqualTo(intArrayToByteArray(
+                new int[]{0x36, 0x00, 0x7E, 0xFE}));
 
         // Queries that extend past the array boundary should be truncated
 
         // Chunk starting at 60 and ending at 67, truncated at 63
-        assertThat(hex.getBytes(60, 8)).isEqualTo(intArrayToByteArray(
-                new int[]{ 0x46, 0x01 ,0x34, 0x21 }));
+        assertThat(defaultHex.bytes(60, 8)).isEqualTo(intArrayToByteArray(
+                new int[]{0x46, 0x01, 0x34, 0x21}));
 
         // Chunk starting at 60 and ending at 64, truncated at 63
-        assertThat(hex.getChunk(5, 12)).isEqualTo(intArrayToByteArray(
-                new int[]{ 0x46, 0x01 ,0x34, 0x21 }));
+        assertThat(defaultHex.chunk(5, 12)).isEqualTo(intArrayToByteArray(
+                new int[]{0x46, 0x01, 0x34, 0x21}));
+
+    }
+
+    public void testGetChunkCount() {
+
+        assertThat(defaultHex.chunkCount(8)).isEqualTo(8);
+        assertThat(defaultHex.chunkCount(1)).isEqualTo(64);
+        assertThat(defaultHex.chunkCount(33)).isEqualTo(2);
+        assertThat(defaultHex.chunkCount(5)).isEqualTo(13);
 
     }
 
