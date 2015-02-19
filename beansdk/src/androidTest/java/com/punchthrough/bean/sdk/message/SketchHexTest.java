@@ -5,6 +5,8 @@ import android.test.AndroidTestCase;
 import com.punchthrough.bean.sdk.internal.exception.HexParsingException;
 import com.punchthrough.bean.sdk.internal.exception.NameLengthException;
 
+import java.util.List;
+
 import static com.punchthrough.bean.sdk.internal.utility.Misc.intArrayToByteArray;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,13 +24,13 @@ public class SketchHexTest extends AndroidTestCase {
 
     // Produced from the above hex by http://hex2bin.sourceforge.net/
     final int[] rawHexDataInts = new int[]{
-            0x21, 0x46, 0x01, 0x36, 0x01, 0x21, 0x47, 0x01,  //  1-16
+            0x21, 0x46, 0x01, 0x36, 0x01, 0x21, 0x47, 0x01,  //  0-15
             0x36, 0x00, 0x7E, 0xFE, 0x09, 0xD2, 0x19, 0x01,
-            0x21, 0x46, 0x01, 0x7E, 0x17, 0xC2, 0x00, 0x01,  // 17-32
+            0x21, 0x46, 0x01, 0x7E, 0x17, 0xC2, 0x00, 0x01,  // 16-31
             0xFF, 0x5F, 0x16, 0x00, 0x21, 0x48, 0x01, 0x19,
-            0x19, 0x4E, 0x79, 0x23, 0x46, 0x23, 0x96, 0x57,  // 33-48
+            0x19, 0x4E, 0x79, 0x23, 0x46, 0x23, 0x96, 0x57,  // 32-47
             0x78, 0x23, 0x9E, 0xDA, 0x3F, 0x01, 0xB2, 0xCA,
-            0x3F, 0x01, 0x56, 0x70, 0x2B, 0x5E, 0x71, 0x2B,  // 49-64
+            0x3F, 0x01, 0x56, 0x70, 0x2B, 0x5E, 0x71, 0x2B,  // 48-63
             0x72, 0x2B, 0x73, 0x21, 0x46, 0x01, 0x34, 0x21
     };
 
@@ -84,6 +86,26 @@ public class SketchHexTest extends AndroidTestCase {
         assertThat(defaultHex.chunkCount(1)).isEqualTo(64);
         assertThat(defaultHex.chunkCount(33)).isEqualTo(2);
         assertThat(defaultHex.chunkCount(5)).isEqualTo(13);
+
+    }
+
+    public void testGetChunks() {
+
+        List<byte[]> chunks = defaultHex.chunks(5);
+
+        assertThat(chunks.size()).isEqualTo(13);
+
+        // Bytes 0-5
+        assertThat(chunks.get(0)).isEqualTo(intArrayToByteArray(
+                new int[]{0x21, 0x46, 0x01, 0x36, 0x01}));
+
+        // Bytes 60-63
+        assertThat(chunks.get(12)).isEqualTo(intArrayToByteArray(
+                new int[]{0x46, 0x01, 0x34, 0x21}));
+
+        // Bytes 15-19
+        assertThat(chunks.get(3)).isEqualTo(intArrayToByteArray(
+                new int[]{0x01, 0x21, 0x46, 0x01, 0x7E}));
 
     }
 

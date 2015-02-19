@@ -76,6 +76,17 @@ public abstract class SketchHex implements Parcelable {
         return (int) Math.ceil(bytes().length * 1.0 / chunkLength);
     }
 
+    public List<byte[]> chunks(int chunkLength) {
+
+        List<byte[]> chunks = new ArrayList<>();
+
+        for (int i = 0; i < chunkCount(chunkLength); i++) {
+            chunks.add(chunk(chunkLength, i));
+        }
+
+        return chunks;
+    }
+
     private static List<Line> parseHexStringToLines(String hexString) throws HexParsingException {
         List<String> rawLines = Arrays.asList(hexString.split("\n"));
         ListIterator<String> iterator = rawLines.listIterator();
