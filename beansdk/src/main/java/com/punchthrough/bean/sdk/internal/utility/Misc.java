@@ -1,7 +1,11 @@
 package com.punchthrough.bean.sdk.internal.utility;
 
+import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
+
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
+
+import java.util.EnumSet;
 
 public class Misc {
 
@@ -26,6 +30,20 @@ public class Misc {
 
     public static byte intToByte(int i) {
         return (byte) (i & 0xFF);
+    }
+
+    // Based on http://stackoverflow.com/a/16406386/254187
+    public static <T extends Enum & RawValuable> T enumWithRawValue(Class<T> enumClass, int value)
+            throws NoEnumFoundException {
+
+        for (T oneEnum : EnumSet.allOf(enumClass)) {
+            if (value == oneEnum.getRawValue()) {
+                return oneEnum;
+            }
+        }
+        throw new NoEnumFoundException(String.format(
+                "No enum found for class %s with raw value %d", enumClass.getName(), value));
+
     }
 
 }
