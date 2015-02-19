@@ -47,4 +47,11 @@ public class Misc {
 
     }
 
+    public static <T extends Enum & RawValuable> T enumWithRawValue(Class<T> enumClass, byte value)
+            throws NoEnumFoundException {
+
+        return enumWithRawValue(enumClass, (int) value);
+
+    }
+
 }
