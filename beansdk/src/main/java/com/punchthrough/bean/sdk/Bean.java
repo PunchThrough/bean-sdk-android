@@ -66,11 +66,6 @@ import static com.punchthrough.bean.sdk.internal.Protocol.APP_MSG_RESPONSE_BIT;
  * Interacts with the Punch Through Design Bean hardware.
  */
 public class Bean implements Parcelable {
-    public static final int SCRATCH_BANK_1 = 0;
-    public static final int SCRATCH_BANK_2 = 1;
-    public static final int SCRATCH_BANK_3 = 2;
-    public static final int SCRATCH_BANK_4 = 3;
-    public static final int SCRATCH_BANK_5 = 4;
 
     public static final Creator<Bean> CREATOR = new Creator<Bean>() {
         @Override
