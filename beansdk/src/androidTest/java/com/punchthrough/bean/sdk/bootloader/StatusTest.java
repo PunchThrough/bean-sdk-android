@@ -2,8 +2,8 @@ package com.punchthrough.bean.sdk.bootloader;
 
 import android.test.AndroidTestCase;
 
-import com.punchthrough.bean.sdk.internal.bootloader.State;
-import com.punchthrough.bean.sdk.internal.bootloader.Substate;
+import com.punchthrough.bean.sdk.internal.bootloader.BeanState;
+import com.punchthrough.bean.sdk.internal.bootloader.BeanSubstate;
 import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
 import com.punchthrough.bean.sdk.message.Status;
 
@@ -27,8 +27,8 @@ public class StatusTest extends AndroidTestCase {
         buffer.writeByte(0x51);
 
         Status status = Status.fromPayload(buffer);
-        assertThat(status.state()).isEqualTo(State.VERIFY);
-        assertThat(status.substate()).isEqualTo(Substate.HELLO);
+        assertThat(status.state()).isEqualTo(BeanState.VERIFY);
+        assertThat(status.substate()).isEqualTo(BeanSubstate.HELLO);
         assertThat(status.blocksSent()).isEqualTo(4616);
         assertThat(status.bytesSent()).isEqualTo(13393);
     }

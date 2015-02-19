@@ -14,7 +14,7 @@ import com.punchthrough.bean.sdk.internal.utility.RawValuable;
  *     BL_HL_STATE_ERROR
  * }
  */
-public enum State implements RawValuable {
+public enum BeanState implements RawValuable {
     NULL(0),
     INIT(1),
     READY(2),
@@ -25,7 +25,7 @@ public enum State implements RawValuable {
 
     private final int value;
 
-    private State(final int value) {
+    private BeanState(final int value) {
         this.value = value;
     }
 

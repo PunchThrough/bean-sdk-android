@@ -33,7 +33,7 @@ import com.punchthrough.bean.sdk.internal.utility.RawValuable;
  *     BL_STATE_ERROR
  * }
  */
-public enum Substate implements RawValuable {
+public enum BeanSubstate implements RawValuable {
     INIT(0x00),
     WRITE_ADDRESS(0x01),
     WRITE_ADDRESS_ACK(0x02),
@@ -63,7 +63,7 @@ public enum Substate implements RawValuable {
 
     private final int value;
 
-    private Substate(final int value) {
+    private BeanSubstate(final int value) {
         this.value = value;
     }
 

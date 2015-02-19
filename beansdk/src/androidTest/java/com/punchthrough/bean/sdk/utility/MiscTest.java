@@ -3,7 +3,7 @@ package com.punchthrough.bean.sdk.utility;
 import android.test.AndroidTestCase;
 
 import com.punchthrough.bean.sdk.internal.MessageID;
-import com.punchthrough.bean.sdk.internal.bootloader.State;
+import com.punchthrough.bean.sdk.internal.bootloader.BeanState;
 import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
 
 import static com.punchthrough.bean.sdk.internal.utility.Misc.enumWithRawValue;
@@ -22,7 +22,7 @@ public class MiscTest extends AndroidTestCase {
 
     public void testEnumWithRawByte() throws NoEnumFoundException {
         byte state = 5;
-        assertThat(enumWithRawValue(State.class, state)).isEqualTo(State.COMPLETE);
+        assertThat(enumWithRawValue(BeanState.class, state)).isEqualTo(BeanState.COMPLETE);
     }
 
     public void testEnumWithUnparsableValue() {

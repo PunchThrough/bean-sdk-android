@@ -2,8 +2,8 @@ package com.punchthrough.bean.sdk.message;
 
 import android.os.Parcelable;
 
-import com.punchthrough.bean.sdk.internal.bootloader.State;
-import com.punchthrough.bean.sdk.internal.bootloader.Substate;
+import com.punchthrough.bean.sdk.internal.bootloader.BeanState;
+import com.punchthrough.bean.sdk.internal.bootloader.BeanSubstate;
 import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
 
 import auto.parcel.AutoParcel;
@@ -33,24 +33,24 @@ public abstract class Status implements Parcelable {
      * }
      */
 
-    public abstract State state();
+    public abstract BeanState state();
 
-    public abstract Substate substate();
+    public abstract BeanSubstate substate();
 
     public abstract int blocksSent();
 
     public abstract int bytesSent();
 
-    public static Status create(State state, Substate substate, int blocksSent, int bytesSent) {
-        return new AutoParcel_Status(state, substate, blocksSent, bytesSent);
+    public static Status create(BeanState beanState, BeanSubstate beanSubstate, int blocksSent, int bytesSent) {
+        return new AutoParcel_Status(beanState, beanSubstate, blocksSent, bytesSent);
     }
 
     public static Status fromPayload(Buffer buffer) throws NoEnumFoundException {
-        State state = enumWithRawValue(State.class, buffer.readByte());
-        Substate substate = enumWithRawValue(Substate.class, buffer.readByte());
+        BeanState beanState = enumWithRawValue(BeanState.class, buffer.readByte());
+        BeanSubstate beanSubstate = enumWithRawValue(BeanSubstate.class, buffer.readByte());
         int blocksSent = bytesToInt(buffer.readByte(), buffer.readByte());
         int bytesSent = bytesToInt(buffer.readByte(), buffer.readByte());
-        return Status.create(state, substate, blocksSent, bytesSent);
+        return Status.create(beanState, beanSubstate, blocksSent, bytesSent);
     }
 
 }
