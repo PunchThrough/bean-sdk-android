@@ -55,11 +55,21 @@ public abstract class SketchHex implements Parcelable {
     }
 
     public byte[] getBytes(int offset, int length) {
-        return null;  // TODO: implement
+
+        if ( offset + length > bytes().length ) {
+            // Arrays.copyOfRange appends 0s when the array end is exceeded.
+            // Trim length manually to avoid appending extra data.
+            return Arrays.copyOfRange(bytes(), offset, bytes().length);
+
+        } else {
+            return Arrays.copyOfRange(bytes(), offset, offset + length);
+
+        }
     }
 
     public byte[] getChunk(int chunkLength, int chunkNum) {
-        return null;  // TODO: implement
+        int start = chunkNum * chunkLength;
+        return getBytes(start, chunkLength);
     }
 
     private static List<Line> parseHexStringToLines(String hexString) throws HexParsingException {

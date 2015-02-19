@@ -32,6 +32,18 @@ public class Misc {
         return (byte) (i & 0xFF);
     }
 
+    public static byte[] intArrayToByteArray(int[] intArray) {
+
+        byte[] byteArray = new byte[intArray.length];
+
+        for (int i = 0; i < intArray.length; i++) {
+            byteArray[i] = intToByte(intArray[i]);
+        }
+
+        return byteArray;
+
+    }
+
     // Based on http://stackoverflow.com/a/16406386/254187
     public static <T extends Enum & RawValuable> T enumWithRawValue(Class<T> enumClass, int value)
             throws NoEnumFoundException {
