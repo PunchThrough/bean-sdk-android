@@ -19,4 +19,14 @@ public class MiscTest extends AndroidTestCase {
         assertThat(enumWithRawValue(MessageID.class, 0x1001)).isEqualTo(MessageID.BL_FW_BLOCK);
     }
 
+    public void testEnumWithUnparsableValue() {
+        try {
+            enumWithRawValue(MessageID.class, 0x9999);
+            fail("Expected a NoEnumFound exception to be thrown when parsing an enum from an " +
+                    "invalid value");
+        } catch (NoEnumFoundException e) {
+            assertThat(e).isNotNull();
+        }
+    }
+
 }
