@@ -27,8 +27,8 @@ public class StatusTest extends AndroidTestCase {
         buffer.writeByte(0x51);
 
         Status status = Status.fromPayload(buffer);
-        assertThat(status.state()).isEqualTo(BeanState.VERIFY);
-        assertThat(status.substate()).isEqualTo(BeanSubstate.HELLO);
+        assertThat(status.beanState()).isEqualTo(BeanState.VERIFY);
+        assertThat(status.beanSubstate()).isEqualTo(BeanSubstate.HELLO);
         assertThat(status.blocksSent()).isEqualTo(4616);
         assertThat(status.bytesSent()).isEqualTo(13393);
     }

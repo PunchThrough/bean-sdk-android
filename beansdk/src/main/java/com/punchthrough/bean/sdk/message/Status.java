@@ -33,9 +33,9 @@ public abstract class Status implements Parcelable {
      * }
      */
 
-    public abstract BeanState state();
+    public abstract BeanState beanState();
 
-    public abstract BeanSubstate substate();
+    public abstract BeanSubstate beanSubstate();
 
     public abstract int blocksSent();
 
