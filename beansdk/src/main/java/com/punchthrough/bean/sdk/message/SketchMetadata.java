@@ -53,11 +53,11 @@ public abstract class SketchMetadata implements Parcelable {
     }
 
     public static SketchMetadata create(SketchHex hex, Date timestamp) {
-        int hexSize = hex.getBytes().length;
-        String hexName = hex.getSketchName();
+        int hexSize = hex.bytes().length;
+        String hexName = hex.sketchName();
 
         CRC32 crc = new CRC32();
-        crc.update(hex.getBytes());
+        crc.update(hex.bytes());
         int hexCrc = (int) crc.getValue();
 
         return SketchMetadata.create(hexSize, hexCrc, timestamp, hexName);

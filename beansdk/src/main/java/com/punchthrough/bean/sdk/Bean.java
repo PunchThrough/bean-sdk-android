@@ -496,7 +496,7 @@ public class Bean implements Parcelable {
     /**
      * Programs the Bean with an Arduino sketch in hex form. The Bean's sketch name and
      * programmed-at timestamp will be set from
-     * {@link com.punchthrough.bean.sdk.message.SketchHex#getSketchName()}.
+     * {@link com.punchthrough.bean.sdk.message.SketchHex#sketchName()}.
      *
      * @param hex The sketch to be sent to the Bean
      */
@@ -507,7 +507,7 @@ public class Bean implements Parcelable {
         SketchMetadata metadata = SketchMetadata.create(hex, new Date());
         Buffer payload = metadata.toPayload();
 
-        if (hex.getBytes().length > 0) {
+        if (hex.bytes().length > 0) {
             clientState = ClientState.SENDING_START_COMMAND;
             resetStateTimeout();
 
