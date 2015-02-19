@@ -339,11 +339,6 @@ public class Bean implements Parcelable {
      *
      * @param bank The scratch bank being set
      * @param data The bytes to write into the scratch bank
-     * @see #SCRATCH_BANK_1
-     * @see #SCRATCH_BANK_2
-     * @see #SCRATCH_BANK_3
-     * @see #SCRATCH_BANK_4
-     * @see #SCRATCH_BANK_5
      */
     public void setScratchData(ScratchBank bank, byte[] data) {
         ScratchData sd = ScratchData.create(bank, data);
@@ -355,11 +350,6 @@ public class Bean implements Parcelable {
      *
      * @param bank The scratch bank being set
      * @param data The string data to write into the scratch bank
-     * @see #SCRATCH_BANK_1
-     * @see #SCRATCH_BANK_2
-     * @see #SCRATCH_BANK_3
-     * @see #SCRATCH_BANK_4
-     * @see #SCRATCH_BANK_5
      */
     public void setScratchData(ScratchBank bank, String data) {
         ScratchData sd = ScratchData.create(bank, data);
