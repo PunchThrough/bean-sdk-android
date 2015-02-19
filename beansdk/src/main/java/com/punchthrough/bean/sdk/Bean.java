@@ -44,6 +44,7 @@ import com.punchthrough.bean.sdk.internal.serial.GattSerialTransportProfile;
 import com.punchthrough.bean.sdk.message.Acceleration;
 import com.punchthrough.bean.sdk.message.AccelerometerRange;
 import com.punchthrough.bean.sdk.message.BatteryLevel;
+import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.Callback;
 import com.punchthrough.bean.sdk.message.DeviceInfo;
 import com.punchthrough.bean.sdk.message.LedColor;
@@ -61,6 +62,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import okio.Buffer;
 
@@ -118,7 +121,14 @@ public class Bean implements Parcelable {
     private boolean mConnected;
     private HashMap<MessageID, List<Callback<?>>> mCallbacks = new HashMap<>(16);
     private Handler mHandler = new Handler(Looper.getMainLooper());
+
+    // Used for firmware and sketch uploads
+    private static final int STATE_TIMEOUT_MS = 3000;
+    private static final int CHUNK_SEND_TIMEOUT_MS = 200;
     private ClientState clientState = ClientState.INACTIVE;
+    private Timer stateTimeout;
+    private Timer chunkSendTimeout;
+
 
     /**
      * Create a Bean using it's {@link android.bluetooth.BluetoothDevice}
@@ -484,15 +494,27 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Programs the Arduino on board the Bean with an Android sketch in hex form. The Bean's sketch
-     * name will be set from {@link com.punchthrough.bean.sdk.message.SketchHex#getSketchName()}.
+     * Programs the Bean with an Arduino sketch in hex form. The Bean's sketch name and
+     * programmed-at timestamp will be set from
+     * {@link com.punchthrough.bean.sdk.message.SketchHex#getSketchName()}.
      *
      * @param hex The sketch to be sent to the Bean
      */
     public void programWithSketch(SketchHex hex) {
+
+        resetClientState();
+
         SketchMetadata metadata = SketchMetadata.create(hex, new Date());
         Buffer payload = metadata.toPayload();
+
+        if (hex.getBytes().length > 0) {
+            clientState = ClientState.SENDING_START_COMMAND;
+            resetStateTimeout();
+
+        }
+
         sendMessage(MessageID.BL_CMD_START, payload);
+
     }
 
     private void handleMessage(byte[] data) {
@@ -553,47 +575,78 @@ public class Bean implements Parcelable {
 
         BeanState beanState = status.beanState();
 
-        // Ignore init state: we don't have to reset the Bean before downloading new sketches
-
         if (beanState == BeanState.READY) {
-            resetStateTimeoutTimer();
+            resetStateTimeout();
 
             if (clientState == ClientState.SENDING_START_COMMAND) {
-                // Send first chunk
+                // TODO: Send first chunk
                 clientState = ClientState.SENDING_CHUNKS;
 
             }
 
         } else if (beanState == BeanState.PROGRAMMING) {
-            resetStateTimeoutTimer();
+            resetStateTimeout();
 
         } else if (beanState == BeanState.COMPLETE) {
-            // Callback on completion
+            // TODO: Callback on completion
 
         } else if (beanState == BeanState.ERROR) {
-            // Callback with an error
+            onUploadError(BeanError.UNKNOWN);
+            resetClientState();
 
         }
 
     }
 
-    private void resetStateTimeoutTimer() {
-        // TODO: Implement
+    private void stopStateTimeout() {
+        if (stateTimeout != null) stateTimeout.cancel();
+        stateTimeout = null;
     }
 
-    private void resetChunkSendTimeoutTimer() {
-        // TODO: Implement
+    private void stopChunkSendTimeout() {
+        if (chunkSendTimeout != null) chunkSendTimeout.cancel();
+        chunkSendTimeout = null;
+    }
+
+    private void resetStateTimeout() {
+
+        stopStateTimeout();
+
+        TimerTask onTimeout = new TimerTask() {
+            @Override
+            public void run() {
+                onUploadError(BeanError.STATE_TIMEOUT);
+            }
+        };
+
+        stateTimeout.schedule(onTimeout, STATE_TIMEOUT_MS);
+
+    }
+
+    private void resetChunkSendTimeout() {
+
+        stopChunkSendTimeout();
+
+        TimerTask onTimeout = new TimerTask() {
+            @Override
+            public void run() {
+                // TODO: Resend current chunk - don't increment the chunk counter yet
+            }
+        };
+
+        stateTimeout.schedule(onTimeout, CHUNK_SEND_TIMEOUT_MS);
+
     }
 
     /**
-     * Reset local variables and kill timers that relate to uploading a new sketch or new firmware.
+     * Reset local variables and kill timers that are used for uploading sketches and firmware.
      */
-    private void resetUploadState() {
+    private void resetClientState() {
         // Current firmware image = null
         // Current chunk index = null
         clientState = ClientState.INACTIVE;
-        resetStateTimeoutTimer();
-        resetChunkSendTimeoutTimer();
+        stopStateTimeout();
+        stopChunkSendTimeout();
     }
 
     private void returnArduinoPowerState(Buffer buffer) {
@@ -651,6 +704,29 @@ public class Bean implements Parcelable {
         if (callback != null) {
             callback.onResult(config);
         }
+    }
+
+    /**
+     * Call this to alert the client whenever any errors occur with a NON-upload task.
+     * @param error The type of error that occurred
+     */
+    private void onError(BeanError error) {
+        resetClientState();
+        Callback<BeanError> callback = getFirstCallback(MessageID.ERROR_CC);
+        if (callback != null) {
+            callback.onResult(error);
+        }
+    }
+
+    /**
+     * Call this to alert the client whenever any errors occur with an upload task.
+     * It resets the local upload state to clean the slate for future sketch/firmware uploads.
+     *
+     * @param error The type of error that occurred
+     */
+    private void onUploadError(BeanError error) {
+        resetClientState();
+        onError(error);
     }
 
     private void addCallback(MessageID type, Callback<?> callback) {
