@@ -4,6 +4,7 @@ import android.os.Parcelable;
 
 import com.punchthrough.bean.sdk.internal.exception.HexParsingException;
 import com.punchthrough.bean.sdk.internal.exception.NameLengthException;
+import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
 import com.punchthrough.bean.sdk.internal.intelhex.Line;
 import com.punchthrough.bean.sdk.internal.intelhex.LineRecordType;
 import com.punchthrough.bean.sdk.internal.utility.Constants;
@@ -19,6 +20,7 @@ import auto.parcel.AutoParcel;
 
 import static com.punchthrough.bean.sdk.internal.utility.Misc.asciiHexToBytes;
 import static com.punchthrough.bean.sdk.internal.utility.Misc.bytesToInt;
+import static com.punchthrough.bean.sdk.internal.utility.Misc.enumWithRawValue;
 
 @AutoParcel
 public abstract class SketchHex implements Parcelable {
@@ -122,23 +124,14 @@ public abstract class SketchHex implements Parcelable {
 
             byte rawRecordType = rawBytes[3];
             LineRecordType recordType;
-            if (rawRecordType == 0) {
-                recordType = LineRecordType.DATA;
-            } else if (rawRecordType == 1) {
-                recordType = LineRecordType.END_OF_FILE;
-            } else if (rawRecordType == 2) {
-                recordType = LineRecordType.EXTENDED_SEGMENT_ADDRESS;
-            } else if (rawRecordType == 3) {
-                recordType = LineRecordType.START_SEGMENT_ADDRESS;
-            } else if (rawRecordType == 4) {
-                recordType = LineRecordType.EXTENDED_LINEAR_ADDRESS;
-            } else if (rawRecordType == 5) {
-                recordType = LineRecordType.START_LINEAR_ADDRESS;
-            } else {
+            try {
+                recordType = enumWithRawValue(LineRecordType.class, rawRecordType);
+            } catch (NoEnumFoundException e) {
                 throw new HexParsingException(String.format(
                         "Couldn't parse hex: line %d had invalid record type %d",
                         rawLineNum, rawRecordType));
             }
+
             line.setRecordType(recordType);
 
             if (line.getByteCount() > 0) {
