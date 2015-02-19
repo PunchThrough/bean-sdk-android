@@ -533,9 +533,11 @@ public class Bean implements Parcelable {
             try {
                 Status status = Status.fromPayload(buffer);
                 handleStatus(status);
+
             } catch (NoEnumFoundException e) {
                 Log.e(TAG, "Unable to parse status from buffer: " + buffer.toString());
                 e.printStackTrace();
+
             }
 
         } else {
