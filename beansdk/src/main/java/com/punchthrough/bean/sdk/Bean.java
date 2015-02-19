@@ -35,7 +35,10 @@ import android.util.Log;
 import com.punchthrough.bean.sdk.internal.MessageID;
 import com.punchthrough.bean.sdk.internal.battery.BatteryProfile.BatteryLevelCallback;
 import com.punchthrough.bean.sdk.internal.ble.GattClient;
+import com.punchthrough.bean.sdk.internal.bootloader.BeanState;
+import com.punchthrough.bean.sdk.internal.bootloader.ClientState;
 import com.punchthrough.bean.sdk.internal.device.DeviceProfile.DeviceInfoCallback;
+import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
 import com.punchthrough.bean.sdk.internal.serial.GattSerialMessage;
 import com.punchthrough.bean.sdk.internal.serial.GattSerialTransportProfile;
 import com.punchthrough.bean.sdk.message.Acceleration;
@@ -50,6 +53,7 @@ import com.punchthrough.bean.sdk.message.ScratchBank;
 import com.punchthrough.bean.sdk.message.ScratchData;
 import com.punchthrough.bean.sdk.message.SketchHex;
 import com.punchthrough.bean.sdk.message.SketchMetadata;
+import com.punchthrough.bean.sdk.message.Status;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -114,6 +118,7 @@ public class Bean implements Parcelable {
     private boolean mConnected;
     private HashMap<MessageID, List<Callback<?>>> mCallbacks = new HashMap<>(16);
     private Handler mHandler = new Handler(Looper.getMainLooper());
+    private ClientState clientState = ClientState.INACTIVE;
 
     /**
      * Create a Bean using it's {@link android.bluetooth.BluetoothDevice}
@@ -525,13 +530,68 @@ public class Bean implements Parcelable {
             returnArduinoPowerState(buffer);
 
         } else if (type == MessageID.BL_STATUS.getRawValue()) {
-
+            try {
+                Status status = Status.fromPayload(buffer);
+                handleStatus(status);
+            } catch (NoEnumFoundException e) {
+                Log.e(TAG, "Unable to parse status from buffer: " + buffer.toString());
+                e.printStackTrace();
+            }
 
         } else {
             Log.e(TAG, "Received message of unknown type " + Integer.toHexString(type));
             disconnect();
 
         }
+    }
+
+    private void handleStatus(Status status) {
+
+        Log.d(TAG, "Handling Bean status: " + status);
+
+        BeanState beanState = status.beanState();
+
+        // Ignore init state: we don't have to reset the Bean before downloading new sketches
+
+        if (beanState == BeanState.READY) {
+            resetStateTimeoutTimer();
+
+            if (clientState == ClientState.SENDING_START_COMMAND) {
+                // Send first chunk
+                clientState = ClientState.SENDING_CHUNKS;
+
+            }
+
+        } else if (beanState == BeanState.PROGRAMMING) {
+            resetStateTimeoutTimer();
+
+        } else if (beanState == BeanState.COMPLETE) {
+            // Callback on completion
+
+        } else if (beanState == BeanState.ERROR) {
+            // Callback with an error
+
+        }
+
+    }
+
+    private void resetStateTimeoutTimer() {
+        // TODO: Implement
+    }
+
+    private void resetChunkSendTimeoutTimer() {
+        // TODO: Implement
+    }
+
+    /**
+     * Reset local variables and kill timers that relate to uploading a new sketch or new firmware.
+     */
+    private void resetUploadState() {
+        // Current firmware image = null
+        // Current chunk index = null
+        clientState = ClientState.INACTIVE;
+        resetStateTimeoutTimer();
+        resetChunkSendTimeoutTimer();
     }
 
     private void returnArduinoPowerState(Buffer buffer) {
