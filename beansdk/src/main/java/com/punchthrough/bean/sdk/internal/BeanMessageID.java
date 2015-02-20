@@ -3,7 +3,7 @@ package com.punchthrough.bean.sdk.internal;
 import com.punchthrough.bean.sdk.internal.utility.RawValuable;
 
 // Enum as int technique from http://stackoverflow.com/a/3990421/254187
-public enum MessageID implements RawValuable {
+public enum BeanMessageID implements RawValuable {
     SERIAL_DATA(0x0000),
     BT_SET_ADV(0x0500),
     BT_SET_CONN(0x0502),
@@ -41,7 +41,7 @@ public enum MessageID implements RawValuable {
 
     private final int value;
 
-    private MessageID(final int value) {
+    private BeanMessageID(final int value) {
         this.value = value;
     }
 

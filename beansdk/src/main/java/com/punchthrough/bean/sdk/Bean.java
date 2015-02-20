@@ -32,7 +32,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
 
-import com.punchthrough.bean.sdk.internal.MessageID;
+import com.punchthrough.bean.sdk.internal.BeanMessageID;
 import com.punchthrough.bean.sdk.internal.battery.BatteryProfile.BatteryLevelCallback;
 import com.punchthrough.bean.sdk.internal.ble.GattClient;
 import com.punchthrough.bean.sdk.internal.bootloader.BeanState;
@@ -166,7 +166,7 @@ public class Bean implements Parcelable {
 
             @Override
             public void onDisconnected() {
-                mCallbacks.clear();
+                beanCallbacks.clear();
                 mConnected = false;
                 mHandler.post(new Runnable() {
                     @Override
@@ -247,8 +247,8 @@ public class Bean implements Parcelable {
      * @param callback the callback for the result
      */
     public void readRadioConfig(Callback<RadioConfig> callback) {
-        addBeanCallback(MessageID.BT_GET_CONFIG, callback);
-        sendMessageWithoutPayload(MessageID.BT_GET_CONFIG);
+        addBeanCallback(BeanMessageID.BT_GET_CONFIG, callback);
+        sendMessageWithoutPayload(BeanMessageID.BT_GET_CONFIG);
     }
 
     /**
@@ -261,7 +261,7 @@ public class Bean implements Parcelable {
         buffer.writeByte(color.red());
         buffer.writeByte(color.green());
         buffer.writeByte(color.blue());
-        sendMessage(MessageID.CC_LED_WRITE_ALL, buffer);
+        sendMessage(BeanMessageID.CC_LED_WRITE_ALL, buffer);
     }
 
     /**
@@ -270,8 +270,8 @@ public class Bean implements Parcelable {
      * @param callback the callback for the result
      */
     public void readLed(Callback<LedColor> callback) {
-        addBeanCallback(MessageID.CC_LED_READ_ALL, callback);
-        sendMessageWithoutPayload(MessageID.CC_LED_READ_ALL);
+        addBeanCallback(BeanMessageID.CC_LED_READ_ALL, callback);
+        sendMessageWithoutPayload(BeanMessageID.CC_LED_READ_ALL);
     }
 
     /**
@@ -282,7 +282,7 @@ public class Bean implements Parcelable {
     public void setAdvertising(boolean enable) {
         Buffer buffer = new Buffer();
         buffer.writeByte(enable ? 1 : 0);
-        sendMessage(MessageID.BT_ADV_ONOFF, buffer);
+        sendMessage(BeanMessageID.BT_ADV_ONOFF, buffer);
     }
 
     /**
@@ -291,8 +291,8 @@ public class Bean implements Parcelable {
      * @param callback the callback for the result
      */
     public void readTemperature(Callback<Integer> callback) {
-        addBeanCallback(MessageID.CC_TEMP_READ, callback);
-        sendMessageWithoutPayload(MessageID.CC_TEMP_READ);
+        addBeanCallback(BeanMessageID.CC_TEMP_READ, callback);
+        sendMessageWithoutPayload(BeanMessageID.CC_TEMP_READ);
     }
 
     /**
@@ -301,8 +301,8 @@ public class Bean implements Parcelable {
      * @param callback the callback for the result
      */
     public void readAcceleration(Callback<Acceleration> callback) {
-        addBeanCallback(MessageID.CC_ACCEL_READ, callback);
-        sendMessageWithoutPayload(MessageID.CC_ACCEL_READ);
+        addBeanCallback(BeanMessageID.CC_ACCEL_READ, callback);
+        sendMessageWithoutPayload(BeanMessageID.CC_ACCEL_READ);
     }
 
     /**
@@ -311,8 +311,8 @@ public class Bean implements Parcelable {
      * @param callback the callback for the result
      */
     public void readSketchMetaData(Callback<SketchMetadata> callback) {
-        addBeanCallback(MessageID.BL_GET_META, callback);
-        sendMessageWithoutPayload(MessageID.BL_GET_META);
+        addBeanCallback(BeanMessageID.BL_GET_META, callback);
+        sendMessageWithoutPayload(BeanMessageID.BL_GET_META);
     }
 
     /**
@@ -322,13 +322,13 @@ public class Bean implements Parcelable {
      * @param callback the callback for the result
      */
     public void readScratchData(int number, Callback<ScratchData> callback) {
-        addBeanCallback(MessageID.BT_GET_SCRATCH, callback);
+        addBeanCallback(BeanMessageID.BT_GET_SCRATCH, callback);
         Buffer buffer = new Buffer();
         if (number < 0 || number > 5) {
             throw new IllegalArgumentException("Scratch bank must be in the range of 0-4");
         }
         buffer.writeByte((number + 1) & 0xff);
-        sendMessage(MessageID.BT_GET_SCRATCH, buffer);
+        sendMessage(BeanMessageID.BT_GET_SCRATCH, buffer);
     }
 
     /**
@@ -339,7 +339,7 @@ public class Bean implements Parcelable {
     public void setAccelerometerRange(AccelerometerRange range) {
         Buffer buffer = new Buffer();
         buffer.writeByte(range.getRawValue());
-        sendMessage(MessageID.CC_ACCEL_SET_RANGE, buffer);
+        sendMessage(BeanMessageID.CC_ACCEL_SET_RANGE, buffer);
     }
 
     /**
@@ -348,8 +348,8 @@ public class Bean implements Parcelable {
      * @param callback the callback for the result
      */
     public void readAccelerometerRange(Callback<Integer> callback) {
-        addBeanCallback(MessageID.CC_ACCEL_GET_RANGE, callback);
-        sendMessageWithoutPayload(MessageID.CC_ACCEL_GET_RANGE);
+        addBeanCallback(BeanMessageID.CC_ACCEL_GET_RANGE, callback);
+        sendMessageWithoutPayload(BeanMessageID.CC_ACCEL_GET_RANGE);
     }
 
     /**
@@ -360,7 +360,7 @@ public class Bean implements Parcelable {
      */
     public void setScratchData(ScratchBank bank, byte[] data) {
         ScratchData sd = ScratchData.create(bank, data);
-        sendMessage(MessageID.BT_SET_SCRATCH, sd);
+        sendMessage(BeanMessageID.BT_SET_SCRATCH, sd);
     }
 
     /**
@@ -371,7 +371,7 @@ public class Bean implements Parcelable {
      */
     public void setScratchData(ScratchBank bank, String data) {
         ScratchData sd = ScratchData.create(bank, data);
-        sendMessage(MessageID.BT_SET_SCRATCH, sd);
+        sendMessage(BeanMessageID.BT_SET_SCRATCH, sd);
     }
 
     /**
@@ -394,7 +394,7 @@ public class Bean implements Parcelable {
      * @param save   true to save the config in non-volatile storage, false otherwise.
      */
     public void setRadioConfig(RadioConfig config, boolean save) {
-        sendMessage(save ? MessageID.BT_SET_CONFIG : MessageID.BT_SET_CONFIG_NOSAVE, config);
+        sendMessage(save ? BeanMessageID.BT_SET_CONFIG : BeanMessageID.BT_SET_CONFIG_NOSAVE, config);
     }
 
     /**
@@ -405,7 +405,7 @@ public class Bean implements Parcelable {
     public void sendSerialMessage(byte[] value) {
         Buffer buffer = new Buffer();
         buffer.write(value);
-        sendMessage(MessageID.SERIAL_DATA, buffer);
+        sendMessage(BeanMessageID.SERIAL_DATA, buffer);
     }
 
     /**
@@ -418,7 +418,7 @@ public class Bean implements Parcelable {
         Buffer buffer = new Buffer();
         buffer.writeIntLe(pin);
         buffer.writeByte(active ? 1 : 0);
-        sendMessage(MessageID.BT_SET_PIN, buffer);
+        sendMessage(BeanMessageID.BT_SET_PIN, buffer);
     }
 
     /**
@@ -430,7 +430,7 @@ public class Bean implements Parcelable {
         Buffer buffer = new Buffer();
         try {
             buffer.write(value.getBytes("UTF-8"));
-            sendMessage(MessageID.SERIAL_DATA, buffer);
+            sendMessage(BeanMessageID.SERIAL_DATA, buffer);
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
@@ -458,7 +458,7 @@ public class Bean implements Parcelable {
     public void setArduinoEnabled(boolean enable) {
         Buffer buffer = new Buffer();
         buffer.writeByte(enable ? 1 : 0);
-        sendMessage(MessageID.CC_POWER_ARDUINO, buffer);
+        sendMessage(BeanMessageID.CC_POWER_ARDUINO, buffer);
     }
 
     /**
@@ -467,8 +467,8 @@ public class Bean implements Parcelable {
      * @param callback the callback for the result, true if the Arduino is enabled, false otherwise.
      */
     public void readArduinoPowerState(final Callback<Boolean> callback) {
-        addBeanCallback(MessageID.CC_GET_AR_POWER, callback);
-        sendMessageWithoutPayload(MessageID.CC_GET_AR_POWER);
+        addBeanCallback(BeanMessageID.CC_GET_AR_POWER, callback);
+        sendMessageWithoutPayload(BeanMessageID.CC_GET_AR_POWER);
     }
 
     /**
@@ -493,7 +493,7 @@ public class Bean implements Parcelable {
      * clients that want to send commands to the ATmega.
      */
     public void endSerialGate() {
-        sendMessageWithoutPayload(MessageID.BT_END_GATE);
+        sendMessageWithoutPayload(BeanMessageID.BT_END_GATE);
     }
 
     /**
@@ -516,7 +516,7 @@ public class Bean implements Parcelable {
 
         }
 
-        sendMessage(MessageID.BL_CMD_START, payload);
+        sendMessage(BeanMessageID.BL_CMD_START, payload);
 
     }
 
@@ -525,36 +525,36 @@ public class Bean implements Parcelable {
         buffer.write(data);
         int type = (buffer.readShort() & 0xffff) & ~(APP_MSG_RESPONSE_BIT);
 
-        if (type == MessageID.SERIAL_DATA.getRawValue()) {
+        if (type == BeanMessageID.SERIAL_DATA.getRawValue()) {
             mBeanListener.onSerialMessageReceived(buffer.readByteArray());
 
-        } else if (type == MessageID.BT_GET_CONFIG.getRawValue()) {
+        } else if (type == BeanMessageID.BT_GET_CONFIG.getRawValue()) {
             returnConfig(buffer);
 
-        } else if (type == MessageID.CC_TEMP_READ.getRawValue()) {
+        } else if (type == BeanMessageID.CC_TEMP_READ.getRawValue()) {
             returnTemperature(buffer);
 
-        } else if (type == MessageID.BL_GET_META.getRawValue()) {
+        } else if (type == BeanMessageID.BL_GET_META.getRawValue()) {
             returnMetaData(buffer);
 
-        } else if (type == MessageID.BT_GET_SCRATCH.getRawValue()) {
+        } else if (type == BeanMessageID.BT_GET_SCRATCH.getRawValue()) {
             returnScratchData(buffer);
 
-        } else if (type == MessageID.CC_LED_READ_ALL.getRawValue()) {
+        } else if (type == BeanMessageID.CC_LED_READ_ALL.getRawValue()) {
             returnLed(buffer);
 
-        } else if (type == MessageID.CC_ACCEL_READ.getRawValue()) {
+        } else if (type == BeanMessageID.CC_ACCEL_READ.getRawValue()) {
             returnAcceleration(buffer);
 
-        } else if (type == MessageID.CC_ACCEL_GET_RANGE.getRawValue()) {
+        } else if (type == BeanMessageID.CC_ACCEL_GET_RANGE.getRawValue()) {
             returnAccelerometerRange(buffer);
 
         // Ignore CC_LED_WRITE; it appears to be only an ack
 
-        } else if (type == MessageID.CC_GET_AR_POWER.getRawValue()) {
+        } else if (type == BeanMessageID.CC_GET_AR_POWER.getRawValue()) {
             returnArduinoPowerState(buffer);
 
-        } else if (type == MessageID.BL_STATUS.getRawValue()) {
+        } else if (type == BeanMessageID.BL_STATUS.getRawValue()) {
             try {
                 Status status = Status.fromPayload(buffer);
                 handleStatus(status);
@@ -653,49 +653,49 @@ public class Bean implements Parcelable {
     }
 
     private void returnArduinoPowerState(Buffer buffer) {
-        Callback<Boolean> callback = getFirstCallback(MessageID.CC_GET_AR_POWER);
+        Callback<Boolean> callback = getFirstCallback(BeanMessageID.CC_GET_AR_POWER);
         if (callback != null) {
             callback.onResult((buffer.readByte() & 0xff) == 1);
         }
     }
 
     private void returnAccelerometerRange(Buffer buffer) {
-        Callback<Integer> callback = getFirstCallback(MessageID.CC_ACCEL_GET_RANGE);
+        Callback<Integer> callback = getFirstCallback(BeanMessageID.CC_ACCEL_GET_RANGE);
         if (callback != null) {
             callback.onResult(buffer.readByte() & 0xff);
         }
     }
 
     private void returnAcceleration(Buffer buffer) {
-        Callback<Acceleration> callback = getFirstCallback(MessageID.CC_ACCEL_READ);
+        Callback<Acceleration> callback = getFirstCallback(BeanMessageID.CC_ACCEL_READ);
         if (callback != null) {
             callback.onResult(Acceleration.fromPayload(buffer));
         }
     }
 
     private void returnLed(Buffer buffer) {
-        Callback<LedColor> callback = getFirstCallback(MessageID.CC_LED_READ_ALL);
+        Callback<LedColor> callback = getFirstCallback(BeanMessageID.CC_LED_READ_ALL);
         if (callback != null) {
             callback.onResult(LedColor.fromPayload(buffer));
         }
     }
 
     private void returnScratchData(Buffer buffer) {
-        Callback<ScratchData> callback = getFirstCallback(MessageID.BT_GET_SCRATCH);
+        Callback<ScratchData> callback = getFirstCallback(BeanMessageID.BT_GET_SCRATCH);
         if (callback != null) {
             callback.onResult(ScratchData.fromPayload(buffer));
         }
     }
 
     private void returnMetaData(Buffer buffer) {
-        Callback<SketchMetadata> callback = getFirstCallback(MessageID.BL_GET_META);
+        Callback<SketchMetadata> callback = getFirstCallback(BeanMessageID.BL_GET_META);
         if (callback != null) {
             callback.onResult(SketchMetadata.fromPayload(buffer));
         }
     }
 
     private void returnTemperature(Buffer buffer) {
-        Callback<Integer> callback = getFirstCallback(MessageID.CC_TEMP_READ);
+        Callback<Integer> callback = getFirstCallback(BeanMessageID.CC_TEMP_READ);
         if (callback != null) {
             callback.onResult((int) buffer.readByte());
         }
@@ -703,7 +703,7 @@ public class Bean implements Parcelable {
 
     private void returnConfig(Buffer data) {
         RadioConfig config = RadioConfig.fromPayload(data);
-        Callback<RadioConfig> callback = getFirstCallback(MessageID.BT_GET_CONFIG);
+        Callback<RadioConfig> callback = getFirstCallback(BeanMessageID.BT_GET_CONFIG);
         if (callback != null) {
             callback.onResult(config);
         }
@@ -715,7 +715,7 @@ public class Bean implements Parcelable {
      */
     private void returnError(BeanError error) {
         resetClientState();
-        Callback<BeanError> callback = getFirstCallback(MessageID.ERROR_CC);
+        Callback<BeanError> callback = getFirstCallback(BeanMessageID.ERROR_CC);
         if (callback != null) {
             callback.onResult(error);
         }
@@ -732,18 +732,18 @@ public class Bean implements Parcelable {
         returnError(error);
     }
 
-    private void addBeanCallback(MessageID type, Callback<?> callback) {
-        List<Callback<?>> callbacks = mCallbacks.get(type);
+    private void addBeanCallback(BeanMessageID type, Callback<?> callback) {
+        List<Callback<?>> callbacks = beanCallbacks.get(type);
         if (callbacks == null) {
             callbacks = new ArrayList<>(16);
-            mCallbacks.put(type, callbacks);
+            beanCallbacks.put(type, callbacks);
         }
         callbacks.add(callback);
     }
 
     @SuppressWarnings("unchecked")
-    private <T> Callback<T> getFirstCallback(MessageID type) {
-        List<Callback<?>> callbacks = mCallbacks.get(type);
+    private <T> Callback<T> getFirstCallback(BeanMessageID type) {
+        List<Callback<?>> callbacks = beanCallbacks.get(type);
         if (callbacks == null || callbacks.isEmpty()) {
             Log.w(TAG, "Got response without callback!");
             return null;
@@ -751,7 +751,7 @@ public class Bean implements Parcelable {
         return (Callback<T>) callbacks.remove(0);
     }
 
-    private void sendMessage(MessageID type, Message message) {
+    private void sendMessage(BeanMessageID type, Message message) {
         Buffer buffer = new Buffer();
         buffer.writeByte((type.getRawValue() >> 8) & 0xff);
         buffer.writeByte(type.getRawValue() & 0xff);
@@ -760,7 +760,7 @@ public class Bean implements Parcelable {
         mGattClient.getSerialProfile().sendMessage(serialMessage.getBuffer());
     }
 
-    private void sendMessage(MessageID type, Buffer payload) {
+    private void sendMessage(BeanMessageID type, Buffer payload) {
         Buffer buffer = new Buffer();
         buffer.writeByte((type.getRawValue() >> 8) & 0xff);
         buffer.writeByte(type.getRawValue() & 0xff);
@@ -775,7 +775,7 @@ public class Bean implements Parcelable {
         mGattClient.getSerialProfile().sendMessage(serialMessage.getBuffer());
     }
 
-    private void sendMessageWithoutPayload(MessageID type) {
+    private void sendMessageWithoutPayload(BeanMessageID type) {
         sendMessage(type, (Buffer) null);
     }
 
