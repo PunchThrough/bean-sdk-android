@@ -556,6 +556,9 @@ public class Bean implements Parcelable {
         this.onProgress = onProgress;
         this.onComplete = onComplete;
 
+        // Prepare the firmware chunks to be sent
+        chunksToSend = hex.chunks(MAX_CHUNK_SIZE_BYTES);
+
         // Construct and send the START payload with sketch metadata
         SketchMetadata metadata = SketchMetadata.create(hex, new Date());
         Buffer payload = metadata.toPayload();
