@@ -125,9 +125,12 @@ public class Bean implements Parcelable {
     // Used for firmware and sketch uploads
     private static final int STATE_TIMEOUT_MS = 3000;
     private static final int CHUNK_SEND_TIMEOUT_MS = 200;
+    private static final int MAX_CHUNK_SIZE_BYTES = 64;
     private ClientState clientState = ClientState.INACTIVE;
     private Timer stateTimeout;
     private Timer chunkSendTimeout;
+    private List<byte[]> chunksToSend;
+    private int currChunkNum;
 
 
     /**
