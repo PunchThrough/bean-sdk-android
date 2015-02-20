@@ -119,8 +119,34 @@ public class Bean implements Parcelable {
     private final GattSerialTransportProfile.Listener mTransportListener;
     private final BluetoothDevice mDevice;
     private boolean mConnected;
-    private HashMap<MessageID, List<Callback<?>>> mCallbacks = new HashMap<>(16);
     private Handler mHandler = new Handler(Looper.getMainLooper());
+    private Callback<BeanError> errorHandler;
+
+    /* The handling of callbacks is somewhat complex. Here's how they work:
+     *
+     * 1. Client:
+     *      bean.readLed(Callback<LedColor> cb { ... })
+     *
+     * 2. Bean class:
+     *      cbList = beanCallbacks.get(readLed) - or create if cbList doesn't exist yet
+     *      cbList.add(cb)
+     *
+     * 3. On data from Bean, ledResult:
+     *      cb = cbList.remove(0) - cbList is a FIFO queue, so that two readLed() calls are called
+     *                              back in order when their results appear
+     *      cb.onResult(ledResult)
+     *
+     * This is to handle the case where, for example, readLed() is called, then readLed() is called
+     * again before results are returned for the first call. If the callbacks map were a simple
+     * Map<MessageID, Callback<?>>, the first callback would never receive its data and the second
+     * callback would get called twice.
+     *
+     * By using a Map<MessageID, List<Callback<?>>>, we can handle each call in order and guarantee
+     * each callback is called exactly once.
+     *
+     * beanCallbacks: Callbacks initiated by messages coming from the Bean
+     */
+    private HashMap<BeanMessageID, List<Callback<?>>> beanCallbacks = new HashMap<>(16);
 
     // Used for firmware and sketch uploads
     private static final int STATE_TIMEOUT_MS = 3000;
@@ -242,12 +268,20 @@ public class Bean implements Parcelable {
     }
 
     /**
+     * Sets a Bean's error handler. This is called whenever errors occur.
+     * @param errorHandler The callback to be called with the error cause
+     */
+    public void setErrorHandler(Callback<BeanError> errorHandler) {
+         this.errorHandler = errorHandler;
+    }
+
+    /**
      * Request the {@link com.punchthrough.bean.sdk.message.RadioConfig}
      *
      * @param callback the callback for the result
      */
     public void readRadioConfig(Callback<RadioConfig> callback) {
-        addBeanCallback(BeanMessageID.BT_GET_CONFIG, callback);
+        addCallback(BeanMessageID.BT_GET_CONFIG, callback);
         sendMessageWithoutPayload(BeanMessageID.BT_GET_CONFIG);
     }
 
@@ -270,7 +304,7 @@ public class Bean implements Parcelable {
      * @param callback the callback for the result
      */
     public void readLed(Callback<LedColor> callback) {
-        addBeanCallback(BeanMessageID.CC_LED_READ_ALL, callback);
+        addCallback(BeanMessageID.CC_LED_READ_ALL, callback);
         sendMessageWithoutPayload(BeanMessageID.CC_LED_READ_ALL);
     }
 
@@ -291,7 +325,7 @@ public class Bean implements Parcelable {
      * @param callback the callback for the result
      */
     public void readTemperature(Callback<Integer> callback) {
-        addBeanCallback(BeanMessageID.CC_TEMP_READ, callback);
+        addCallback(BeanMessageID.CC_TEMP_READ, callback);
         sendMessageWithoutPayload(BeanMessageID.CC_TEMP_READ);
     }
 
@@ -301,7 +335,7 @@ public class Bean implements Parcelable {
      * @param callback the callback for the result
      */
     public void readAcceleration(Callback<Acceleration> callback) {
-        addBeanCallback(BeanMessageID.CC_ACCEL_READ, callback);
+        addCallback(BeanMessageID.CC_ACCEL_READ, callback);
         sendMessageWithoutPayload(BeanMessageID.CC_ACCEL_READ);
     }
 
@@ -311,7 +345,7 @@ public class Bean implements Parcelable {
      * @param callback the callback for the result
      */
     public void readSketchMetaData(Callback<SketchMetadata> callback) {
-        addBeanCallback(BeanMessageID.BL_GET_META, callback);
+        addCallback(BeanMessageID.BL_GET_META, callback);
         sendMessageWithoutPayload(BeanMessageID.BL_GET_META);
     }
 
@@ -322,7 +356,7 @@ public class Bean implements Parcelable {
      * @param callback the callback for the result
      */
     public void readScratchData(int number, Callback<ScratchData> callback) {
-        addBeanCallback(BeanMessageID.BT_GET_SCRATCH, callback);
+        addCallback(BeanMessageID.BT_GET_SCRATCH, callback);
         Buffer buffer = new Buffer();
         if (number < 0 || number > 5) {
             throw new IllegalArgumentException("Scratch bank must be in the range of 0-4");
@@ -348,7 +382,7 @@ public class Bean implements Parcelable {
      * @param callback the callback for the result
      */
     public void readAccelerometerRange(Callback<Integer> callback) {
-        addBeanCallback(BeanMessageID.CC_ACCEL_GET_RANGE, callback);
+        addCallback(BeanMessageID.CC_ACCEL_GET_RANGE, callback);
         sendMessageWithoutPayload(BeanMessageID.CC_ACCEL_GET_RANGE);
     }
 
@@ -467,7 +501,7 @@ public class Bean implements Parcelable {
      * @param callback the callback for the result, true if the Arduino is enabled, false otherwise.
      */
     public void readArduinoPowerState(final Callback<Boolean> callback) {
-        addBeanCallback(BeanMessageID.CC_GET_AR_POWER, callback);
+        addCallback(BeanMessageID.CC_GET_AR_POWER, callback);
         sendMessageWithoutPayload(BeanMessageID.CC_GET_AR_POWER);
     }
 
@@ -715,9 +749,8 @@ public class Bean implements Parcelable {
      */
     private void returnError(BeanError error) {
         resetClientState();
-        Callback<BeanError> callback = getFirstCallback(BeanMessageID.ERROR_CC);
-        if (callback != null) {
-            callback.onResult(error);
+        if (errorHandler != null) {
+            errorHandler.onResult(error);
         }
     }
 
@@ -732,7 +765,7 @@ public class Bean implements Parcelable {
         returnError(error);
     }
 
-    private void addBeanCallback(BeanMessageID type, Callback<?> callback) {
+    private void addCallback(BeanMessageID type, Callback<?> callback) {
         List<Callback<?>> callbacks = beanCallbacks.get(type);
         if (callbacks == null) {
             callbacks = new ArrayList<>(16);
