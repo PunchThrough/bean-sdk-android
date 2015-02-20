@@ -247,7 +247,7 @@ public class Bean implements Parcelable {
      * @param callback the callback for the result
      */
     public void readRadioConfig(Callback<RadioConfig> callback) {
-        addCallback(MessageID.BT_GET_CONFIG, callback);
+        addBeanCallback(MessageID.BT_GET_CONFIG, callback);
         sendMessageWithoutPayload(MessageID.BT_GET_CONFIG);
     }
 
@@ -270,7 +270,7 @@ public class Bean implements Parcelable {
      * @param callback the callback for the result
      */
     public void readLed(Callback<LedColor> callback) {
-        addCallback(MessageID.CC_LED_READ_ALL, callback);
+        addBeanCallback(MessageID.CC_LED_READ_ALL, callback);
         sendMessageWithoutPayload(MessageID.CC_LED_READ_ALL);
     }
 
@@ -291,7 +291,7 @@ public class Bean implements Parcelable {
      * @param callback the callback for the result
      */
     public void readTemperature(Callback<Integer> callback) {
-        addCallback(MessageID.CC_TEMP_READ, callback);
+        addBeanCallback(MessageID.CC_TEMP_READ, callback);
         sendMessageWithoutPayload(MessageID.CC_TEMP_READ);
     }
 
@@ -301,7 +301,7 @@ public class Bean implements Parcelable {
      * @param callback the callback for the result
      */
     public void readAcceleration(Callback<Acceleration> callback) {
-        addCallback(MessageID.CC_ACCEL_READ, callback);
+        addBeanCallback(MessageID.CC_ACCEL_READ, callback);
         sendMessageWithoutPayload(MessageID.CC_ACCEL_READ);
     }
 
@@ -311,7 +311,7 @@ public class Bean implements Parcelable {
      * @param callback the callback for the result
      */
     public void readSketchMetaData(Callback<SketchMetadata> callback) {
-        addCallback(MessageID.BL_GET_META, callback);
+        addBeanCallback(MessageID.BL_GET_META, callback);
         sendMessageWithoutPayload(MessageID.BL_GET_META);
     }
 
@@ -322,7 +322,7 @@ public class Bean implements Parcelable {
      * @param callback the callback for the result
      */
     public void readScratchData(int number, Callback<ScratchData> callback) {
-        addCallback(MessageID.BT_GET_SCRATCH, callback);
+        addBeanCallback(MessageID.BT_GET_SCRATCH, callback);
         Buffer buffer = new Buffer();
         if (number < 0 || number > 5) {
             throw new IllegalArgumentException("Scratch bank must be in the range of 0-4");
@@ -348,7 +348,7 @@ public class Bean implements Parcelable {
      * @param callback the callback for the result
      */
     public void readAccelerometerRange(Callback<Integer> callback) {
-        addCallback(MessageID.CC_ACCEL_GET_RANGE, callback);
+        addBeanCallback(MessageID.CC_ACCEL_GET_RANGE, callback);
         sendMessageWithoutPayload(MessageID.CC_ACCEL_GET_RANGE);
     }
 
@@ -467,7 +467,7 @@ public class Bean implements Parcelable {
      * @param callback the callback for the result, true if the Arduino is enabled, false otherwise.
      */
     public void readArduinoPowerState(final Callback<Boolean> callback) {
-        addCallback(MessageID.CC_GET_AR_POWER, callback);
+        addBeanCallback(MessageID.CC_GET_AR_POWER, callback);
         sendMessageWithoutPayload(MessageID.CC_GET_AR_POWER);
     }
 
@@ -594,7 +594,7 @@ public class Bean implements Parcelable {
             // TODO: Callback on completion
 
         } else if (beanState == BeanState.ERROR) {
-            onUploadError(BeanError.UNKNOWN);
+            returnUploadError(BeanError.UNKNOWN);
             resetClientState();
 
         }
@@ -618,7 +618,7 @@ public class Bean implements Parcelable {
         TimerTask onTimeout = new TimerTask() {
             @Override
             public void run() {
-                onUploadError(BeanError.STATE_TIMEOUT);
+                returnUploadError(BeanError.STATE_TIMEOUT);
             }
         };
 
@@ -645,8 +645,8 @@ public class Bean implements Parcelable {
      * Reset local variables and kill timers that are used for uploading sketches and firmware.
      */
     private void resetClientState() {
-        // Current firmware image = null
-        // Current chunk index = null
+        chunksToSend = null;
+        currChunkNum = 0;
         clientState = ClientState.INACTIVE;
         stopStateTimeout();
         stopChunkSendTimeout();
@@ -713,7 +713,7 @@ public class Bean implements Parcelable {
      * Call this to alert the client whenever any errors occur with a NON-upload task.
      * @param error The type of error that occurred
      */
-    private void onError(BeanError error) {
+    private void returnError(BeanError error) {
         resetClientState();
         Callback<BeanError> callback = getFirstCallback(MessageID.ERROR_CC);
         if (callback != null) {
@@ -727,12 +727,12 @@ public class Bean implements Parcelable {
      *
      * @param error The type of error that occurred
      */
-    private void onUploadError(BeanError error) {
+    private void returnUploadError(BeanError error) {
         resetClientState();
-        onError(error);
+        returnError(error);
     }
 
-    private void addCallback(MessageID type, Callback<?> callback) {
+    private void addBeanCallback(MessageID type, Callback<?> callback) {
         List<Callback<?>> callbacks = mCallbacks.get(type);
         if (callbacks == null) {
             callbacks = new ArrayList<>(16);
