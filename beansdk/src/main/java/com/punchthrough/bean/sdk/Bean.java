@@ -55,6 +55,7 @@ import com.punchthrough.bean.sdk.message.ScratchData;
 import com.punchthrough.bean.sdk.message.SketchHex;
 import com.punchthrough.bean.sdk.message.SketchMetadata;
 import com.punchthrough.bean.sdk.message.Status;
+import com.punchthrough.bean.sdk.message.UploadProgress;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -153,10 +154,17 @@ public class Bean implements Parcelable {
     private static final int CHUNK_SEND_TIMEOUT_MS = 200;
     private static final int MAX_CHUNK_SIZE_BYTES = 64;
     private ClientState clientState = ClientState.INACTIVE;
+    // stateTimeout throws an error if too much time passes without an update from the Bean asking
+    // programming to begin
     private Timer stateTimeout;
+    // chunkSendTimeout sends the next chunk of data
     private Timer chunkSendTimeout;
+    // Chunks to send and current chunk pointer
     private List<byte[]> chunksToSend;
     private int currChunkNum;
+    // Client update methods passed in with sketch hex to be programmed
+    private Callback<UploadProgress> onProgress;
+    private Runnable onComplete;
 
 
     /**
@@ -537,17 +545,26 @@ public class Bean implements Parcelable {
      *
      * @param hex The sketch to be sent to the Bean
      */
-    public void programWithSketch(SketchHex hex) {
+    public void programWithSketch(SketchHex hex, Callback<UploadProgress> onProgress,
+                                  Runnable onComplete) {
 
+        // Resetting client state means we have a clean state to start. Variables are cleared and
+        // the state timeout timer will not fire during firmware uploads.
         resetClientState();
 
+        // Set onProgress and onComplete handlers
+        this.onProgress = onProgress;
+        this.onComplete = onComplete;
+
+        // Construct and send the START payload with sketch metadata
         SketchMetadata metadata = SketchMetadata.create(hex, new Date());
         Buffer payload = metadata.toPayload();
 
+        // If there's no data in the hex sketch, send the empty metadata to clear the Bean's sketch
+        // and don't worry about sending the firmware chunks
         if (hex.bytes().length > 0) {
             clientState = ClientState.SENDING_START_COMMAND;
             resetStateTimeout();
-
         }
 
         sendMessage(BeanMessageID.BL_CMD_START, payload);
@@ -606,6 +623,12 @@ public class Bean implements Parcelable {
         }
     }
 
+    /**
+     * Fired when the Bean sends a Status message. Updates the client's internal state machine,
+     * used for uploading sketches and firmware to the Bean.
+     *
+     * @param status The status received from the Bean
+     */
     private void handleStatus(Status status) {
 
         Log.d(TAG, "Handling Bean status: " + status);
@@ -616,7 +639,7 @@ public class Bean implements Parcelable {
             resetStateTimeout();
 
             if (clientState == ClientState.SENDING_START_COMMAND) {
-                // TODO: Send first chunk
+                sendNextChunk();
                 clientState = ClientState.SENDING_CHUNKS;
 
             }
@@ -625,7 +648,7 @@ public class Bean implements Parcelable {
             resetStateTimeout();
 
         } else if (beanState == BeanState.COMPLETE) {
-            // TODO: Callback on completion
+            if (onComplete != null) onComplete.run();
 
         } else if (beanState == BeanState.ERROR) {
             returnUploadError(BeanError.UNKNOWN);
@@ -635,20 +658,31 @@ public class Bean implements Parcelable {
 
     }
 
+    /**
+     * Cancel the state timeout timer and null it to indicate it is no longer running.
+     */
     private void stopStateTimeout() {
-        if (stateTimeout != null) stateTimeout.cancel();
-        stateTimeout = null;
+        if (stateTimeout != null) {
+            stateTimeout.cancel();
+            stateTimeout = null;
+        }
     }
 
+    /**
+     * Cancel the chunk send timer and null it to indicate it is no longer running.
+     */
     private void stopChunkSendTimeout() {
-        if (chunkSendTimeout != null) chunkSendTimeout.cancel();
-        chunkSendTimeout = null;
+        if (chunkSendTimeout != null) {
+            chunkSendTimeout.cancel();
+            chunkSendTimeout = null;
+        }
     }
 
+    /**
+     * Reset the state timeout timer. If this timer fires, the client has waited too long for a
+     * state update from the Bean and an error will be fired.
+     */
     private void resetStateTimeout() {
-
-        stopStateTimeout();
-
         TimerTask onTimeout = new TimerTask() {
             @Override
             public void run() {
@@ -656,23 +690,46 @@ public class Bean implements Parcelable {
             }
         };
 
+        stopStateTimeout();
+        stateTimeout = new Timer();
         stateTimeout.schedule(onTimeout, STATE_TIMEOUT_MS);
-
     }
 
+    /**
+     * Reset the chunk send timer. When this timer fires, another firmware chunk is sent.
+     */
     private void resetChunkSendTimeout() {
-
-        stopChunkSendTimeout();
-
         TimerTask onTimeout = new TimerTask() {
             @Override
             public void run() {
-                // TODO: Resend current chunk - don't increment the chunk counter yet
+                sendNextChunk();
             }
         };
 
-        stateTimeout.schedule(onTimeout, CHUNK_SEND_TIMEOUT_MS);
+        stopChunkSendTimeout();
+        chunkSendTimeout = new Timer();
+        chunkSendTimeout.schedule(onTimeout, CHUNK_SEND_TIMEOUT_MS);
+    }
 
+    /**
+     * Send one chunk of sketch or firmware data to the Bean and increment the chunk counter.
+     */
+    private void sendNextChunk() {
+        byte[] rawChunk = chunksToSend.get(currChunkNum);
+        Buffer chunk = new Buffer();
+        chunk.write(rawChunk);
+        sendMessage(BeanMessageID.BL_FW_BLOCK, chunk);
+
+        resetChunkSendTimeout();
+
+        int chunksSent = currChunkNum + 1;
+        int totalChunks = chunksToSend.size();
+        onProgress.onResult(UploadProgress.create(chunksSent, totalChunks));
+
+        currChunkNum++;
+        if ( currChunkNum >= chunksToSend.size() ) {
+            resetClientState();
+        }
     }
 
     /**
