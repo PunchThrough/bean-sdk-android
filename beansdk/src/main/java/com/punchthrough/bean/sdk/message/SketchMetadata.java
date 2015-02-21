@@ -36,6 +36,7 @@ import okio.ByteString;
 
 import static com.punchthrough.bean.sdk.internal.utility.Misc.intToByte;
 import static com.punchthrough.bean.sdk.internal.utility.Constants.MAX_SKETCH_NAME_LENGTH;
+import static com.punchthrough.bean.sdk.internal.utility.Misc.intToUInt32;
 
 @AutoParcel
 public abstract class SketchMetadata implements Parcelable {
@@ -77,16 +78,23 @@ public abstract class SketchMetadata implements Parcelable {
         Buffer buffer = new Buffer();
 
         // Pad name to 20 bytes to fill buffer completely. It will be truncated by the Bean.
+        // Name has already been truncated to max length by the SketchHex constructor.
         String fullName = hexName();
         while (fullName.length() < MAX_SKETCH_NAME_LENGTH) {
             fullName += " ";
         }
 
-        buffer.writeInt(hexSize());
-        buffer.writeInt(hexCrc());
-        buffer.writeInt((int) (new Date().getTime() / 1000));
-        buffer.writeByte(intToByte(hexName().length()));
-        buffer.write(ByteString.encodeUtf8(fullName));
+        byte[] hexSize = intToUInt32(hexSize());
+        byte[] hexCrc = intToUInt32(hexCrc());
+        byte[] timestamp = intToUInt32( (int) (new Date().getTime() / 1000) );
+        byte nameLength = intToByte(hexName().length());
+        ByteString name = ByteString.encodeUtf8(fullName);
+
+        buffer.write(hexSize);
+        buffer.write(hexCrc);
+        buffer.write(timestamp);
+        buffer.writeByte(nameLength);
+        buffer.write(name);
 
         return buffer;
     }
