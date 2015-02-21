@@ -5,6 +5,9 @@ import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.Arrays;
 import java.util.EnumSet;
 
 public class Misc {
@@ -42,6 +45,15 @@ public class Misc {
 
         return byteArray;
 
+    }
+
+    public static byte[] intToUInt16(int i) {
+        return Arrays.copyOfRange(intToUInt32(i), 2, 4);
+    }
+
+    public static byte[] intToUInt32(int i) {
+        int truncated = (int) ( (long) i );
+        return ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(truncated).array();
     }
 
     // Based on http://stackoverflow.com/a/16406386/254187

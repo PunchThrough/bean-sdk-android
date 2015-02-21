@@ -7,7 +7,10 @@ import com.punchthrough.bean.sdk.internal.bootloader.BeanState;
 import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
 
 import static com.punchthrough.bean.sdk.internal.utility.Misc.enumWithRawValue;
+import static com.punchthrough.bean.sdk.internal.utility.Misc.intArrayToByteArray;
 import static com.punchthrough.bean.sdk.internal.utility.Misc.intToByte;
+import static com.punchthrough.bean.sdk.internal.utility.Misc.intToUInt16;
+import static com.punchthrough.bean.sdk.internal.utility.Misc.intToUInt32;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class MiscTest extends AndroidTestCase {
@@ -33,6 +36,34 @@ public class MiscTest extends AndroidTestCase {
         } catch (NoEnumFoundException e) {
             assertThat(e).isNotNull();
         }
+    }
+
+    public void testUnsigningInts() {
+
+        assertThat(intToUInt32(0)).isEqualTo(intArrayToByteArray(
+                new int[]{0x00, 0x00, 0x00, 0x00}));
+
+        assertThat(intToUInt32(6400)).isEqualTo(intArrayToByteArray(
+                new int[]{0x00, 0x00, 0x19, 0x00}));
+
+        assertThat(intToUInt32(65535)).isEqualTo(intArrayToByteArray(
+                new int[]{0x00, 0x00, 0xFF, 0xFF}));
+
+        assertThat(intToUInt32(2147483647)).isEqualTo(intArrayToByteArray(
+                new int[]{0x7F, 0xFF, 0xFF, 0xFF}));
+
+        assertThat(intToUInt16(256)).isEqualTo(intArrayToByteArray(
+                new int[]{0x01, 0x00}));
+
+        assertThat(intToUInt16(78519)).isEqualTo(intArrayToByteArray(
+                new int[]{0x32, 0xB7}));
+
+        assertThat(intToUInt16(65535)).isEqualTo(intArrayToByteArray(
+                new int[]{0xFF, 0xFF}));
+
+        assertThat(intToUInt16(2147483647)).isEqualTo(intArrayToByteArray(
+                new int[]{0xFF, 0xFF}));
+
     }
 
 }
