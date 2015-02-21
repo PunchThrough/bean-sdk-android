@@ -26,6 +26,7 @@ package com.punchthrough.bean.sdk.message;
 
 import android.os.Parcelable;
 
+import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 import java.util.Date;
 import java.util.zip.CRC32;
@@ -34,8 +35,8 @@ import auto.parcel.AutoParcel;
 import okio.Buffer;
 import okio.ByteString;
 
-import static com.punchthrough.bean.sdk.internal.utility.Misc.intToByte;
 import static com.punchthrough.bean.sdk.internal.utility.Constants.MAX_SKETCH_NAME_LENGTH;
+import static com.punchthrough.bean.sdk.internal.utility.Misc.intToByte;
 import static com.punchthrough.bean.sdk.internal.utility.Misc.intToUInt32;
 
 @AutoParcel
@@ -84,9 +85,12 @@ public abstract class SketchMetadata implements Parcelable {
             fullName += " ";
         }
 
-        byte[] hexSize = intToUInt32(hexSize());
-        byte[] hexCrc = intToUInt32(hexCrc());
-        byte[] timestamp = intToUInt32( (int) (new Date().getTime() / 1000) );
+        // !! The Bean uses little endian. Don't screw this up like I did!
+        ByteOrder endian = ByteOrder.LITTLE_ENDIAN;
+
+        byte[] hexSize = intToUInt32(hexSize(), endian);
+        byte[] hexCrc = intToUInt32(hexCrc(), endian);
+        byte[] timestamp = intToUInt32( (int) (new Date().getTime() / 1000), endian);
         byte nameLength = intToByte(hexName().length());
         ByteString name = ByteString.encodeUtf8(fullName);
 
