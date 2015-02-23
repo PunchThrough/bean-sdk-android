@@ -361,7 +361,7 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Request the {@link com.punchthrough.bean.sdk.message.RadioConfig}
+     * Request the {@link com.punchthrough.bean.sdk.message.RadioConfig}.
      *
      * @param callback the callback for the result
      */
@@ -371,9 +371,9 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Set the led values
+     * Set the LED color.
      *
-     * @param color The color being sent to the LED
+     * @param color The {@link com.punchthrough.bean.sdk.message.LedColor} being sent to the LED
      */
     public void setLed(LedColor color) {
         Buffer buffer = new Buffer();
@@ -384,9 +384,10 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Read the led state
+     * Read the LED color.
      *
-     * @param callback the callback for the result
+     * @param callback the callback for the {@link com.punchthrough.bean.sdk.message.LedColor}
+     *                 result
      */
     public void readLed(Callback<LedColor> callback) {
         addCallback(BeanMessageID.CC_LED_READ_ALL, callback);
@@ -394,7 +395,7 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Set the advertising flag (note: does not appear to work at this time)
+     * Set the advertising flag.
      *
      * @param enable true to enable, false otherwise
      */
@@ -405,9 +406,9 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Request a temperature reading
+     * Request a temperature reading.
      *
-     * @param callback the callback for the result
+     * @param callback the callback for the temperature result, in degrees C
      */
     public void readTemperature(Callback<Integer> callback) {
         addCallback(BeanMessageID.CC_TEMP_READ, callback);
@@ -415,9 +416,10 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Request an acceleration sensor reading
+     * Request an acceleration sensor reading.
      *
-     * @param callback the callback for the result
+     * @param callback the callback for the {@link com.punchthrough.bean.sdk.message.Acceleration}
+     *                 result
      */
     public void readAcceleration(Callback<Acceleration> callback) {
         addCallback(BeanMessageID.CC_ACCEL_READ, callback);
@@ -425,9 +427,10 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Request the sketch metadata
+     * Request the sketch metadata.
      *
-     * @param callback the callback for the result
+     * @param callback the callback for the {@link com.punchthrough.bean.sdk.message.SketchMetadata}
+     *                 result
      */
     public void readSketchMetadata(Callback<SketchMetadata> callback) {
         addCallback(BeanMessageID.BL_GET_META, callback);
@@ -449,9 +452,9 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Set accelerometer range.
+     * Set the accelerometer range.
      *
-     * @param range the range in G's, must be 2, 4, 8 or 16
+     * @param range the {@link com.punchthrough.bean.sdk.message.AccelerometerRange} to be set
      */
     public void setAccelerometerRange(AccelerometerRange range) {
         Buffer buffer = new Buffer();
@@ -460,11 +463,11 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Read the accelerometer range in G's
+     * Read the accelerometer range.
      *
      * @param callback the callback for the result
      */
-    public void readAccelerometerRange(Callback<Integer> callback) {
+    public void readAccelerometerRange(Callback<AccelerometerRange> callback) {
         addCallback(BeanMessageID.CC_ACCEL_GET_RANGE, callback);
         sendMessageWithoutPayload(BeanMessageID.CC_ACCEL_GET_RANGE);
     }
@@ -472,7 +475,7 @@ public class Bean implements Parcelable {
     /**
      * Set a scratch bank data value.
      *
-     * @param bank The scratch bank being set
+     * @param bank The {@link com.punchthrough.bean.sdk.message.ScratchBank} being set
      * @param data The bytes to write into the scratch bank
      */
     public void setScratchData(ScratchBank bank, byte[] data) {
@@ -483,7 +486,7 @@ public class Bean implements Parcelable {
     /**
      * Set a scratch bank data value.
      *
-     * @param bank The scratch bank being set
+     * @param bank The {@link com.punchthrough.bean.sdk.message.ScratchBank} being set
      * @param data The string data to write into the scratch bank
      */
     public void setScratchData(ScratchBank bank, String data) {
@@ -492,22 +495,26 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Set the {@link com.punchthrough.bean.sdk.message.RadioConfig}
-     * <p/>
+     * <p>
+     * Set the radio config.
+     *
+     * <p/><p>
+     *
      * This is equivalent to calling
      * {@link #setRadioConfig(com.punchthrough.bean.sdk.message.RadioConfig, boolean)}
      * with true for the save parameter.
+     * </p>
      *
-     * @param config the configuration to set
+     * @param config the {@link com.punchthrough.bean.sdk.message.RadioConfig} to set
      */
     public void setRadioConfig(RadioConfig config) {
         setRadioConfig(config, true);
     }
 
     /**
-     * Set the {@link com.punchthrough.bean.sdk.message.RadioConfig}
+     * Set the radio config.
      *
-     * @param config the configuration to set
+     * @param config the {@link com.punchthrough.bean.sdk.message.RadioConfig} to set
      * @param save   true to save the config in non-volatile storage, false otherwise.
      */
     public void setRadioConfig(RadioConfig config, boolean save) {
@@ -541,7 +548,7 @@ public class Bean implements Parcelable {
     /**
      * Send a serial message.
      *
-     * @param value the message which will be converted to UTF-8 bytes.
+     * @param value the message to send as UTF-8 bytes
      */
     public void sendSerialMessage(String value) {
         Buffer buffer = new Buffer();
@@ -570,7 +577,7 @@ public class Bean implements Parcelable {
     /**
      * Enable or disable the Arduino
      *
-     * @param enable true to enable, false otherwise
+     * @param enable true to enable, false to disable
      */
     public void setArduinoEnabled(boolean enable) {
         Buffer buffer = new Buffer();
