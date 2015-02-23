@@ -91,8 +91,19 @@ public class Bean implements Parcelable {
             return new Bean[size];
         }
     };
-    private static final String TAG = "Bean";
-    private BeanListener mInternalBeanListener = new BeanListener() {
+
+    /**
+     * TAG = "BeanSDK". Used for debug messages.
+     */
+    private static final String TAG = "BeanSDK";
+
+    /**
+     * The default {@link com.punchthrough.bean.sdk.BeanListener}. Replaced by the listener passed
+     * into
+     * {@link com.punchthrough.bean.sdk.Bean#connect(android.content.Context, BeanListener)}.
+     * Provides warning messages when connections occur or fail in an invalid state.
+     */
+    private BeanListener internalBeanListener = new BeanListener() {
         @Override
         public void onConnected() {
             Log.w(TAG, "onConnected after disconnect from device " + getDevice().getAddress());
@@ -100,7 +111,8 @@ public class Bean implements Parcelable {
 
         @Override
         public void onConnectionFailed() {
-            Log.w(TAG, "onConnectionFailed after disconnect from device " + getDevice().getAddress());
+            Log.w(TAG, "onConnectionFailed after disconnect from device " +
+                    getDevice().getAddress());
         }
 
         @Override
@@ -115,85 +127,149 @@ public class Bean implements Parcelable {
         public void onScratchValueChanged(int bank, byte[] value) {
         }
     };
-    private BeanListener mBeanListener = mInternalBeanListener;
-    private final GattClient mGattClient;
-    private final GattSerialTransportProfile.Listener mTransportListener;
-    private final BluetoothDevice mDevice;
-    private boolean mConnected;
-    private Handler mHandler = new Handler(Looper.getMainLooper());
+    /**
+     * The {@link com.punchthrough.bean.sdk.BeanListener} that provides data back to the class that
+     * sets up the Bean object. Passed into
+     * {@link com.punchthrough.bean.sdk.Bean#connect(android.content.Context, BeanListener)}.
+     */
+    private BeanListener beanListener = internalBeanListener;
+    /**
+     * The GattClient associated with this Bean.
+     */
+    private final GattClient gattClient;
+    /**
+     * The BluetoothDevice representing this physical Bean.
+     */
+    private final BluetoothDevice device;
+    /**
+     * Whether the Bean is connected or not.
+     */
+    private boolean connected;
+    /**
+     * Used to provide async calls to the Bean class.
+     */
+    private Handler handler = new Handler(Looper.getMainLooper());
     private Callback<BeanError> errorHandler;
 
-    /* The handling of callbacks is somewhat complex. Here's how they work:
+    /**
+     * <p>
+     * Holds callbacks initiated by messages coming from the Bean.
+     *
+     * </p><p>
+     *
+     * The handling of callbacks is somewhat complex. Here's how they work:
+     *
+     * </p><p>
      *
      * 1. Client:
-     *      bean.readLed(Callback<LedColor> cb { ... })
+     * <pre>
+     * bean.readLed(Callback<LedColor> cb { ... })
+     * </pre>
+     *
+     * </p><p>
      *
      * 2. Bean class:
-     *      cbList = beanCallbacks.get(readLed) - or create if cbList doesn't exist yet
-     *      cbList.add(cb)
+     * <pre>
+     * cbList = beanCallbacks.get(readLed) - or create if cbList doesn't exist yet
+     * cbList.add(cb)
+     * </pre>
+     *
+     * </p><p>
      *
      * 3. On data from Bean, ledResult:
-     *      cb = cbList.remove(0) - cbList is a FIFO queue, so that two readLed() calls are called
-     *                              back in order when their results appear
-     *      cb.onResult(ledResult)
+     * <pre>
+     * cb = cbList.remove(0) - cbList is a FIFO queue, so that two readLed() calls are called
+     *                         back in order when their results appear
+     * cb.onResult(ledResult)
+     * </pre>
      *
-     * This is to handle the case where, for example, readLed() is called, then readLed() is called
+     * </p><p>
+     *
+     * This is to handle the case where, for example, <code>readLed()</code> is called, then
+     * <code>readLed()</code> is called
      * again before results are returned for the first call. If the callbacks map were a simple
-     * Map<MessageID, Callback<?>>, the first callback would never receive its data and the second
-     * callback would get called twice.
+     * <code>Map&lt;MessageID, Callback&lt;?&gt;&gt;</code>, the first callback would never receive
+     * its data and the second callback would get called twice.
      *
-     * By using a Map<MessageID, List<Callback<?>>>, we can handle each call in order and guarantee
-     * each callback is called exactly once.
+     * </p><p>
      *
-     * beanCallbacks: Callbacks initiated by messages coming from the Bean
+     * By using a <code>Map&lt;MessageID, List&lt;Callback&lt;?&gt;&gt;</code>, we can handle each
+     * call in order and guarantee each callback is called exactly once.
+     * </p>
      */
     private HashMap<BeanMessageID, List<Callback<?>>> beanCallbacks = new HashMap<>(16);
 
-    // Used for firmware and sketch uploads
+    // These class variables are used for firmware and sketch uploads.
+    /**
+     * The maximum amount of time, in ms, that passes between state updates from the Bean before
+     * programming is aborted
+     */
     private static final int STATE_TIMEOUT_MS = 3000;
+    /**
+     * The time, in ms, between chunks being sent. Chunks are sent to the Bean without waiting for
+     * acks, so setting this value lower will accelerate sketch programming. Setting this value too
+     * low will send chunks faster than BLE/the Bean can handle them.
+     */
     private static final int CHUNK_SEND_TIMEOUT_MS = 200;
+    /**
+     *
+     */
     private static final int MAX_CHUNK_SIZE_BYTES = 64;
     private ClientState clientState = ClientState.INACTIVE;
-    // stateTimeout throws an error if too much time passes without an update from the Bean asking
-    // programming to begin
+    /**
+     * stateTimeout throws an error if too much time passes without an update from the Bean asking
+     * programming to begin
+     */
     private Timer stateTimeout;
-    // chunkSendTimeout sends the next chunk of data
+    /**
+     * Sends the next chunk of data
+     */
     private Timer chunkSendTimeout;
-    // Chunks to send and current chunk pointer
+    /**
+     * Holds all chunks being sent to Bean
+     */
     private List<byte[]> chunksToSend;
+    /**
+     * Index of the next chunk to be sent to Bean
+     */
     private int currChunkNum;
-    // Client update methods passed in with sketch hex to be programmed
+    /**
+     * Passes in an UploadProgress object when progress is made in the sketch upload process
+     */
     private Callback<UploadProgress> onProgress;
+    /**
+     * Called when the sketch upload process completes successfully
+     */
     private Runnable onComplete;
 
 
     /**
-     * Create a Bean using it's {@link android.bluetooth.BluetoothDevice}
-     * The bean will not be connected until {@link #connect(android.content.Context, BeanListener)} is called.
+     * Create a Bean using its {@link android.bluetooth.BluetoothDevice}
+     * The Bean will not be connected until {@link #connect(android.content.Context, BeanListener)} is called.
      *
-     * @param device the device
+     * @param device The BluetoothDevice representing a Bean
      */
     public Bean(BluetoothDevice device) {
-        mDevice = device;
-        mTransportListener = new GattSerialTransportProfile.Listener() {
+        this.device = device;
+        GattSerialTransportProfile.Listener listener = new GattSerialTransportProfile.Listener() {
             @Override
             public void onConnected() {
-                mConnected = true;
-                mHandler.post(new Runnable() {
+                connected = true;
+                handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        mBeanListener.onConnected();
+                        beanListener.onConnected();
                     }
                 });
             }
 
             @Override
             public void onConnectionFailed() {
-                mConnected = false;
-                mHandler.post(new Runnable() {
+                connected = false;
+                handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        mBeanListener.onConnectionFailed();
+                        beanListener.onConnectionFailed();
                     }
                 });
             }
@@ -201,18 +277,18 @@ public class Bean implements Parcelable {
             @Override
             public void onDisconnected() {
                 beanCallbacks.clear();
-                mConnected = false;
-                mHandler.post(new Runnable() {
+                connected = false;
+                handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        mBeanListener.onDisconnected();
+                        beanListener.onDisconnected();
                     }
                 });
             }
 
             @Override
             public void onMessageReceived(final byte[] data) {
-                mHandler.post(new Runnable() {
+                handler.post(new Runnable() {
                     @Override
                     public void run() {
                         handleMessage(data);
@@ -222,16 +298,16 @@ public class Bean implements Parcelable {
 
             @Override
             public void onScratchValueChanged(final int bank, final byte[] value) {
-                mHandler.post(new Runnable() {
+                handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        mBeanListener.onScratchValueChanged(bank, value);
+                        beanListener.onScratchValueChanged(bank, value);
                     }
                 });
             }
         };
-        mGattClient = new GattClient();
-        mGattClient.getSerialProfile().setListener(mTransportListener);
+        gattClient = new GattClient();
+        gattClient.getSerialProfile().setListener(listener);
     }
 
     /**
@@ -240,7 +316,7 @@ public class Bean implements Parcelable {
      * @return true if connected, false otherwise
      */
     public boolean isConnected() {
-        return mConnected;
+        return connected;
     }
 
     /**
@@ -250,20 +326,20 @@ public class Bean implements Parcelable {
      * @param listener the bean listener
      */
     public void connect(Context context, BeanListener listener) {
-        if (mConnected) {
+        if (connected) {
             return;
         }
-        mBeanListener = listener;
-        mGattClient.connect(context, mDevice);
+        beanListener = listener;
+        gattClient.connect(context, device);
     }
 
     /**
      * Disconnect the bean
      */
     public void disconnect() {
-        mBeanListener = mInternalBeanListener;
-        mGattClient.disconnect();
-        mConnected = false;
+        beanListener = internalBeanListener;
+        gattClient.disconnect();
+        connected = false;
     }
 
     /**
@@ -272,7 +348,7 @@ public class Bean implements Parcelable {
      * @return the device
      */
     public BluetoothDevice getDevice() {
-        return mDevice;
+        return device;
     }
 
     /**
@@ -352,7 +428,7 @@ public class Bean implements Parcelable {
      *
      * @param callback the callback for the result
      */
-    public void readSketchMetaData(Callback<SketchMetadata> callback) {
+    public void readSketchMetadata(Callback<SketchMetadata> callback) {
         addCallback(BeanMessageID.BL_GET_META, callback);
         sendMessageWithoutPayload(BeanMessageID.BL_GET_META);
     }
@@ -484,7 +560,7 @@ public class Bean implements Parcelable {
      * @param callback the callback for the result
      */
     public void readDeviceInfo(final Callback<DeviceInfo> callback) {
-        mGattClient.getDeviceProfile().getDeviceInfo(new DeviceInfoCallback() {
+        gattClient.getDeviceProfile().getDeviceInfo(new DeviceInfoCallback() {
             @Override
             public void onDeviceInfo(DeviceInfo info) {
                 callback.onResult(info);
@@ -519,7 +595,7 @@ public class Bean implements Parcelable {
      * @param callback the callback for the result, the battery level in the range of 0-100%
      */
     public void readBatteryLevel(final Callback<BatteryLevel> callback) {
-        mGattClient.getBatteryProfile().getBatteryLevel(new BatteryLevelCallback() {
+        gattClient.getBatteryProfile().getBatteryLevel(new BatteryLevelCallback() {
             @Override
             public void onBatteryLevel(int percentage) {
                 callback.onResult(new BatteryLevel(percentage));
@@ -574,13 +650,17 @@ public class Bean implements Parcelable {
 
     }
 
+    /**
+     * Handles incoming messages from the Bean and dispatches them to the proper handlers.
+     * @param data The raw byte data received from the Bean
+     */
     private void handleMessage(byte[] data) {
         Buffer buffer = new Buffer();
         buffer.write(data);
         int type = (buffer.readShort() & 0xffff) & ~(APP_MSG_RESPONSE_BIT);
 
         if (type == BeanMessageID.SERIAL_DATA.getRawValue()) {
-            mBeanListener.onSerialMessageReceived(buffer.readByteArray());
+            beanListener.onSerialMessageReceived(buffer.readByteArray());
 
         } else if (type == BeanMessageID.BT_GET_CONFIG.getRawValue()) {
             returnConfig(buffer);
@@ -589,7 +669,7 @@ public class Bean implements Parcelable {
             returnTemperature(buffer);
 
         } else if (type == BeanMessageID.BL_GET_META.getRawValue()) {
-            returnMetaData(buffer);
+            returnMetadata(buffer);
 
         } else if (type == BeanMessageID.BT_GET_SCRATCH.getRawValue()) {
             returnScratchData(buffer);
@@ -746,6 +826,10 @@ public class Bean implements Parcelable {
         stopChunkSendTimeout();
     }
 
+    /**
+     * Call the onResult callback for {@link com.punchthrough.bean.sdk.Bean#readArduinoPowerState(com.punchthrough.bean.sdk.message.Callback)}.
+     * @param buffer Raw message bytes from the Bean
+     */
     private void returnArduinoPowerState(Buffer buffer) {
         Callback<Boolean> callback = getFirstCallback(BeanMessageID.CC_GET_AR_POWER);
         if (callback != null) {
@@ -753,6 +837,10 @@ public class Bean implements Parcelable {
         }
     }
 
+    /**
+     * Call the onResult callback for {@link com.punchthrough.bean.sdk.Bean#readAccelerometerRange(com.punchthrough.bean.sdk.message.Callback)}.
+     * @param buffer Raw message bytes from the Bean
+     */
     private void returnAccelerometerRange(Buffer buffer) {
         Callback<Integer> callback = getFirstCallback(BeanMessageID.CC_ACCEL_GET_RANGE);
         if (callback != null) {
@@ -760,6 +848,10 @@ public class Bean implements Parcelable {
         }
     }
 
+    /**
+     * Call the onResult callback for {@link com.punchthrough.bean.sdk.Bean#readAcceleration(com.punchthrough.bean.sdk.message.Callback)}.
+     * @param buffer Raw message bytes from the Bean
+     */
     private void returnAcceleration(Buffer buffer) {
         Callback<Acceleration> callback = getFirstCallback(BeanMessageID.CC_ACCEL_READ);
         if (callback != null) {
@@ -767,6 +859,10 @@ public class Bean implements Parcelable {
         }
     }
 
+    /**
+     * Call the onResult callback for {@link com.punchthrough.bean.sdk.Bean#readLed(com.punchthrough.bean.sdk.message.Callback)}.
+     * @param buffer Raw message bytes from the Bean
+     */
     private void returnLed(Buffer buffer) {
         Callback<LedColor> callback = getFirstCallback(BeanMessageID.CC_LED_READ_ALL);
         if (callback != null) {
@@ -774,6 +870,10 @@ public class Bean implements Parcelable {
         }
     }
 
+    /**
+     * Call the onResult callback for {@link com.punchthrough.bean.sdk.Bean#readScratchData(int, com.punchthrough.bean.sdk.message.Callback)}.
+     * @param buffer Raw message bytes from the Bean
+     */
     private void returnScratchData(Buffer buffer) {
         Callback<ScratchData> callback = getFirstCallback(BeanMessageID.BT_GET_SCRATCH);
         if (callback != null) {
@@ -781,13 +881,21 @@ public class Bean implements Parcelable {
         }
     }
 
-    private void returnMetaData(Buffer buffer) {
+    /**
+     * Call the onResult callback for {@link com.punchthrough.bean.sdk.Bean#readSketchMetadata(com.punchthrough.bean.sdk.message.Callback)} (com.punchthrough.bean.sdk.message.Callback)}.
+     * @param buffer Raw message bytes from the Bean
+     */
+    private void returnMetadata(Buffer buffer) {
         Callback<SketchMetadata> callback = getFirstCallback(BeanMessageID.BL_GET_META);
         if (callback != null) {
             callback.onResult(SketchMetadata.fromPayload(buffer));
         }
     }
 
+    /**
+     * Call the onResult callback for {@link com.punchthrough.bean.sdk.Bean#readTemperature(com.punchthrough.bean.sdk.message.Callback)} (com.punchthrough.bean.sdk.message.Callback)}.
+     * @param buffer Raw message bytes from the Bean
+     */
     private void returnTemperature(Buffer buffer) {
         Callback<Integer> callback = getFirstCallback(BeanMessageID.CC_TEMP_READ);
         if (callback != null) {
@@ -795,8 +903,12 @@ public class Bean implements Parcelable {
         }
     }
 
-    private void returnConfig(Buffer data) {
-        RadioConfig config = RadioConfig.fromPayload(data);
+    /**
+     * Call the onResult callback for {@link com.punchthrough.bean.sdk.Bean#readRadioConfig(com.punchthrough.bean.sdk.message.Callback)}.
+     * @param buffer Raw message bytes from the Bean
+     */
+    private void returnConfig(Buffer buffer) {
+        RadioConfig config = RadioConfig.fromPayload(buffer);
         Callback<RadioConfig> callback = getFirstCallback(BeanMessageID.BT_GET_CONFIG);
         if (callback != null) {
             callback.onResult(config);
@@ -850,7 +962,7 @@ public class Bean implements Parcelable {
         buffer.writeByte(type.getRawValue() & 0xff);
         buffer.write(message.toPayload());
         GattSerialMessage serialMessage = GattSerialMessage.fromPayload(buffer.readByteArray());
-        mGattClient.getSerialProfile().sendMessage(serialMessage.getBuffer());
+        gattClient.getSerialProfile().sendMessage(serialMessage.getBuffer());
     }
 
     private void sendMessage(BeanMessageID type, Buffer payload) {
@@ -865,7 +977,7 @@ public class Bean implements Parcelable {
             }
         }
         GattSerialMessage serialMessage = GattSerialMessage.fromPayload(buffer.readByteArray());
-        mGattClient.getSerialProfile().sendMessage(serialMessage.getBuffer());
+        gattClient.getSerialProfile().sendMessage(serialMessage.getBuffer());
     }
 
     private void sendMessageWithoutPayload(BeanMessageID type) {
@@ -879,6 +991,6 @@ public class Bean implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeParcelable(mDevice, 0);
+        dest.writeParcelable(device, 0);
     }
 }
