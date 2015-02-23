@@ -69,6 +69,7 @@ import java.util.TimerTask;
 import okio.Buffer;
 
 import static com.punchthrough.bean.sdk.internal.Protocol.APP_MSG_RESPONSE_BIT;
+import static com.punchthrough.bean.sdk.internal.utility.Misc.intToByte;
 
 /**
  * Interacts with the Punch Through Design Bean hardware.
@@ -434,18 +435,16 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Request a scratch bank data value
+     * Request a scratch bank data value.
      *
-     * @param number   the scratch bank number, must be in the range 0-4 (inclusive)
+     * @param bank     the {@link com.punchthrough.bean.sdk.message.ScratchBank} for which data is
+     *                 being requested
      * @param callback the callback for the result
      */
-    public void readScratchData(int number, Callback<ScratchData> callback) {
+    public void readScratchData(ScratchBank bank, Callback<ScratchData> callback) {
         addCallback(BeanMessageID.BT_GET_SCRATCH, callback);
         Buffer buffer = new Buffer();
-        if (number < 0 || number > 5) {
-            throw new IllegalArgumentException("Scratch bank must be in the range of 0-4");
-        }
-        buffer.writeByte((number + 1) & 0xff);
+        buffer.writeByte(intToByte(bank.getRawValue()));
         sendMessage(BeanMessageID.BT_GET_SCRATCH, buffer);
     }
 
@@ -871,7 +870,7 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Call the onResult callback for {@link com.punchthrough.bean.sdk.Bean#readScratchData(int, com.punchthrough.bean.sdk.message.Callback)}.
+     * Call the onResult callback for {@link com.punchthrough.bean.sdk.Bean#readScratchData(com.punchthrough.bean.sdk.message.ScratchBank, com.punchthrough.bean.sdk.message.Callback)}.
      * @param buffer Raw message bytes from the Bean
      */
     private void returnScratchData(Buffer buffer) {
