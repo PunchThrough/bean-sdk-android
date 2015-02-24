@@ -3,7 +3,7 @@ package com.punchthrough.bean.sdk.utility;
 import android.test.AndroidTestCase;
 
 import com.punchthrough.bean.sdk.internal.BeanMessageID;
-import com.punchthrough.bean.sdk.internal.bootloader.BeanState;
+import com.punchthrough.bean.sdk.internal.upload.sketch.BeanState;
 import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
 
 import java.nio.ByteOrder;

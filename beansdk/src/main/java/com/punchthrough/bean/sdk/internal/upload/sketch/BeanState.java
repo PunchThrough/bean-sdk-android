@@ -1,4 +1,4 @@
-package com.punchthrough.bean.sdk.internal.bootloader;
+package com.punchthrough.bean.sdk.internal.upload.sketch;
 
 import com.punchthrough.bean.sdk.internal.utility.RawValuable;
 

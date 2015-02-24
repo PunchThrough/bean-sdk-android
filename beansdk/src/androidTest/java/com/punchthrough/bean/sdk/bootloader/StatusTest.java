@@ -2,8 +2,8 @@ package com.punchthrough.bean.sdk.bootloader;
 
 import android.test.AndroidTestCase;
 
-import com.punchthrough.bean.sdk.internal.bootloader.BeanState;
-import com.punchthrough.bean.sdk.internal.bootloader.BeanSubstate;
+import com.punchthrough.bean.sdk.internal.upload.sketch.BeanState;
+import com.punchthrough.bean.sdk.internal.upload.sketch.BeanSubstate;
 import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
 import com.punchthrough.bean.sdk.message.Status;
 
