@@ -26,7 +26,7 @@ import static com.punchthrough.bean.sdk.internal.utility.Misc.enumWithRawValue;
 
 public class GattSerialTransportProfile extends BaseProfile {
     public static final int PACKET_TX_MAX_PAYLOAD_LENGTH = 19;
-    private static final String TAG = "GattSerialTransportProfile";
+    private static final String TAG = "GattSerialXportProfile";
     private static final UUID BEAN_SERIAL_CHARACTERISTIC_UUID = UUID.fromString("a495ff11-c5b1-4b44-b512-1370f02d74de");
     private static final UUID BEAN_SERIAL_SERVICE_UUID = UUID.fromString("a495ff10-c5b1-4b44-b512-1370f02d74de");
     private static final UUID BEAN_SCRATCH_SERVICE_UUID = UUID.fromString("a495ff20-c5b1-4b44-b512-1370f02d74de");
