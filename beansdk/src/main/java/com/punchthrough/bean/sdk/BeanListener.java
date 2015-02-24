@@ -32,31 +32,32 @@ import com.punchthrough.bean.sdk.message.ScratchBank;
 public interface BeanListener {
 
     /**
-     * Called when the bean is connected. Connected means that a Bluetooth GATT connection is made and the
-     * setup for the Bean serial protocol is complete.
+     * Called when the Bean is connected. Connected means that a Bluetooth GATT connection is made
+     * and the setup for the Bean serial protocol is complete.
      */
     public void onConnected();
 
     /**
-     * Called when the connection could not be established. This could either be because the bean could not be connected,
-     * or the serial connection could not be established.
+     * Called when the connection could not be established. This could either be because the Bean
+     * could not be connected, or the serial connection could not be established.
      */
     public void onConnectionFailed();
 
     /**
-     * Called when the bean has been disconnected.
+     * Called when the Bean has been disconnected.
      */
     public void onDisconnected();
 
     /**
-     * Called when a serial message is received form the bean, e.g. a <code>Serial.write()</code> from Arduino code.
+     * Called when a serial message is received from the Bean, e.g. a <code>Serial.write()</code>
+     * from Arduino code.
      *
      * @param data the data that was sent from th bean
      */
     public void onSerialMessageReceived(byte[] data);
 
     /**
-     * Called when one of the scratch characteristics of the bean has an updated value
+     * Called when one of the scratch characteristics of the Bean has an updated value
      *
      * @param bank  the {@link com.punchthrough.bean.sdk.message.ScratchBank} that was updated
      * @param value the bank's new value
