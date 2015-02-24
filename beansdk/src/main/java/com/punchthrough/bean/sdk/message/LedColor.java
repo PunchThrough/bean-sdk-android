@@ -31,6 +31,9 @@ import okio.Buffer;
 
 import static com.punchthrough.bean.sdk.internal.utility.Misc.clampToUInt8;
 
+/**
+ * Represents the color of the Bean's LED.
+ */
 @AutoParcel
 public abstract class LedColor implements Parcelable {
 

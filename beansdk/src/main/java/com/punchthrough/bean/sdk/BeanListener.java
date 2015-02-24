@@ -58,11 +58,6 @@ public interface BeanListener {
      *
      * @param bank  the bank number, 0-4 or one of the SCRATCH_BANK_* constants.
      * @param value the value
-     * @see Bean#SCRATCH_BANK_1
-     * @see Bean#SCRATCH_BANK_2
-     * @see Bean#SCRATCH_BANK_3
-     * @see Bean#SCRATCH_BANK_4
-     * @see Bean#SCRATCH_BANK_5
      */
     public void onScratchValueChanged(int bank, byte[] value);
 }

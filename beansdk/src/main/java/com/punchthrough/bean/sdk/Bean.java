@@ -943,6 +943,13 @@ public class Bean implements Parcelable {
         returnError(error);
     }
 
+    /**
+     * Add a callback for a Bean message type.
+     *
+     * @param type      The {@link com.punchthrough.bean.sdk.internal.BeanMessageID} the callback
+     *                  will answer to
+     * @param callback  The callback to store
+     */
     private void addCallback(BeanMessageID type, Callback<?> callback) {
         List<Callback<?>> callbacks = beanCallbacks.get(type);
         if (callbacks == null) {
@@ -952,6 +959,14 @@ public class Bean implements Parcelable {
         callbacks.add(callback);
     }
 
+    /**
+     * Get the first callback for a Bean message type.
+     *
+     * @param type  The {@link com.punchthrough.bean.sdk.internal.BeanMessageID} for which to find
+     *              an associated callback
+     * @param <T>   The parameter type for the callback
+     * @return      The callback for the given message type, or null if none exists
+     */
     @SuppressWarnings("unchecked")
     private <T> Callback<T> getFirstCallback(BeanMessageID type) {
         List<Callback<?>> callbacks = beanCallbacks.get(type);
@@ -962,6 +977,11 @@ public class Bean implements Parcelable {
         return (Callback<T>) callbacks.remove(0);
     }
 
+    /**
+     * Send a message to Bean with a payload.
+     * @param type      The {@link com.punchthrough.bean.sdk.internal.BeanMessageID} for the message
+     * @param message   The message payload to send
+     */
     private void sendMessage(BeanMessageID type, Message message) {
         Buffer buffer = new Buffer();
         buffer.writeByte((type.getRawValue() >> 8) & 0xff);
@@ -971,6 +991,11 @@ public class Bean implements Parcelable {
         gattClient.getSerialProfile().sendMessage(serialMessage.getBuffer());
     }
 
+    /**
+     * Send a message to Bean with a payload.
+     * @param type      The {@link com.punchthrough.bean.sdk.internal.BeanMessageID} for the message
+     * @param payload   The message payload to send
+     */
     private void sendMessage(BeanMessageID type, Buffer payload) {
         Buffer buffer = new Buffer();
         buffer.writeByte((type.getRawValue() >> 8) & 0xff);
@@ -986,6 +1011,10 @@ public class Bean implements Parcelable {
         gattClient.getSerialProfile().sendMessage(serialMessage.getBuffer());
     }
 
+    /**
+     * Send a message to Bean without a payload.
+     * @param type The {@link com.punchthrough.bean.sdk.internal.BeanMessageID} for the message
+     */
     private void sendMessageWithoutPayload(BeanMessageID type) {
         sendMessage(type, (Buffer) null);
     }

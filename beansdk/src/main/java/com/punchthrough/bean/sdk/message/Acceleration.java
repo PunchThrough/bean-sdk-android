@@ -29,6 +29,9 @@ import android.os.Parcelable;
 import auto.parcel.AutoParcel;
 import okio.Buffer;
 
+/**
+ * Represents an acceleration reading from the Bean, returning values in Gs.
+ */
 @AutoParcel
 public abstract class Acceleration implements Parcelable {
     public static Acceleration fromPayload(Buffer buffer) {

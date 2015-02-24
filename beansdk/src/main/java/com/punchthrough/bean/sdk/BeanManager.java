@@ -129,6 +129,9 @@ public class BeanManager {
         return new ArrayList<>(mBeans.values());
     }
 
+    /**
+     * Finish Bean discovery.
+     */
     private void completeDiscovery() {
         if (mScanning) {
             BluetoothAdapter.getDefaultAdapter().stopLeScan(mCallback);
@@ -142,6 +145,14 @@ public class BeanManager {
         }
     }
 
+    /**
+     * Determines if a {@link android.bluetooth.BluetoothDevice} is a Bean based on its scan record
+     * value.
+     *
+     * @param scanRecord    The scanRecord provided by
+     *                      {@link android.bluetooth.BluetoothAdapter.LeScanCallback}
+     * @return              true if device is a Bean, false otherwise
+     */
     private boolean isBean(byte[] scanRecord) {
         List<UUID> uuids = parseUUIDs(scanRecord);
         return uuids.contains(BEAN_UUID);

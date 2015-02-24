@@ -24,6 +24,9 @@
 
 package com.punchthrough.bean.sdk.message;
 
+/**
+ * Represents an untyped message from the Bean.
+ */
 public interface Message {
     public byte[] toPayload();
 }

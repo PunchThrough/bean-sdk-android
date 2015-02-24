@@ -32,6 +32,9 @@ import java.nio.charset.Charset;
 import auto.parcel.AutoParcel;
 import okio.Buffer;
 
+/**
+ * Represents the radio configuration of the Bean.
+ */
 @AutoParcel
 public abstract class RadioConfig implements Parcelable, Message {
 

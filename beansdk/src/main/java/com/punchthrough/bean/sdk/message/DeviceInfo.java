@@ -4,6 +4,9 @@ import android.os.Parcelable;
 
 import auto.parcel.AutoParcel;
 
+/**
+ * Represents the hardware, software, and firmware versions of the Bean.
+ */
 @AutoParcel
 public abstract class DeviceInfo implements Parcelable {
     public static final String UNKNOWN_VERSION = "";

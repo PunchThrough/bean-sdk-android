@@ -24,6 +24,21 @@
 
 package com.punchthrough.bean.sdk.message;
 
+/**
+ * Callbacks emulate lambdas since Java 7 doesn't have lambdas. They act much like
+ * {@link java.lang.Runnable}s and are passed into methods that will complete asynchronously. To get
+ * results on method completion, override the
+ * {@link com.punchthrough.bean.sdk.message.Callback#onResult(Object)} method and use the result
+ * passed in as a parameter.
+ *
+ * @param <T> The type of the callback, passed into
+ *            {@link com.punchthrough.bean.sdk.message.Callback#onResult(Object)} as a parameter
+ */
 public interface Callback<T> {
+    /**
+     * Override this method to get results back from an asynchronous process.
+     *
+     * @param result The result passed back from the asynchronous process
+     */
     public void onResult(T result);
 }

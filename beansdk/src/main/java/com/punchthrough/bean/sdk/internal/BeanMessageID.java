@@ -3,6 +3,10 @@ package com.punchthrough.bean.sdk.internal;
 import com.punchthrough.bean.sdk.internal.utility.RawValuable;
 
 // Enum as int technique from http://stackoverflow.com/a/3990421/254187
+
+/**
+ * Represents commands to be sent to/received from the Bean.
+ */
 public enum BeanMessageID implements RawValuable {
     SERIAL_DATA(0x0000),
     BT_SET_ADV(0x0500),

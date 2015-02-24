@@ -1,5 +1,8 @@
 package com.punchthrough.bean.sdk.message;
 
+/**
+ * Represents the current battery level of a Bean.
+ */
 public class BatteryLevel {
 
     private int percentage;

@@ -11,29 +11,73 @@ import java.util.EnumSet;
 
 public class Misc {
 
+    /**
+     * Clamp an int to a min/max value.
+     *
+     * @param n     The value to be clamped
+     * @param min   The minimum
+     * @param max   The maximum
+     * @return      The value passed in, or minimum if n &lt; minimum, or maximum if n &gt; maximum
+     */
     public static int clamp(int n, int min, int max) {
         if (n < min) return min;
         if (n > max) return max;
         return n;
     }
 
+    /**
+     * Clamp an int to the uint8 (0-255) range.
+     *
+     * @param n The value to be clamped
+     * @return  The value clamped between 0 and 255
+     */
     public static int clampToUInt8(int n) {
         return clamp(n, 0, 255);
     }
 
+    /**
+     * Convert a string of ASCII hex characters (e.g. "DEADBEEF0042") to an array of bytes the hex
+     * represents (e.g. [0xDE, 0xAD, 0xBE, 0xEF, 0x00, 0x42]). Treat bytes returned by this method
+     * as unsigned.
+     *
+     * @param hex               The string of hex characters
+     * @return                  An array of bytes the string represents
+     * @throws DecoderException If the string passed in isn't made up of valid hex bytes
+     */
     public static byte[] asciiHexToBytes(String hex) throws DecoderException {
         return Hex.decodeHex(hex.toCharArray());
     }
 
     // From http://stackoverflow.com/a/4768950/254187
+    /**
+     * Convert two unsigned bytes to one signed int.
+     *
+     * @param high  The high byte
+     * @param low   The low byte
+     * @return      The high byte combined with the low byte as an unsigned int
+     */
     public static int bytesToInt(byte high, byte low) {
         return ( (high & 0xFF) << 8 ) | ( low & 0xFF );
     }
 
+    /**
+     * Convert an int to an unsigned byte.
+     *
+     * @param i     The int to be converted
+     * @return      The int in unsigned byte form
+     */
     public static byte intToByte(int i) {
         return (byte) (i & 0xFF);
     }
 
+    /**
+     * Convert an array of ints to an array of unsigned bytes. This is useful when you want to
+     * construct a literal array of unsigned bytes with values greater than 127.
+     * Only the lowest 8 bits of the int values are used.
+     *
+     * @param intArray  The array of ints to be converted
+     * @return          The corresponding array of unsigned bytes
+     */
     public static byte[] intArrayToByteArray(int[] intArray) {
 
         byte[] byteArray = new byte[intArray.length];
@@ -46,12 +90,33 @@ public class Misc {
 
     }
 
+    /**
+     * Convert an int to a four-byte array of its representation as an unsigned byte.
+     *
+     * @param i         The int to be converted
+     * @param endian    The {@link java.nio.ByteOrder} endianness of the desired byte array
+     * @return          The array of bytes representing the 32-bit unsigned integer
+     */
     public static byte[] intToUInt32(int i, ByteOrder endian) {
         int truncated = (int) ( (long) i );
         return ByteBuffer.allocate(4).order(endian).putInt(truncated).array();
     }
 
     // Based on http://stackoverflow.com/a/16406386/254187
+
+    /**
+     * Retrieve the enum of a given type from a given raw value. Enums must implement the
+     * {@link com.punchthrough.bean.sdk.internal.utility.RawValuable} interface to ensure they have
+     * a {@link RawValuable#getRawValue()} method.
+     *
+     * @param enumClass The class of the enum type being parsed, e.g. <code>BeanState.class</code>
+     * @param value     The raw int value of the enum to be retrieved
+     * @param <T>       The enum type being parsed
+     * @return          The enum value with the given raw value
+     *
+     * @throws NoEnumFoundException if the given enum type has no enum value with a raw value
+     *      matching the given value
+     */
     public static <T extends Enum & RawValuable> T enumWithRawValue(Class<T> enumClass, int value)
             throws NoEnumFoundException {
 
@@ -66,6 +131,19 @@ public class Misc {
 
     }
 
+    /**
+     * Retrieve the enum of a given type from a given raw value. Enums must implement the
+     * {@link com.punchthrough.bean.sdk.internal.utility.RawValuable} interface to ensure they have
+     * a {@link RawValuable#getRawValue()} method.
+     *
+     * @param enumClass The class of the enum type being parsed, e.g. <code>BeanState.class</code>
+     * @param value     The raw byte value of the enum to be retrieved
+     * @param <T>       The enum type being parsed
+     * @return          The enum value with the given raw value
+     *
+     * @throws NoEnumFoundException if the given enum type has no enum value with a raw value
+     *      matching the given value
+     */
     public static <T extends Enum & RawValuable> T enumWithRawValue(Class<T> enumClass, byte value)
             throws NoEnumFoundException {
 

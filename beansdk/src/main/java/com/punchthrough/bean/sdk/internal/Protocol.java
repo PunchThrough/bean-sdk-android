@@ -25,5 +25,12 @@
 package com.punchthrough.bean.sdk.internal;
 
 public interface Protocol {
+
+    /**
+     * A bitmap for the bit that indicates whether the message is being sent or received. See
+     * <a href="https://github.com/PunchThrough/bean-documentation/blob/master/app_message_types.md">App Message Types</a>
+     * for more information.
+     */
     int APP_MSG_RESPONSE_BIT = 0x80;
+
 }

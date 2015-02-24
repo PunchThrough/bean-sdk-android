@@ -39,6 +39,10 @@ import static com.punchthrough.bean.sdk.internal.utility.Constants.MAX_SKETCH_NA
 import static com.punchthrough.bean.sdk.internal.utility.Misc.intToByte;
 import static com.punchthrough.bean.sdk.internal.utility.Misc.intToUInt32;
 
+/**
+ * Represents sketch metadata. This data is sent when programming a Bean so that the Bean knows the
+ * name, size, and programming time of the sketch being sent.
+ */
 @AutoParcel
 public abstract class SketchMetadata implements Parcelable {
 
@@ -54,6 +58,13 @@ public abstract class SketchMetadata implements Parcelable {
         return new AutoParcel_SketchMetadata(hexSize, hexCrc, timestamp, hexName);
     }
 
+    /**
+     * Create a SketchMetadata object with the given
+     * {@link com.punchthrough.bean.sdk.message.SketchHex} data and programmed-at timestamp.
+     * @param hex       The {@link com.punchthrough.bean.sdk.message.SketchHex} to be sent
+     * @param timestamp The time the bean will indicate it was programmed
+     * @return          The SketchMetadata object
+     */
     public static SketchMetadata create(SketchHex hex, Date timestamp) {
         int hexSize = hex.bytes().length;
         String hexName = hex.sketchName();
@@ -65,6 +76,11 @@ public abstract class SketchMetadata implements Parcelable {
         return SketchMetadata.create(hexSize, hexCrc, timestamp, hexName);
     }
 
+    /**
+     * Get this object's metadata as a payload of bytes, ready to send to Bean in a
+     * {@link com.punchthrough.bean.sdk.internal.BeanMessageID#BL_CMD_START} message.
+     * @return The SketchMetadata in payload form
+     */
     public Buffer toPayload() {
         /* From AppMessages.h: BL_SKETCH_META_DATA_T struct
          *

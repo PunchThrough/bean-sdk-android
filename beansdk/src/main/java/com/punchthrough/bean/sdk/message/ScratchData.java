@@ -31,6 +31,9 @@ import java.io.UnsupportedEncodingException;
 import auto.parcel.AutoParcel;
 import okio.Buffer;
 
+/**
+ * Represents scratch data being sent to/received from the Bean.
+ */
 @AutoParcel
 public abstract class ScratchData implements Parcelable, Message {
     public static ScratchData fromPayload(Buffer buffer) {
