@@ -24,6 +24,8 @@
 
 package com.punchthrough.bean.sdk;
 
+import com.punchthrough.bean.sdk.message.ScratchBank;
+
 /**
  * Listener for communicating with the Bean
  */
@@ -56,8 +58,8 @@ public interface BeanListener {
     /**
      * Called when one of the scratch characteristics of the bean has an updated value
      *
-     * @param bank  the bank number, 0-4 or one of the SCRATCH_BANK_* constants.
-     * @param value the value
+     * @param bank  the {@link com.punchthrough.bean.sdk.message.ScratchBank} that was updated
+     * @param value the bank's new value
      */
-    public void onScratchValueChanged(int bank, byte[] value);
+    public void onScratchValueChanged(ScratchBank bank, byte[] value);
 }

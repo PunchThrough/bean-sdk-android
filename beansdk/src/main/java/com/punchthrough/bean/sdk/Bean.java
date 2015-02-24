@@ -125,7 +125,7 @@ public class Bean implements Parcelable {
         }
 
         @Override
-        public void onScratchValueChanged(int bank, byte[] value) {
+        public void onScratchValueChanged(ScratchBank bank, byte[] value) {
         }
     };
     /**
@@ -298,7 +298,7 @@ public class Bean implements Parcelable {
             }
 
             @Override
-            public void onScratchValueChanged(final int bank, final byte[] value) {
+            public void onScratchValueChanged(final ScratchBank bank, final byte[] value) {
                 handler.post(new Runnable() {
                     @Override
                     public void run() {

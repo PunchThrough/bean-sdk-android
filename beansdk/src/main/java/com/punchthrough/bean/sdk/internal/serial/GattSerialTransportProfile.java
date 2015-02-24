@@ -11,6 +11,8 @@ import android.util.Log;
 import com.punchthrough.bean.sdk.BuildConfig;
 import com.punchthrough.bean.sdk.internal.ble.BaseProfile;
 import com.punchthrough.bean.sdk.internal.ble.GattClient;
+import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
+import com.punchthrough.bean.sdk.message.ScratchBank;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -20,19 +22,22 @@ import java.util.UUID;
 
 import okio.Buffer;
 
+import static com.punchthrough.bean.sdk.internal.utility.Misc.enumWithRawValue;
+
 public class GattSerialTransportProfile extends BaseProfile {
     public static final int PACKET_TX_MAX_PAYLOAD_LENGTH = 19;
     private static final String TAG = "GattSerialTransportProfile";
     private static final UUID BEAN_SERIAL_CHARACTERISTIC_UUID = UUID.fromString("a495ff11-c5b1-4b44-b512-1370f02d74de");
     private static final UUID BEAN_SERIAL_SERVICE_UUID = UUID.fromString("a495ff10-c5b1-4b44-b512-1370f02d74de");
     private static final UUID BEAN_SCRATCH_SERVICE_UUID = UUID.fromString("a495ff20-c5b1-4b44-b512-1370f02d74de");
-    private static final UUID BEAN_SCRATCH_0_UUID = UUID.fromString("a495ff21-c5b1-4b44-b512-1370f02d74de");
-    private static final UUID BEAN_SCRATCH_1_UUID = UUID.fromString("a495ff22-c5b1-4b44-b512-1370f02d74de");
-    private static final UUID BEAN_SCRATCH_2_UUID = UUID.fromString("a495ff23-c5b1-4b44-b512-1370f02d74de");
-    private static final UUID BEAN_SCRATCH_3_UUID = UUID.fromString("a495ff24-c5b1-4b44-b512-1370f02d74de");
-    private static final UUID BEAN_SCRATCH_4_UUID = UUID.fromString("a495ff25-c5b1-4b44-b512-1370f02d74de");
 
-    private static final List<UUID> BEAN_SCRATCH_UUIDS = Arrays.asList(BEAN_SCRATCH_0_UUID, BEAN_SCRATCH_1_UUID, BEAN_SCRATCH_2_UUID, BEAN_SCRATCH_3_UUID, BEAN_SCRATCH_4_UUID);
+    private static final List<UUID> BEAN_SCRATCH_UUIDS = Arrays.asList(
+            UUID.fromString("a495ff21-c5b1-4b44-b512-1370f02d74de"),
+            UUID.fromString("a495ff22-c5b1-4b44-b512-1370f02d74de"),
+            UUID.fromString("a495ff23-c5b1-4b44-b512-1370f02d74de"),
+            UUID.fromString("a495ff24-c5b1-4b44-b512-1370f02d74de"),
+            UUID.fromString("a495ff25-c5b1-4b44-b512-1370f02d74de")
+    );
     private WeakReference<Listener> mListener = new WeakReference<>(null);
     private BluetoothGattCharacteristic mSerialCharacteristic;
     private boolean mReadyToSend = false;
@@ -134,7 +139,14 @@ public class GattSerialTransportProfile extends BaseProfile {
                 }
                 Listener listener = mListener.get();
                 if (listener != null) {
-                    listener.onScratchValueChanged(index, characteristic.getValue());
+                    try {
+                        ScratchBank bank = enumWithRawValue(ScratchBank.class, index);
+                        listener.onScratchValueChanged(bank, characteristic.getValue());
+                    } catch (NoEnumFoundException e) {
+                        Log.e(TAG, "Couldn't parse bank enum from scratch bank with index " +
+                                index);
+                        e.printStackTrace();
+                    }
                 } else {
                     client.disconnect();
                 }
@@ -211,6 +223,6 @@ public class GattSerialTransportProfile extends BaseProfile {
 
         public void onMessageReceived(byte[] data);
 
-        public void onScratchValueChanged(int bank, byte[] value);
+        public void onScratchValueChanged(ScratchBank bank, byte[] value);
     }
 }
