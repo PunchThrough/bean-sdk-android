@@ -36,7 +36,7 @@ import com.punchthrough.bean.sdk.internal.BeanMessageID;
 import com.punchthrough.bean.sdk.internal.battery.BatteryProfile.BatteryLevelCallback;
 import com.punchthrough.bean.sdk.internal.ble.GattClient;
 import com.punchthrough.bean.sdk.internal.upload.sketch.BeanState;
-import com.punchthrough.bean.sdk.internal.upload.sketch.ClientState;
+import com.punchthrough.bean.sdk.internal.upload.sketch.SketchUploadState;
 import com.punchthrough.bean.sdk.internal.device.DeviceProfile.DeviceInfoCallback;
 import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
 import com.punchthrough.bean.sdk.internal.serial.GattSerialMessage;
@@ -216,7 +216,7 @@ public class Bean implements Parcelable {
      *
      */
     private static final int MAX_CHUNK_SIZE_BYTES = 64;
-    private ClientState clientState = ClientState.INACTIVE;
+    private SketchUploadState sketchUploadState = SketchUploadState.INACTIVE;
     /**
      * stateTimeout throws an error if too much time passes without an update from the Bean asking
      * programming to begin
@@ -648,7 +648,7 @@ public class Bean implements Parcelable {
         // If there's no data in the hex sketch, send the empty metadata to clear the Bean's sketch
         // and don't worry about sending the firmware chunks
         if (hex.bytes().length > 0) {
-            clientState = ClientState.SENDING_START_COMMAND;
+            sketchUploadState = SketchUploadState.SENDING_START_COMMAND;
             resetStateTimeout();
         }
 
@@ -727,9 +727,9 @@ public class Bean implements Parcelable {
         if (beanState == BeanState.READY) {
             resetStateTimeout();
 
-            if (clientState == ClientState.SENDING_START_COMMAND) {
+            if (sketchUploadState == SketchUploadState.SENDING_START_COMMAND) {
                 sendNextChunk();
-                clientState = ClientState.SENDING_CHUNKS;
+                sketchUploadState = SketchUploadState.SENDING_CHUNKS;
 
             }
 
@@ -827,7 +827,7 @@ public class Bean implements Parcelable {
     private void resetClientState() {
         chunksToSend = null;
         currChunkNum = 0;
-        clientState = ClientState.INACTIVE;
+        sketchUploadState = SketchUploadState.INACTIVE;
         stopStateTimeout();
         stopChunkSendTimeout();
     }

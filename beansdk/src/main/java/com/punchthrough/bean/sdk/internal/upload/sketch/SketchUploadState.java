@@ -1,5 +1,5 @@
 package com.punchthrough.bean.sdk.internal.upload.sketch;
 
-public enum ClientState {
+public enum SketchUploadState {
     INACTIVE, RESETTING_REMOTE, SENDING_START_COMMAND, SENDING_CHUNKS, FINISHED
 }
