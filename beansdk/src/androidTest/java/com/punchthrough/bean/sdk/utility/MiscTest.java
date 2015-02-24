@@ -12,6 +12,7 @@ import static com.punchthrough.bean.sdk.internal.utility.Misc.enumWithRawValue;
 import static com.punchthrough.bean.sdk.internal.utility.Misc.intArrayToByteArray;
 import static com.punchthrough.bean.sdk.internal.utility.Misc.intToByte;
 import static com.punchthrough.bean.sdk.internal.utility.Misc.intToUInt32;
+import static com.punchthrough.bean.sdk.internal.utility.Misc.twoBytesToInt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class MiscTest extends AndroidTestCase {
@@ -58,6 +59,30 @@ public class MiscTest extends AndroidTestCase {
 
         assertThat(intToUInt32(65535, ByteOrder.LITTLE_ENDIAN)).isEqualTo(intArrayToByteArray(
                 new int[]{0xFF, 0xFF, 0x00, 0x00}));
+
+    }
+
+    public void testParsingTwoBytesWithOrder() {
+
+        assertThat(twoBytesToInt(
+                intArrayToByteArray(new int[] {0x43, 0x0C}),
+                ByteOrder.BIG_ENDIAN))
+                .isEqualTo(17164);
+
+        assertThat(twoBytesToInt(
+                intArrayToByteArray(new int[] {0x0C, 0x43}),
+                ByteOrder.LITTLE_ENDIAN))
+                .isEqualTo(17164);
+
+        assertThat(twoBytesToInt(
+                intArrayToByteArray(new int[] {0x13, 0xB2}),
+                ByteOrder.BIG_ENDIAN))
+                .isEqualTo(5042);
+
+        assertThat(twoBytesToInt(
+                intArrayToByteArray(new int[] {0xB2, 0x13}),
+                ByteOrder.LITTLE_ENDIAN))
+                .isEqualTo(5042);
 
     }
 

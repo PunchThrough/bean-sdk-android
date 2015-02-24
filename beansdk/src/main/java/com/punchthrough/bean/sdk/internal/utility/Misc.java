@@ -61,6 +61,23 @@ public class Misc {
     }
 
     /**
+     * Convert an array of two unsigned bytes with the given byte order to one signed int.
+     *
+     * @param bytes The bytes to be parsed
+     * @param order The byte order to be used
+     * @return      An int representing the bytes in the given order
+     */
+    public static int twoBytesToInt(byte[] bytes, ByteOrder order) {
+        if (order == ByteOrder.BIG_ENDIAN) {
+            return bytesToInt(bytes[0], bytes[1]);
+        } else if (order == ByteOrder.LITTLE_ENDIAN) {
+            return bytesToInt(bytes[1], bytes[0]);
+        } else {
+            throw new IllegalArgumentException("ByteOrder must be BIG_ENDIAN or LITTLE_ENDIAN");
+        }
+    }
+
+    /**
      * Convert an int to an unsigned byte.
      *
      * @param i     The int to be converted
