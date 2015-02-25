@@ -54,11 +54,11 @@ public abstract class FirmwareImage implements Parcelable {
      * @return The length of the image
      */
     public int length() {
-        return uint16FromData(5);
+        return uint16FromData(6);
     }
 
     /**
-     * The user-defined unique ID for the image.
+     * The user-defined unique ID for the image. Currently determines image type.
      * @return The image's unique ID
      */
     public byte[] uniqueID() {
