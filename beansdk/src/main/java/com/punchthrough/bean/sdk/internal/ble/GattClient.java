@@ -49,13 +49,21 @@ public class GattClient {
      */
     private static final UUID SERVICE_OAD = UUID.fromString("F000FFC0-0451-4000-B000-000000000000");
     /**
-     * The Identify characteristic is used to negotiate the start of a firmware transfer
+     * The OAD Identify characteristic is used to negotiate the start of a firmware transfer
      */
     private static final UUID CHAR_OAD_IDENTIFY = UUID.fromString("F000FFC1-0451-4000-B000-000000000000");
     /**
-     * The Block characteristic is used to send firmware chunks and confirm transfer completion
+     * The OAD Block characteristic is used to send firmware chunks and confirm transfer completion
      */
     private static final UUID CHAR_OAD_BLOCK = UUID.fromString("F000FFC1-0451-4000-B000-000000000000");
+    /**
+     * The OAD Identify characteristic for this device. Assigned when firmware upload is started.
+     */
+    private BluetoothGattCharacteristic oadIdentify;
+    /**
+     * The OAD Block characteristic for this device. Assigned when firmware upload is started.
+     */
+    private BluetoothGattCharacteristic oadBlock;
     /**
      * True if the OAD Identify characteristic is notifying, false otherwise
      */
@@ -124,6 +132,23 @@ public class GattClient {
                 disconnect();
                 return;
             }
+
+            if (uploadInProgress()) {
+
+                if (isOADIdentifyCharacteristic(characteristic)) {
+
+                    if (firmwareUploadState == FirmwareUploadState.AWAIT_CURRENT_HEADER) {
+                        prepareResponseHeader(characteristic.getValue());
+
+                    }
+
+                } else if (isOADBlockCharacteristic(characteristic)) {
+
+
+
+                }
+            }
+
             fireCharacteristicsRead(characteristic);
             executeNextOperation();
         }
@@ -141,21 +166,11 @@ public class GattClient {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
 
-            // Set notify flags for OAD Identify and Block characteristics
-            UUID uuid = characteristic.getUuid();
-
-            if (uuid == CHAR_OAD_IDENTIFY) {
-                oadIdentifyNotifying = true;
-                verifyNotifyEnabled();
-
-            } else if (uuid == CHAR_OAD_BLOCK) {
-                oadBlockNotifying = true;
-                verifyNotifyEnabled();
-
+            if (uploadInProgress() && isOADCharacteristic(characteristic)) {
+                mGatt.readCharacteristic(characteristic);
             }
 
             fireCharacteristicChanged(characteristic);
-
         }
 
         @Override
@@ -352,6 +367,7 @@ public class GattClient {
 
     public void disconnect() {
         close();
+        throwBeanError(BeanError.UNKNOWN);
     }
 
     private synchronized void close() {
@@ -403,7 +419,9 @@ public class GattClient {
     }
 
     private void verifyNotifyEnabled() {
-        if (oadIdentifyNotifying && oadBlockNotifying) {
+        // Ensure all characteristics are discovered and notifying
+        if (oadIdentify != null && oadBlock != null &&
+                oadIdentifyNotifying && oadBlockNotifying) {
             requestCurrentHeader();
         } else {
             enableOADNotifications();
@@ -419,31 +437,52 @@ public class GattClient {
             return;
         }
 
-        BluetoothGattCharacteristic oadIdentify = oadService.getCharacteristic(CHAR_OAD_IDENTIFY);
+        oadIdentify = oadService.getCharacteristic(CHAR_OAD_IDENTIFY);
         if (oadIdentify == null) {
             throwBeanError(BeanError.MISSING_OAD_IDENTIFY);
             return;
         }
 
-        BluetoothGattCharacteristic oadBlock = oadService.getCharacteristic(CHAR_OAD_BLOCK);
+        oadBlock = oadService.getCharacteristic(CHAR_OAD_BLOCK);
         if (oadBlock == null) {
             throwBeanError(BeanError.MISSING_OAD_BLOCK);
             return;
         }
 
-        enableNotifyForChar(oadIdentify);
-        enableNotifyForChar(oadBlock);
+        oadIdentifyNotifying = enableNotifyForChar(oadIdentify);
+        oadBlockNotifying = enableNotifyForChar(oadBlock);
+        if (oadIdentifyNotifying && oadBlockNotifying) {
+            enableOADNotifications();
+        } else {
+            throwBeanError(BeanError.ENABLE_OAD_NOTIFY_FAILED);
+        }
     }
 
     // https://developer.android.com/guide/topics/connectivity/bluetooth-le.html#notification
-    private void enableNotifyForChar(BluetoothGattCharacteristic characteristic) {
-        mGatt.setCharacteristicNotification(characteristic, true);
+    private boolean enableNotifyForChar(BluetoothGattCharacteristic characteristic) {
+        boolean result = mGatt.setCharacteristicNotification(characteristic, true);
 
         String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
         BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
                 UUID.fromString(CLIENT_CHARACTERISTIC_CONFIG));
         descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
         mGatt.writeDescriptor(descriptor);
+
+        return result;
+    }
+
+    private void requestCurrentHeader() {
+
+        firmwareUploadState = FirmwareUploadState.AWAIT_CURRENT_HEADER;
+
+        // To request the current header, write [0x00] to OAD Identify
+        oadIdentify.setValue(new byte[]{0x00});
+        mGatt.writeCharacteristic(oadIdentify);
+
+    }
+
+    private void prepareResponseHeader(byte[] rawRequestHeader) {
+        // TODO
     }
     
     private void stopFirmwareStateTimeout() {
@@ -471,5 +510,23 @@ public class GattClient {
         if (onError != null) {
             onError.onResult(error);
         }
+    }
+
+    private boolean uploadInProgress() {
+        return firmwareUploadState == FirmwareUploadState.INACTIVE;
+    }
+
+    private boolean isOADBlockCharacteristic(BluetoothGattCharacteristic charc) {
+        UUID uuid = charc.getUuid();
+        return uuid.equals(CHAR_OAD_BLOCK);
+    }
+
+    private boolean isOADIdentifyCharacteristic(BluetoothGattCharacteristic charc) {
+        UUID uuid = charc.getUuid();
+        return uuid.equals(CHAR_OAD_IDENTIFY);
+    }
+
+    private boolean isOADCharacteristic(BluetoothGattCharacteristic charc) {
+        return isOADBlockCharacteristic(charc) || isOADIdentifyCharacteristic(charc);
     }
 }

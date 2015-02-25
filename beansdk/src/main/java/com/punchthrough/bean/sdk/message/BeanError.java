@@ -25,6 +25,10 @@ public enum BeanError {
      */
     MISSING_OAD_BLOCK,
     /**
+     * Notifications could not be enabled for either OAD Identify, Block, or both characteristics
+     */
+    ENABLE_OAD_NOTIFY_FAILED,
+    /**
      * Timed out during sketch programming, before sending chunks: Bean took too long to update its
      * current state
      */
