@@ -672,9 +672,17 @@ public class Bean implements Parcelable {
      */
     public void programWithFirmware(FirmwareBundle bundle, Callback<UploadProgress> onProgress,
                                     Runnable onComplete) {
+
+        Callback<BeanError> onError = new Callback<BeanError>() {
+            @Override
+            public void onResult(BeanError error) {
+                returnError(error);
+            }
+        };
+
         // Since TI OAD FW uploads use BLE characteristics directly, we need to delegate this task
         // to GattClient
-        gattClient.programWithFirmware(bundle, onProgress, onComplete);
+        gattClient.programWithFirmware(bundle, onProgress, onComplete, onError);
     }
 
     /**
