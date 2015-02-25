@@ -35,18 +35,19 @@ import android.util.Log;
 import com.punchthrough.bean.sdk.internal.BeanMessageID;
 import com.punchthrough.bean.sdk.internal.battery.BatteryProfile.BatteryLevelCallback;
 import com.punchthrough.bean.sdk.internal.ble.GattClient;
-import com.punchthrough.bean.sdk.internal.upload.sketch.BeanState;
-import com.punchthrough.bean.sdk.internal.upload.sketch.SketchUploadState;
 import com.punchthrough.bean.sdk.internal.device.DeviceProfile.DeviceInfoCallback;
 import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
 import com.punchthrough.bean.sdk.internal.serial.GattSerialMessage;
 import com.punchthrough.bean.sdk.internal.serial.GattSerialTransportProfile;
+import com.punchthrough.bean.sdk.internal.upload.sketch.BeanState;
+import com.punchthrough.bean.sdk.internal.upload.sketch.SketchUploadState;
 import com.punchthrough.bean.sdk.message.Acceleration;
 import com.punchthrough.bean.sdk.message.AccelerometerRange;
 import com.punchthrough.bean.sdk.message.BatteryLevel;
 import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.Callback;
 import com.punchthrough.bean.sdk.message.DeviceInfo;
+import com.punchthrough.bean.sdk.upload.FirmwareBundle;
 import com.punchthrough.bean.sdk.message.LedColor;
 import com.punchthrough.bean.sdk.message.Message;
 import com.punchthrough.bean.sdk.message.RadioConfig;
@@ -656,6 +657,18 @@ public class Bean implements Parcelable {
 
         sendMessage(BeanMessageID.BL_CMD_START, payload);
 
+    }
+
+    /**
+     * Programs the Bean with new firmware images.
+     *
+     * @param firmwareBundle   The firmware package holding A and B images to be sent to the Bean
+     * @param onProgress        Called with progress while the sketch upload is occurring
+     * @param onComplete        Called when the sketch upload is complete
+     */
+    public void programWithFirmware(FirmwareBundle firmwareBundle,
+                                    Callback<UploadProgress> onProgress, Runnable onComplete) {
+        
     }
 
     /**
