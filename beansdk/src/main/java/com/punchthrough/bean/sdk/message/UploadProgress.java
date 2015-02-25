@@ -7,7 +7,7 @@ import auto.parcel.AutoParcel;
 /**
  * Represents the upload progress of a Bean's upload in progress. Returned in the onUpdate
  * {@link com.punchthrough.bean.sdk.message.Callback} passed into
- * {@link com.punchthrough.bean.sdk.Bean#programWithSketch(SketchHex, Callback, Runnable)}.
+ * {@link com.punchthrough.bean.sdk.Bean#programWithSketch(com.punchthrough.bean.sdk.upload.SketchHex, Callback, Runnable)}.
  */
 @AutoParcel
 public abstract class UploadProgress implements Parcelable {

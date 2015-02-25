@@ -1,4 +1,4 @@
-package com.punchthrough.bean.sdk.internal.upload.firmware;
+package com.punchthrough.bean.sdk.upload;
 
 import android.os.Parcelable;
 

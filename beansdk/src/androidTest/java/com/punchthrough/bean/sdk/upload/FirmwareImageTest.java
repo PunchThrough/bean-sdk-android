@@ -1,8 +1,9 @@
-package com.punchthrough.bean.sdk.internal.upload.firmware;
+package com.punchthrough.bean.sdk.upload;
 
 import android.test.AndroidTestCase;
 
 import com.punchthrough.bean.sdk.internal.exception.ImageParsingException;
+import com.punchthrough.bean.sdk.upload.FirmwareImage;
 
 import static com.punchthrough.bean.sdk.internal.utility.Misc.intArrayToByteArray;
 import static org.assertj.core.api.Assertions.assertThat;

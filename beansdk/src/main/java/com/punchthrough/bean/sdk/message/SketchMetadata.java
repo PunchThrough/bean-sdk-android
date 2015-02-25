@@ -26,6 +26,8 @@ package com.punchthrough.bean.sdk.message;
 
 import android.os.Parcelable;
 
+import com.punchthrough.bean.sdk.upload.SketchHex;
+
 import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 import java.util.Date;
@@ -60,8 +62,8 @@ public abstract class SketchMetadata implements Parcelable {
 
     /**
      * Create a SketchMetadata object with the given
-     * {@link com.punchthrough.bean.sdk.message.SketchHex} data and programmed-at timestamp.
-     * @param hex       The {@link com.punchthrough.bean.sdk.message.SketchHex} to be sent
+     * {@link com.punchthrough.bean.sdk.upload.SketchHex} data and programmed-at timestamp.
+     * @param hex       The {@link com.punchthrough.bean.sdk.upload.SketchHex} to be sent
      * @param timestamp The time the bean will indicate it was programmed
      * @return          The SketchMetadata object
      */

@@ -52,7 +52,7 @@ import com.punchthrough.bean.sdk.message.Message;
 import com.punchthrough.bean.sdk.message.RadioConfig;
 import com.punchthrough.bean.sdk.message.ScratchBank;
 import com.punchthrough.bean.sdk.message.ScratchData;
-import com.punchthrough.bean.sdk.message.SketchHex;
+import com.punchthrough.bean.sdk.upload.SketchHex;
 import com.punchthrough.bean.sdk.message.SketchMetadata;
 import com.punchthrough.bean.sdk.message.Status;
 import com.punchthrough.bean.sdk.message.UploadProgress;
@@ -623,9 +623,11 @@ public class Bean implements Parcelable {
     /**
      * Programs the Bean with an Arduino sketch in hex form. The Bean's sketch name and
      * programmed-at timestamp will be set from
-     * {@link com.punchthrough.bean.sdk.message.SketchHex#sketchName()}.
+     * {@link com.punchthrough.bean.sdk.upload.SketchHex#sketchName()}.
      *
-     * @param hex The sketch to be sent to the Bean
+     * @param hex           The sketch to be sent to the Bean
+     * @param onProgress    Called with progress while the sketch upload is occurring
+     * @param onComplete    Called when the sketch upload is complete
      */
     public void programWithSketch(SketchHex hex, Callback<UploadProgress> onProgress,
                                   Runnable onComplete) {

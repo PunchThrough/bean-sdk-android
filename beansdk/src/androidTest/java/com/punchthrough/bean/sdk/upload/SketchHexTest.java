@@ -1,9 +1,10 @@
-package com.punchthrough.bean.sdk.message;
+package com.punchthrough.bean.sdk.upload;
 
 import android.test.AndroidTestCase;
 
 import com.punchthrough.bean.sdk.internal.exception.HexParsingException;
 import com.punchthrough.bean.sdk.internal.exception.NameLengthException;
+import com.punchthrough.bean.sdk.upload.SketchHex;
 
 import java.util.List;
 

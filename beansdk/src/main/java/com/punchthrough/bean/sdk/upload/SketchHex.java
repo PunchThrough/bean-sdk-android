@@ -1,4 +1,4 @@
-package com.punchthrough.bean.sdk.message;
+package com.punchthrough.bean.sdk.upload;
 
 import android.os.Parcelable;
 
