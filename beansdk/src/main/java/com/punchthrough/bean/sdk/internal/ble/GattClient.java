@@ -467,6 +467,7 @@ public class GattClient {
     }
 
     private void throwBeanError(BeanError error) {
+        resetFirmwareUploadState();
         if (onError != null) {
             onError.onResult(error);
         }
