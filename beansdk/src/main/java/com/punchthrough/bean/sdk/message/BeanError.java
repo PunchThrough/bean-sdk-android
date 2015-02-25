@@ -5,6 +5,26 @@ package com.punchthrough.bean.sdk.message;
  */
 public enum BeanError {
     /**
+     * Bean is not connected
+     */
+    NOT_CONNECTED,
+    /**
+     * Bean's services have not yet been discovered
+     */
+    SERVICES_NOT_DISCOVERED,
+    /**
+     * OAD service was not found
+     */
+    MISSING_OAD_SERVICE,
+    /**
+     * OAD Identify characteristic was not found
+     */
+    MISSING_OAD_IDENTIFY,
+    /**
+     * OAD Block characteristic was not found
+     */
+    MISSING_OAD_BLOCK,
+    /**
      * Timed out during sketch programming, before sending chunks: Bean took too long to update its
      * current state
      */

@@ -39,7 +39,6 @@ import com.punchthrough.bean.sdk.internal.device.DeviceProfile.DeviceInfoCallbac
 import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
 import com.punchthrough.bean.sdk.internal.serial.GattSerialMessage;
 import com.punchthrough.bean.sdk.internal.serial.GattSerialTransportProfile;
-import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareUploadState;
 import com.punchthrough.bean.sdk.internal.upload.sketch.BeanState;
 import com.punchthrough.bean.sdk.internal.upload.sketch.SketchUploadState;
 import com.punchthrough.bean.sdk.message.Acceleration;
@@ -67,7 +66,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.UUID;
 
 import okio.Buffer;
 
@@ -249,33 +247,6 @@ public class Bean implements Parcelable {
      * Called when the sketch upload process completes successfully
      */
     private Runnable onSketchUploadComplete;
-
-
-    // These class variables are used for firmware uploads.
-    /**
-     * The Identify characteristic is used to negotiate the start of a firmware transfer.
-     */
-    private static final UUID CHAR_OAD_IDENTIFY = UUID.fromString("F000FFC1-0451-4000-B000-000000000000");
-    /**
-     * The Block characteristic is used to send firmware chunks and confirm transfer completion.
-     */
-    private static final UUID CHAR_OAD_BLOCK = UUID.fromString("F000FFC1-0451-4000-B000-000000000000");
-    /**
-     * State of the current firmware upload process.
-     */
-    private FirmwareUploadState firmwareUploadState = FirmwareUploadState.INACTIVE;
-    /**
-     * Aborts firmware upload and throws an error if we go too long without a response from the CC.
-     */
-    private Timer firmwareStateTimeout;
-    /**
-     * Chunks of firmware to be sent in order
-     */
-    private List<byte[]> fwChunksToSend;
-    /**
-     * Firmware chunk counter. The packet ID must be incremented for each chunk that is sent.
-     */
-    private int currFwPacketNum = 0;
 
 
     /**
@@ -685,7 +656,7 @@ public class Bean implements Parcelable {
         // and don't worry about sending the firmware chunks
         if (hex.bytes().length > 0) {
             sketchUploadState = SketchUploadState.SENDING_START_COMMAND;
-            resetStateTimeout();
+            resetSketchStateTimeout();
         }
 
         sendMessage(BeanMessageID.BL_CMD_START, payload);
@@ -695,13 +666,15 @@ public class Bean implements Parcelable {
     /**
      * Programs the Bean with new firmware images.
      *
-     * @param firmwareBundle   The firmware package holding A and B images to be sent to the Bean
-     * @param onProgress        Called with progress while the sketch upload is occurring
-     * @param onComplete        Called when the sketch upload is complete
+     * @param bundle        The firmware package holding A and B images to be sent to the Bean
+     * @param onProgress    Called with progress while the sketch upload is occurring
+     * @param onComplete    Called when the sketch upload is complete
      */
-    public void programWithFirmware(FirmwareBundle firmwareBundle,
-                                    Callback<UploadProgress> onProgress, Runnable onComplete) {
-
+    public void programWithFirmware(FirmwareBundle bundle, Callback<UploadProgress> onProgress,
+                                    Runnable onComplete) {
+        // Since TI OAD FW uploads use BLE characteristics directly, we need to delegate this task
+        // to GattClient
+        gattClient.programWithFirmware(bundle, onProgress, onComplete);
     }
 
     /**
@@ -773,16 +746,16 @@ public class Bean implements Parcelable {
         BeanState beanState = status.beanState();
 
         if (beanState == BeanState.READY) {
-            resetStateTimeout();
+            resetSketchStateTimeout();
 
             if (sketchUploadState == SketchUploadState.SENDING_START_COMMAND) {
-                sendNextChunk();
+                sendNextSketchChunk();
                 sketchUploadState = SketchUploadState.SENDING_CHUNKS;
 
             }
 
         } else if (beanState == BeanState.PROGRAMMING) {
-            resetStateTimeout();
+            resetSketchStateTimeout();
 
         } else if (beanState == BeanState.COMPLETE) {
             if (onSketchUploadComplete != null) onSketchUploadComplete.run();
@@ -798,7 +771,7 @@ public class Bean implements Parcelable {
     /**
      * Cancel the state timeout timer and null it to indicate it is no longer running.
      */
-    private void stopStateTimeout() {
+    private void stopSketchStateTimeout() {
         if (sketchStateTimeout != null) {
             sketchStateTimeout.cancel();
             sketchStateTimeout = null;
@@ -808,7 +781,7 @@ public class Bean implements Parcelable {
     /**
      * Cancel the chunk send timer and null it to indicate it is no longer running.
      */
-    private void stopChunkSendTimeout() {
+    private void stopSketchChunkSendTimeout() {
         if (sketchChunkSendTimeout != null) {
             sketchChunkSendTimeout.cancel();
             sketchChunkSendTimeout = null;
@@ -819,7 +792,7 @@ public class Bean implements Parcelable {
      * Reset the state timeout timer. If this timer fires, the client has waited too long for a
      * state update from the Bean and an error will be fired.
      */
-    private void resetStateTimeout() {
+    private void resetSketchStateTimeout() {
         TimerTask onTimeout = new TimerTask() {
             @Override
             public void run() {
@@ -827,7 +800,7 @@ public class Bean implements Parcelable {
             }
         };
 
-        stopStateTimeout();
+        stopSketchStateTimeout();
         sketchStateTimeout = new Timer();
         sketchStateTimeout.schedule(onTimeout, SKETCH_UPLOAD_STATE_TIMEOUT);
     }
@@ -835,15 +808,15 @@ public class Bean implements Parcelable {
     /**
      * Reset the chunk send timer. When this timer fires, another firmware chunk is sent.
      */
-    private void resetChunkSendTimeout() {
+    private void resetSketchChunkSendTimeout() {
         TimerTask onTimeout = new TimerTask() {
             @Override
             public void run() {
-                sendNextChunk();
+                sendNextSketchChunk();
             }
         };
 
-        stopChunkSendTimeout();
+        stopSketchChunkSendTimeout();
         sketchChunkSendTimeout = new Timer();
         sketchChunkSendTimeout.schedule(onTimeout, SKETCH_CHUNK_SEND_INTERVAL);
     }
@@ -851,13 +824,13 @@ public class Bean implements Parcelable {
     /**
      * Send one chunk of sketch or firmware data to the Bean and increment the chunk counter.
      */
-    private void sendNextChunk() {
+    private void sendNextSketchChunk() {
         byte[] rawChunk = sketchChunksToSend.get(currSketchChunkNum);
         Buffer chunk = new Buffer();
         chunk.write(rawChunk);
         sendMessage(BeanMessageID.BL_FW_BLOCK, chunk);
 
-        resetChunkSendTimeout();
+        resetSketchChunkSendTimeout();
 
         int chunksSent = currSketchChunkNum + 1;
         int totalChunks = sketchChunksToSend.size();
@@ -876,8 +849,8 @@ public class Bean implements Parcelable {
         sketchChunksToSend = null;
         currSketchChunkNum = 0;
         sketchUploadState = SketchUploadState.INACTIVE;
-        stopStateTimeout();
-        stopChunkSendTimeout();
+        stopSketchStateTimeout();
+        stopSketchChunkSendTimeout();
     }
 
     /**

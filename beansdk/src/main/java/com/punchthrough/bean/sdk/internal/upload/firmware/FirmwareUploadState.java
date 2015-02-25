@@ -8,7 +8,7 @@ public enum FirmwareUploadState {
     /**
      * Waiting for notify to be enabled on OAD characteristics
      */
-    ENABLE_NOTIFY,
+    AWAIT_NOTIFY_ENABLED,
     /**
      * Waiting for current OAD request header
      */
