@@ -22,6 +22,12 @@ public class FirmwareImageTest extends AndroidTestCase {
             0x42, 0x42, 0x42, 0x42, 0xFF, 0xFF, 0xFF, 0xFF
     });
 
+    // This image has no valid type
+    byte[] validImageNoType = intArrayToByteArray(new int[] {
+            0x2B, 0x65, 0xFF, 0xFF, 0x64, 0x00, 0x00, 0x7C,
+            0x41, 0x42, 0x43, 0x44, 0xFF, 0xFF, 0xFF, 0xFF
+    });
+
     // Invalid images don't have a long enough header
     byte[] invalidImage = intArrayToByteArray(new int[] {
             0x01, 0x02, 0x03, 0x04
@@ -47,10 +53,17 @@ public class FirmwareImageTest extends AndroidTestCase {
 
     }
 
+    public void testParsingTypeInvalid() throws ImageParsingException {
+
+        FirmwareImage image = FirmwareImage.create(validImageNoType);
+        assertThat(image.type()).isNull();
+
+    }
+
     public void testParsingInvalidImage() {
 
         try {
-            FirmwareImage image = FirmwareImage.create(invalidImage);
+            FirmwareImage.create(invalidImage);
             fail();
 
         } catch (ImageParsingException e) {
