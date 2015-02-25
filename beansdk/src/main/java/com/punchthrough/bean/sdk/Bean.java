@@ -39,6 +39,7 @@ import com.punchthrough.bean.sdk.internal.device.DeviceProfile.DeviceInfoCallbac
 import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
 import com.punchthrough.bean.sdk.internal.serial.GattSerialMessage;
 import com.punchthrough.bean.sdk.internal.serial.GattSerialTransportProfile;
+import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareUploadState;
 import com.punchthrough.bean.sdk.internal.upload.sketch.BeanState;
 import com.punchthrough.bean.sdk.internal.upload.sketch.SketchUploadState;
 import com.punchthrough.bean.sdk.message.Acceleration;
@@ -47,16 +48,16 @@ import com.punchthrough.bean.sdk.message.BatteryLevel;
 import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.Callback;
 import com.punchthrough.bean.sdk.message.DeviceInfo;
-import com.punchthrough.bean.sdk.upload.FirmwareBundle;
 import com.punchthrough.bean.sdk.message.LedColor;
 import com.punchthrough.bean.sdk.message.Message;
 import com.punchthrough.bean.sdk.message.RadioConfig;
 import com.punchthrough.bean.sdk.message.ScratchBank;
 import com.punchthrough.bean.sdk.message.ScratchData;
-import com.punchthrough.bean.sdk.upload.SketchHex;
 import com.punchthrough.bean.sdk.message.SketchMetadata;
 import com.punchthrough.bean.sdk.message.Status;
 import com.punchthrough.bean.sdk.message.UploadProgress;
+import com.punchthrough.bean.sdk.upload.FirmwareBundle;
+import com.punchthrough.bean.sdk.upload.SketchHex;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -66,6 +67,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.UUID;
 
 import okio.Buffer;
 
@@ -201,6 +203,7 @@ public class Bean implements Parcelable {
      */
     private HashMap<BeanMessageID, List<Callback<?>>> beanCallbacks = new HashMap<>(16);
 
+
     // These class variables are used for sketch uploads.
     /**
      * The maximum amount of time, in ms, that passes between state updates from the Bean before
@@ -217,6 +220,9 @@ public class Bean implements Parcelable {
      * The maximum sketch chunk size. The last chunk may be smaller.
      */
     private static final int MAX_CHUNK_SIZE_BYTES = 64;
+    /**
+     * State of the current sketch upload process.
+     */
     private SketchUploadState sketchUploadState = SketchUploadState.INACTIVE;
     /**
      * sketchStateTimeout throws an error if too much time passes without an update from the Bean
@@ -243,6 +249,33 @@ public class Bean implements Parcelable {
      * Called when the sketch upload process completes successfully
      */
     private Runnable onSketchUploadComplete;
+
+
+    // These class variables are used for firmware uploads.
+    /**
+     * The Identify characteristic is used to negotiate the start of a firmware transfer.
+     */
+    private static final UUID CHAR_OAD_IDENTIFY = UUID.fromString("F000FFC1-0451-4000-B000-000000000000");
+    /**
+     * The Block characteristic is used to send firmware chunks and confirm transfer completion.
+     */
+    private static final UUID CHAR_OAD_BLOCK = UUID.fromString("F000FFC1-0451-4000-B000-000000000000");
+    /**
+     * State of the current firmware upload process.
+     */
+    private FirmwareUploadState firmwareUploadState = FirmwareUploadState.INACTIVE;
+    /**
+     * Aborts firmware upload and throws an error if we go too long without a response from the CC.
+     */
+    private Timer firmwareStateTimeout;
+    /**
+     * Chunks of firmware to be sent in order
+     */
+    private List<byte[]> fwChunksToSend;
+    /**
+     * Firmware chunk counter. The packet ID must be incremented for each chunk that is sent.
+     */
+    private int currFwPacketNum = 0;
 
 
     /**
