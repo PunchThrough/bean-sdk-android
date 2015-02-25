@@ -3,6 +3,7 @@ package com.punchthrough.bean.sdk.upload;
 import android.os.Parcelable;
 
 import com.punchthrough.bean.sdk.internal.exception.ImageParsingException;
+import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareImageType;
 
 import java.nio.ByteOrder;
 import java.util.Arrays;
@@ -16,6 +17,10 @@ public abstract class FirmwareImage implements Parcelable {
 
     // The byte order used by the CC2540
     public static final ByteOrder BYTE_ORDER = ByteOrder.LITTLE_ENDIAN;
+
+    // The Unique IDs that indicate Image Type A or B
+    public static final String IMAGE_A_ID = "AAAA";
+    public static final String IMAGE_B_ID = "BBBB";
 
     // Raw image data
     public abstract byte[] data();
@@ -66,6 +71,37 @@ public abstract class FirmwareImage implements Parcelable {
      */
     public byte[] reserved() {
         return uint8_4FromData(12);
+    }
+
+    /**
+     * <p>
+     * The {@link com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareImageType}
+     * of this image.
+     * </p>
+     *
+     * <p>
+     * Determined by {@link FirmwareImage#uniqueID()},
+     * which is "AAAA" or "BBBB" for A and B images
+     * respectively. Images A and B are identical but occupy different areas of CC storage.
+     * </p>
+     *
+     * @return  {@link com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareImageType#A},
+     *          {@link com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareImageType#B}, or
+     *          null if {@link FirmwareImage#uniqueID()} is not "AAAA" or "BBBB"
+     */
+    public FirmwareImageType type() {
+        String parsedID = new String(uniqueID());
+
+        if (parsedID.equals(IMAGE_A_ID)) {
+            return FirmwareImageType.A;
+
+        } else if (parsedID.equals(IMAGE_B_ID)) {
+            return FirmwareImageType.B;
+
+        } else {
+            return null;
+
+        }
     }
 
     /**
