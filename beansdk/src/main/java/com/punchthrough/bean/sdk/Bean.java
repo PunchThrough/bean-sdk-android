@@ -764,6 +764,7 @@ public class Bean implements Parcelable {
 
         } else if (beanState == BeanState.COMPLETE) {
             if (onSketchUploadComplete != null) onSketchUploadComplete.run();
+            resetSketchUploadState();
 
         } else if (beanState == BeanState.ERROR) {
             returnUploadError(BeanError.UNKNOWN);
