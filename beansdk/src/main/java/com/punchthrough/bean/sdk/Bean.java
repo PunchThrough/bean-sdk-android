@@ -129,6 +129,11 @@ public class Bean implements Parcelable {
         @Override
         public void onScratchValueChanged(ScratchBank bank, byte[] value) {
         }
+
+        @Override
+        public void onError(BeanError error) {
+            Log.e(TAG, "Bean returned error: " + error);
+        }
     };
     /**
      * The {@link com.punchthrough.bean.sdk.BeanListener} that provides data back to the class that
@@ -152,7 +157,6 @@ public class Bean implements Parcelable {
      * Used to provide async calls to the Bean class.
      */
     private Handler handler = new Handler(Looper.getMainLooper());
-    private Callback<BeanError> errorHandler;
 
     /**
      * <p>
@@ -356,14 +360,6 @@ public class Bean implements Parcelable {
      */
     public BluetoothDevice getDevice() {
         return device;
-    }
-
-    /**
-     * Sets a Bean's error handler. This is called whenever errors occur.
-     * @param errorHandler The callback to be called with the error cause
-     */
-    public void setErrorHandler(Callback<BeanError> errorHandler) {
-         this.errorHandler = errorHandler;
     }
 
     /**
@@ -957,9 +953,7 @@ public class Bean implements Parcelable {
      */
     private void returnError(BeanError error) {
         resetSketchUploadState();
-        if (errorHandler != null) {
-            errorHandler.onResult(error);
-        }
+        beanListener.onError(error);
     }
 
     /**

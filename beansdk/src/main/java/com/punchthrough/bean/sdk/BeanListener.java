@@ -24,6 +24,7 @@
 
 package com.punchthrough.bean.sdk;
 
+import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.ScratchBank;
 
 /**
@@ -63,4 +64,11 @@ public interface BeanListener {
      * @param value the bank's new value
      */
     public void onScratchValueChanged(ScratchBank bank, byte[] value);
+
+    /**
+     * Called when an error occurs during sketch or firmware upload
+     *
+     * @param error The {@link com.punchthrough.bean.sdk.message.BeanError} that occurred
+     */
+    public void onError(BeanError error);
 }
