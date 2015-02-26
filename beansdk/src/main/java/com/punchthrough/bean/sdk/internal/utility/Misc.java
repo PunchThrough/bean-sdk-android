@@ -7,7 +7,10 @@ import org.apache.commons.codec.binary.Hex;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.List;
 
 public class Misc {
 
@@ -166,6 +169,76 @@ public class Misc {
 
         return enumWithRawValue(enumClass, (int) value);
 
+    }
+
+    /**
+     * Retrieve a number of raw bytes at an offset.
+     *
+     * @param offset The byte at which to start, zero-indexed
+     * @param length The number of bytes to return. If this is greater than the number of bytes
+     *               available after <code>offset</code>, it will return all available bytes,
+     *               truncated at the end.
+     * @return       The bytes, starting at <code>offset</code> of length <code>length</code> or
+     *               less if truncated
+     */
+    public static <T extends Chunkable> byte[] bytesFromChunkable(T chunkable, int offset, int length) {
+        
+        byte[] data = chunkable.getChunkableData();
+
+        if ( offset + length > data.length ) {
+            // Arrays.copyOfRange appends 0s when the array end is exceeded.
+            // Trim length manually to avoid appending extra data.
+            return Arrays.copyOfRange(data, offset, data.length);
+
+        } else {
+            return Arrays.copyOfRange(data, offset, offset + length);
+
+        }
+    }
+
+    /**
+     * Retrieve a chunk of raw bytes. Chunks are created by slicing the array at even intervals.
+     * The final chunk may be shorter than the other chunks if it's been truncated.
+     *
+     * @param chunkLength   The length of each chunk
+     * @param chunkNum      The chunk at which to start, zero-indexed
+     * @return              The chunk (array of bytes)
+     */
+    public static <T extends Chunkable> byte[] chunkFromChunkable(
+            T chunkable, int chunkLength, int chunkNum) {
+        int start = chunkNum * chunkLength;
+        return bytesFromChunkable(chunkable, start, chunkLength);
+    }
+
+    /**
+     * Retrieve the count of chunks for a given chunk length.
+     *
+     * @param chunkLength   The length of each chunk
+     * @return              The number of chunks generated for a given chunk length
+     */
+    public static <T extends Chunkable> int chunkCountFromChunkable(T chunkable, int chunkLength) {
+        byte[] data = chunkable.getChunkableData();
+        return (int) Math.ceil(data.length * 1.0 / chunkLength);
+    }
+
+    /**
+     * Retrieve all chunks for a given chunk length.
+     * The final chunk may be shorter than the other chunks if it's been truncated.
+     *
+     * @param chunkLength   The length of each chunk
+     * @return              A list of chunks (byte arrays)
+     */
+    public static <T extends Chunkable> List<byte[]> chunksFromChunkable(T chunkable, int chunkLength) {
+
+        List<byte[]> chunks = new ArrayList<>();
+
+        int chunkCount = chunkCountFromChunkable(chunkable, chunkLength);
+        for (int i = 0; i < chunkCount; i++) {
+            byte[] chunk = chunkFromChunkable(chunkable, chunkLength, i);
+            chunks.add(chunk);
+        }
+
+        return chunks;
     }
 
 }

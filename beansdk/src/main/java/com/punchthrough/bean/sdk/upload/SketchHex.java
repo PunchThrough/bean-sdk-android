@@ -7,6 +7,7 @@ import com.punchthrough.bean.sdk.internal.exception.NameLengthException;
 import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
 import com.punchthrough.bean.sdk.internal.intelhex.Line;
 import com.punchthrough.bean.sdk.internal.intelhex.LineRecordType;
+import com.punchthrough.bean.sdk.internal.utility.Chunkable;
 import com.punchthrough.bean.sdk.internal.utility.Constants;
 
 import org.apache.commons.codec.DecoderException;
@@ -23,11 +24,16 @@ import static com.punchthrough.bean.sdk.internal.utility.Misc.bytesToInt;
 import static com.punchthrough.bean.sdk.internal.utility.Misc.enumWithRawValue;
 
 @AutoParcel
-public abstract class SketchHex implements Parcelable {
+public abstract class SketchHex implements Parcelable, Chunkable {
 
     public abstract String sketchName();
 
     public abstract byte[] bytes();
+
+    @Override
+    public byte[] getChunkableData() {
+        return bytes();
+    }
 
     /**
      * Initialize a SketchHex object with no data.
@@ -54,70 +60,6 @@ public abstract class SketchHex implements Parcelable {
         List<Line> lines = parseHexStringToLines(hexString);
         byte[] bytes = convertLinesToBytes(lines);
         return new AutoParcel_SketchHex(sketchName, bytes);
-    }
-
-    /**
-     * Retrieve the raw bytes represented by the parsed Intel Hex.
-     *
-     * @param offset The byte at which to start, zero-indexed
-     * @param length The number of bytes to return. If this is greater than the number of bytes
-     *               available after <code>offset</code>, it will return all available bytes,
-     *               truncated at the end.
-     * @return       The bytes, starting at <code>offset</code> of length <code>length</code> or
-     *               less if truncated
-     */
-    public byte[] bytes(int offset, int length) {
-
-        if ( offset + length > bytes().length ) {
-            // Arrays.copyOfRange appends 0s when the array end is exceeded.
-            // Trim length manually to avoid appending extra data.
-            return Arrays.copyOfRange(bytes(), offset, bytes().length);
-
-        } else {
-            return Arrays.copyOfRange(bytes(), offset, offset + length);
-
-        }
-    }
-
-    /**
-     * Retrieve a chunk of raw bytes. Chunks are created by slicing the array at even intervals.
-     * The final chunk may be shorter than the other chunks if it's been truncated.
-     *
-     * @param chunkLength   The length of each chunk
-     * @param chunkNum      The chunk at which to start, zero-indexed
-     * @return              The chunk (array of bytes)
-     */
-    public byte[] chunk(int chunkLength, int chunkNum) {
-        int start = chunkNum * chunkLength;
-        return bytes(start, chunkLength);
-    }
-
-    /**
-     * Retrieve the count of chunks for a given chunk length.
-     *
-     * @param chunkLength   The length of each chunk
-     * @return              The number of chunks generated for a given chunk length
-     */
-    public int chunkCount(int chunkLength) {
-        return (int) Math.ceil(bytes().length * 1.0 / chunkLength);
-    }
-
-    /**
-     * Retrieve all chunks for a given chunk length.
-     * The final chunk may be shorter than the other chunks if it's been truncated.
-     *
-     * @param chunkLength   The length of each chunk
-     * @return              A list of chunks (byte arrays)
-     */
-    public List<byte[]> chunks(int chunkLength) {
-
-        List<byte[]> chunks = new ArrayList<>();
-
-        for (int i = 0; i < chunkCount(chunkLength); i++) {
-            chunks.add(chunk(chunkLength, i));
-        }
-
-        return chunks;
     }
 
     /**

@@ -3,27 +3,38 @@ package com.punchthrough.bean.sdk.upload;
 import android.os.Parcelable;
 
 import com.punchthrough.bean.sdk.internal.exception.ImageParsingException;
+import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareChunk;
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareImageType;
+import com.punchthrough.bean.sdk.internal.utility.Chunkable;
+import com.punchthrough.bean.sdk.internal.utility.Constants;
 
-import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import auto.parcel.AutoParcel;
 
+import static com.punchthrough.bean.sdk.internal.utility.Misc.chunksFromChunkable;
 import static com.punchthrough.bean.sdk.internal.utility.Misc.twoBytesToInt;
 
 @AutoParcel
-public abstract class FirmwareImage implements Parcelable {
+public abstract class FirmwareImage implements Parcelable, Chunkable {
 
-    // The byte order used by the CC2540
-    public static final ByteOrder BYTE_ORDER = ByteOrder.LITTLE_ENDIAN;
+    /**
+     * The chunk size of firmware packets being sent
+     */
+    private static final int FW_CHUNK_SIZE = 16;
 
-    // The Unique IDs that indicate Image Type A or B
-    public static final String IMAGE_A_ID = "AAAA";
-    public static final String IMAGE_B_ID = "BBBB";
-
-    // Raw image data
+    /**
+     * The raw firmware image data.
+     * @return The raw image data
+     */
     public abstract byte[] data();
+
+    @Override
+    public byte[] getChunkableData() {
+        return data();
+    }
 
     /**
      * The CRC16 of the image.
@@ -92,16 +103,36 @@ public abstract class FirmwareImage implements Parcelable {
     public FirmwareImageType type() {
         String parsedID = new String(uniqueID());
 
-        if (parsedID.equals(IMAGE_A_ID)) {
+        if (parsedID.equals(Constants.IMAGE_A_ID)) {
             return FirmwareImageType.A;
 
-        } else if (parsedID.equals(IMAGE_B_ID)) {
+        } else if (parsedID.equals(Constants.IMAGE_B_ID)) {
             return FirmwareImageType.B;
 
         } else {
             return null;
 
         }
+    }
+
+    /**
+     * Get all {@link com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareChunk}s for this
+     * firmware image.
+     * @return All chunks for this image
+     */
+    public List<FirmwareChunk> chunks() {
+
+        List<FirmwareChunk> chunks = new ArrayList<>();
+
+        List<byte[]> rawChunks = chunksFromChunkable(this, FW_CHUNK_SIZE);
+        int i = 0;
+        for (byte[] rawChunk : rawChunks) {
+            FirmwareChunk chunk = FirmwareChunk.create(i, rawChunk);
+            chunks.add(chunk);
+        }
+
+        return chunks;
+
     }
 
     /**
@@ -128,7 +159,9 @@ public abstract class FirmwareImage implements Parcelable {
      * @return          The Java int representation of the parsed bytes
      */
     private int uint16FromData(int offset) {
-        return twoBytesToInt(Arrays.copyOfRange(data(), offset, offset + 2), BYTE_ORDER);
+        return twoBytesToInt(
+                Arrays.copyOfRange(data(), offset, offset + 2),
+                Constants.CC2540_BYTE_ORDER);
     }
 
     /**

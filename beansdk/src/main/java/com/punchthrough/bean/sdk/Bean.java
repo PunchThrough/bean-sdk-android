@@ -70,6 +70,7 @@ import java.util.TimerTask;
 import okio.Buffer;
 
 import static com.punchthrough.bean.sdk.internal.Protocol.APP_MSG_RESPONSE_BIT;
+import static com.punchthrough.bean.sdk.internal.utility.Misc.chunksFromChunkable;
 import static com.punchthrough.bean.sdk.internal.utility.Misc.intToByte;
 
 /**
@@ -646,7 +647,7 @@ public class Bean implements Parcelable {
         this.onSketchUploadComplete = onComplete;
 
         // Prepare the firmware chunks to be sent
-        sketchChunksToSend = hex.chunks(MAX_CHUNK_SIZE_BYTES);
+        sketchChunksToSend = chunksFromChunkable(hex, MAX_CHUNK_SIZE_BYTES);
 
         // Construct and send the START payload with sketch metadata
         SketchMetadata metadata = SketchMetadata.create(hex, new Date());

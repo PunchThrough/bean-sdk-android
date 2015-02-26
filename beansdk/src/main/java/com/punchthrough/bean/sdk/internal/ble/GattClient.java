@@ -10,12 +10,17 @@ import android.content.Context;
 
 import com.punchthrough.bean.sdk.internal.battery.BatteryProfile;
 import com.punchthrough.bean.sdk.internal.device.DeviceProfile;
+import com.punchthrough.bean.sdk.internal.exception.MetadataParsingException;
 import com.punchthrough.bean.sdk.internal.serial.GattSerialTransportProfile;
+import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareChunk;
+import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareImageType;
+import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareMetadata;
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareUploadState;
 import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.Callback;
 import com.punchthrough.bean.sdk.message.UploadProgress;
 import com.punchthrough.bean.sdk.upload.FirmwareBundle;
+import com.punchthrough.bean.sdk.upload.FirmwareImage;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -81,9 +86,13 @@ public class GattClient {
      */
     private Timer firmwareStateTimeout;
     /**
+     * Firmware bundle with A and B images to send
+     */
+    FirmwareBundle firmwareBundle;
+    /**
      * Chunks of firmware to be sent in order
      */
-    private List<byte[]> fwChunksToSend;
+    private List<FirmwareChunk> fwChunksToSend;
     /**
      * Firmware chunk counter. The packet ID must be incremented for each chunk that is sent.
      */
@@ -136,6 +145,8 @@ public class GattClient {
             if (uploadInProgress()) {
 
                 if (isOADIdentifyCharacteristic(characteristic)) {
+
+                    resetFirmwareStateTimeout();
 
                     if (firmwareUploadState == FirmwareUploadState.AWAIT_CURRENT_HEADER) {
                         prepareResponseHeader(characteristic.getValue());
@@ -405,7 +416,8 @@ public class GattClient {
         this.onComplete = onComplete;
         this.onError = onError;
 
-        // TODO: Parse FW bundle into chunks
+        // Save firmware bundle so we have both images when response header is received
+        this.firmwareBundle = bundle;
 
         verifyNotifyEnabled();
 
@@ -482,7 +494,35 @@ public class GattClient {
     }
 
     private void prepareResponseHeader(byte[] rawRequestHeader) {
-        // TODO
+
+        FirmwareMetadata metadata;
+        try {
+            metadata = FirmwareMetadata.fromPayload(rawRequestHeader);
+
+        } catch (MetadataParsingException e) {
+            throwBeanError(BeanError.UNPARSABLE_FIRMWARE_METADATA);
+            return;
+        }
+
+        // TODO: Check FW to flash's version against existing FW
+
+        FirmwareImageType type = metadata.type();
+        FirmwareImage toSend;
+
+        if (type == FirmwareImageType.A) {
+            toSend = firmwareBundle.imageA();
+
+        } else if (type == FirmwareImageType.B) {
+            toSend = firmwareBundle.imageB();
+
+        } else {
+            throwBeanError(BeanError.UNPARSABLE_FIRMWARE_METADATA);
+            return;
+        }
+
+        fwChunksToSend = toSend.chunks();
+        firmwareUploadState = FirmwareUploadState.AWAIT_XFER_ACCEPT;
+
     }
     
     private void stopFirmwareStateTimeout() {
@@ -496,7 +536,21 @@ public class GattClient {
         TimerTask onTimeout = new TimerTask() {
             @Override
             public void run() {
-                throwBeanError(BeanError.STATE_TIMEOUT);
+
+                if (firmwareUploadState == FirmwareUploadState.AWAIT_CURRENT_HEADER) {
+                    throwBeanError(BeanError.FW_VER_REQ_TIMEOUT);
+
+                } else if (firmwareUploadState == FirmwareUploadState.AWAIT_XFER_ACCEPT) {
+                    throwBeanError(BeanError.FW_START_TIMEOUT);
+
+                } else if (firmwareUploadState == FirmwareUploadState.SEND_FW_CHUNKS) {
+                    throwBeanError(BeanError.FW_TRANSFER_TIMEOUT);
+
+                } else if (firmwareUploadState == FirmwareUploadState.AWAIT_COMPLETION) {
+                    throwBeanError(BeanError.FW_COMPLETE_TIMEOUT);
+
+                }
+
             }
         };
 

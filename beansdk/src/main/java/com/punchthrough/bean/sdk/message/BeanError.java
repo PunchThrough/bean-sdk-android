@@ -34,13 +34,13 @@ public enum BeanError {
      */
     STATE_TIMEOUT,
     /**
-     * Timed out configuring OAD characteristics
+     * Firmware metadata could not be parsed from OAD request header
      */
-    OAD_CONFIG_TIMEOUT,
+    UNPARSABLE_FIRMWARE_METADATA,
     /**
      * Timed out requesting current firmware version
      */
-    CURR_FW_VER_TIMEOUT,
+    FW_VER_REQ_TIMEOUT,
     /**
      * Timed out starting firmware download
      */
@@ -48,7 +48,11 @@ public enum BeanError {
     /**
      * Timed out while sending firmware packets
      */
-    FW_DOWNLOAD_TIMEOUT,
+    FW_TRANSFER_TIMEOUT,
+    /**
+     * Timed out while waiting for confirmation of firmware upload completion
+     */
+    FW_COMPLETE_TIMEOUT,
     /**
      * Bean did not provide a reason for the error
      */
