@@ -5,10 +5,12 @@ import android.os.Parcelable;
 import com.punchthrough.bean.sdk.internal.exception.MetadataParsingException;
 import com.punchthrough.bean.sdk.internal.utility.Constants;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import auto.parcel.AutoParcel;
 
+import static com.punchthrough.bean.sdk.internal.utility.Misc.intToTwoBytes;
 import static com.punchthrough.bean.sdk.internal.utility.Misc.twoBytesToInt;
 
 @AutoParcel
@@ -27,6 +29,18 @@ public abstract class FirmwareMetadata implements Parcelable {
     }
 
     protected abstract byte[] data();
+
+    public static FirmwareMetadata create(int version, int length, byte[] uniqueID) {
+
+        ByteBuffer buffer = ByteBuffer.allocate(8);
+
+        buffer.put(intToTwoBytes(version, Constants.CC2540_BYTE_ORDER));
+        buffer.put(intToTwoBytes(length, Constants.CC2540_BYTE_ORDER));
+        buffer.put(uniqueID);
+
+        return new AutoParcel_FirmwareMetadata(buffer.array());
+
+    }
 
     public static FirmwareMetadata fromPayload(byte[] payload) throws MetadataParsingException {
 
