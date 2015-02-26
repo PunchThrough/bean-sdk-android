@@ -474,7 +474,7 @@ public class GattClient {
         oadIdentifyNotifying = enableNotifyForChar(oadIdentify);
         oadBlockNotifying = enableNotifyForChar(oadBlock);
         if (oadIdentifyNotifying && oadBlockNotifying) {
-            enableOADNotifications();
+            requestCurrentHeader();
         } else {
             throwBeanError(BeanError.ENABLE_OAD_NOTIFY_FAILED);
         }
