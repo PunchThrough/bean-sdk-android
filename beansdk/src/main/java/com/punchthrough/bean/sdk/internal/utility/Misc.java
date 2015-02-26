@@ -71,12 +71,32 @@ public class Misc {
      * @return      An int representing the bytes in the given order
      */
     public static int twoBytesToInt(byte[] bytes, ByteOrder order) {
+
         if (order == ByteOrder.BIG_ENDIAN) {
             return bytesToInt(bytes[0], bytes[1]);
+
         } else if (order == ByteOrder.LITTLE_ENDIAN) {
             return bytesToInt(bytes[1], bytes[0]);
+
         } else {
             throw new IllegalArgumentException("ByteOrder must be BIG_ENDIAN or LITTLE_ENDIAN");
+
+        }
+    }
+
+    public static byte[] intToTwoBytes(int i, ByteOrder order) {
+
+        byte[] bytes = ByteBuffer.allocate(4).order(order).putInt(i).array();
+
+        if (order == ByteOrder.LITTLE_ENDIAN) {
+            return Arrays.copyOfRange(bytes, 0, 2);
+
+        } else if (order == ByteOrder.BIG_ENDIAN) {
+            return Arrays.copyOfRange(bytes, 2, 4);
+
+        } else {
+            throw new IllegalArgumentException("ByteOrder must be BIG_ENDIAN or LITTLE_ENDIAN");
+
         }
     }
 
