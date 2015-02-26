@@ -4,6 +4,7 @@ import android.test.AndroidTestCase;
 
 import com.punchthrough.bean.sdk.internal.exception.ImageParsingException;
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareImageType;
+import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareMetadata;
 
 import static com.punchthrough.bean.sdk.internal.utility.Misc.intArrayToByteArray;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -70,6 +71,16 @@ public class FirmwareImageTest extends AndroidTestCase {
             assertThat(e).isNotNull();
 
         }
+
+    }
+
+    public void testGetMetadata() throws ImageParsingException {
+
+        FirmwareImage image = FirmwareImage.create(validImageA);
+        FirmwareMetadata metadata = image.metadata();
+        assertThat(metadata.version()).isEqualTo(100);
+        assertThat(metadata.length()).isEqualTo(31744);
+        assertThat(metadata.uniqueID()).isEqualTo(new byte[] {0x41, 0x41, 0x41, 0x41});
 
     }
 

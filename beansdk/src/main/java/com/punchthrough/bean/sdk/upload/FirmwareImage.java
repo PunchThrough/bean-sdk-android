@@ -5,6 +5,7 @@ import android.os.Parcelable;
 import com.punchthrough.bean.sdk.internal.exception.ImageParsingException;
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareChunk;
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareImageType;
+import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareMetadata;
 import com.punchthrough.bean.sdk.internal.utility.Chunkable;
 import com.punchthrough.bean.sdk.internal.utility.Constants;
 
@@ -113,6 +114,10 @@ public abstract class FirmwareImage implements Parcelable, Chunkable {
             return null;
 
         }
+    }
+
+    public FirmwareMetadata metadata() {
+        return FirmwareMetadata.create(version(), length(), uniqueID());
     }
 
     /**
