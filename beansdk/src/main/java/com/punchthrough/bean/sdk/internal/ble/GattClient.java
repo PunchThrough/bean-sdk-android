@@ -151,11 +151,21 @@ public class GattClient {
                     if (firmwareUploadState == FirmwareUploadState.AWAIT_CURRENT_HEADER) {
                         prepareResponseHeader(characteristic.getValue());
 
+                    } else if (firmwareUploadState == FirmwareUploadState.AWAIT_XFER_ACCEPT) {
+                        // Existing header read, new header sent, Identify pinged ->
+                        // Bean rejected firmware version
+                        throwBeanError(BeanError.BEAN_REJECTED_FW);
+
                     }
 
                 } else if (isOADBlockCharacteristic(characteristic)) {
 
+                    if (firmwareUploadState == FirmwareUploadState.AWAIT_XFER_ACCEPT) {
+                        // Existing header read, new header sent, Block pinged ->
+                        // Bean accepted firmware version, begin transfer
+                        // TODO: Begin transfer
 
+                    }
 
                 }
             }
@@ -488,25 +498,24 @@ public class GattClient {
         firmwareUploadState = FirmwareUploadState.AWAIT_CURRENT_HEADER;
 
         // To request the current header, write [0x00] to OAD Identify
-        oadIdentify.setValue(new byte[]{0x00});
-        mGatt.writeCharacteristic(oadIdentify);
+        writeToCharacteristic(oadIdentify, new byte[]{0x00});
 
     }
 
     private void prepareResponseHeader(byte[] rawRequestHeader) {
 
-        FirmwareMetadata metadata;
+        FirmwareMetadata existingMeta;
         try {
-            metadata = FirmwareMetadata.fromPayload(rawRequestHeader);
+            existingMeta = FirmwareMetadata.fromPayload(rawRequestHeader);
 
         } catch (MetadataParsingException e) {
-            throwBeanError(BeanError.UNPARSABLE_FIRMWARE_METADATA);
+            throwBeanError(BeanError.UNPARSABLE_FW_METADATA);
             return;
         }
 
         // TODO: Check FW to flash's version against existing FW
 
-        FirmwareImageType type = metadata.type();
+        FirmwareImageType type = existingMeta.type();
         FirmwareImage toSend;
 
         if (type == FirmwareImageType.A) {
@@ -516,12 +525,16 @@ public class GattClient {
             toSend = firmwareBundle.imageB();
 
         } else {
-            throwBeanError(BeanError.UNPARSABLE_FIRMWARE_METADATA);
+            throwBeanError(BeanError.UNPARSABLE_FW_METADATA);
             return;
         }
 
+        FirmwareMetadata newMeta = toSend.metadata();
         fwChunksToSend = toSend.chunks();
         firmwareUploadState = FirmwareUploadState.AWAIT_XFER_ACCEPT;
+
+        // Write the new image metadata
+        writeToCharacteristic(oadIdentify, newMeta.toPayload());
 
     }
     
@@ -582,5 +595,10 @@ public class GattClient {
 
     private boolean isOADCharacteristic(BluetoothGattCharacteristic charc) {
         return isOADBlockCharacteristic(charc) || isOADIdentifyCharacteristic(charc);
+    }
+
+    private boolean writeToCharacteristic(BluetoothGattCharacteristic charc, byte[] data) {
+        charc.setValue(data);
+        return mGatt.writeCharacteristic(charc);
     }
 }

@@ -36,7 +36,7 @@ public enum BeanError {
     /**
      * Firmware metadata could not be parsed from OAD request header
      */
-    UNPARSABLE_FIRMWARE_METADATA,
+    UNPARSABLE_FW_METADATA,
     /**
      * Timed out requesting current firmware version
      */
@@ -53,6 +53,10 @@ public enum BeanError {
      * Timed out while waiting for confirmation of firmware upload completion
      */
     FW_COMPLETE_TIMEOUT,
+    /**
+     * Bean rejected firmware version for being older than the current version
+     */
+    BEAN_REJECTED_FW,
     /**
      * Bean did not provide a reason for the error
      */
