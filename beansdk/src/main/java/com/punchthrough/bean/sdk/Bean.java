@@ -754,8 +754,9 @@ public class Bean implements Parcelable {
             resetSketchStateTimeout();
 
             if (sketchUploadState == SketchUploadState.SENDING_START_COMMAND) {
-                sendNextSketchChunk();
                 sketchUploadState = SketchUploadState.SENDING_CHUNKS;
+                stopSketchStateTimeout();
+                sendNextSketchChunk();
 
             }
 
