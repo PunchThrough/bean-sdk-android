@@ -4,7 +4,6 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/bean-android-sdk.iml" filepath="$PROJECT_DIR$/bean-android-sdk.iml" />
       <module fileurl="file://$PROJECT_DIR$/beansdk/beansdk.iml" filepath="$PROJECT_DIR$/beansdk/beansdk.iml" />
-      <module fileurl="file://$PROJECT_DIR$/sdk/sdk.iml" filepath="$PROJECT_DIR$/sdk/sdk.iml" />
     </modules>
   </component>
 </project>
