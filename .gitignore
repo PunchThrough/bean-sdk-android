@@ -3,3 +3,5 @@ beanlib/build
 build
 local.properties
 jars
+**/.idea/workspace.xml
+**/.idea/tasks.xml
