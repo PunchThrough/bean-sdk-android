@@ -580,7 +580,7 @@ public class GattClient {
     }
 
     private boolean uploadInProgress() {
-        return firmwareUploadState == FirmwareUploadState.INACTIVE;
+        return firmwareUploadState != FirmwareUploadState.INACTIVE;
     }
 
     private boolean isOADBlockCharacteristic(BluetoothGattCharacteristic charc) {
