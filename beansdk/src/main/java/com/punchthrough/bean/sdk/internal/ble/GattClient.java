@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.content.Context;
+import android.util.Log;
 
 import com.punchthrough.bean.sdk.internal.battery.BatteryProfile;
 import com.punchthrough.bean.sdk.internal.device.DeviceProfile;
@@ -24,6 +25,7 @@ import com.punchthrough.bean.sdk.upload.FirmwareImage;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Queue;
 import java.util.Timer;
@@ -145,6 +147,7 @@ public class GattClient {
             if (uploadInProgress()) {
 
                 if (isOADIdentifyCharacteristic(characteristic)) {
+                    Log.d(TAG, "OAD Identify characteristic read");
 
                     resetFirmwareStateTimeout();
 
@@ -159,6 +162,7 @@ public class GattClient {
                     }
 
                 } else if (isOADBlockCharacteristic(characteristic)) {
+                    Log.d(TAG, "OAD Block characteristic read");
 
                     if (firmwareUploadState == FirmwareUploadState.AWAIT_XFER_ACCEPT) {
                         // Existing header read, new header sent, Block pinged ->
@@ -188,6 +192,15 @@ public class GattClient {
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
 
             if (uploadInProgress() && isOADCharacteristic(characteristic)) {
+
+                if (isOADIdentifyCharacteristic(characteristic)) {
+                    Log.d(TAG, "OAD Identify characteristic notified");
+
+                } else if (isOADBlockCharacteristic(characteristic)) {
+                    Log.d(TAG, "OAD Block characteristic notified");
+
+                }
+
                 mGatt.readCharacteristic(characteristic);
             }
 
@@ -413,6 +426,8 @@ public class GattClient {
     public void programWithFirmware(FirmwareBundle bundle, Callback<UploadProgress> onProgress,
                                     Runnable onComplete, Callback<BeanError> onError) {
 
+        Log.d(TAG, "Programming Bean with firmware");
+
         // Ensure Bean is connected and services have been discovered
         if (!mConnected) {
             onError.onResult(BeanError.NOT_CONNECTED);
@@ -441,6 +456,7 @@ public class GattClient {
     }
 
     private void verifyNotifyEnabled() {
+        Log.d(TAG, "Verifying OAD notifications are enabled");
         // Ensure all characteristics are discovered and notifying
         if (oadIdentify != null && oadBlock != null &&
                 oadIdentifyNotifying && oadBlockNotifying) {
@@ -451,6 +467,7 @@ public class GattClient {
     }
 
     private void enableOADNotifications() {
+        Log.d(TAG, "Enabling OAD notifications");
         firmwareUploadState = FirmwareUploadState.AWAIT_NOTIFY_ENABLED;
 
         BluetoothGattService oadService = mGatt.getService(SERVICE_OAD);
@@ -474,6 +491,7 @@ public class GattClient {
         oadIdentifyNotifying = enableNotifyForChar(oadIdentify);
         oadBlockNotifying = enableNotifyForChar(oadBlock);
         if (oadIdentifyNotifying && oadBlockNotifying) {
+            Log.d(TAG, "Enable notifications successful");
             requestCurrentHeader();
         } else {
             throwBeanError(BeanError.ENABLE_OAD_NOTIFY_FAILED);
@@ -489,12 +507,17 @@ public class GattClient {
                 UUID.fromString(CLIENT_CHARACTERISTIC_CONFIG));
         descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
         mGatt.writeDescriptor(descriptor);
-
+        if (result) {
+            Log.d(TAG, "Enabled notify for characteristic: " + characteristic.getUuid());
+        } else {
+            Log.e(TAG, "Enable notify failed for characteristic: " + characteristic.getUuid());
+        }
         return result;
     }
 
     private void requestCurrentHeader() {
 
+        Log.d(TAG, "Requesting current header");
         firmwareUploadState = FirmwareUploadState.AWAIT_CURRENT_HEADER;
 
         // To request the current header, write [0x00] to OAD Identify
@@ -503,6 +526,8 @@ public class GattClient {
     }
 
     private void prepareResponseHeader(byte[] rawRequestHeader) {
+
+        Log.d(TAG, "Preparing response header");
 
         FirmwareMetadata existingMeta;
         try {
@@ -549,6 +574,8 @@ public class GattClient {
         TimerTask onTimeout = new TimerTask() {
             @Override
             public void run() {
+
+                Log.e(TAG, "Firmware update state timed out: " + firmwareUploadState);
 
                 if (firmwareUploadState == FirmwareUploadState.AWAIT_CURRENT_HEADER) {
                     throwBeanError(BeanError.FW_VER_REQ_TIMEOUT);
@@ -599,6 +626,14 @@ public class GattClient {
 
     private boolean writeToCharacteristic(BluetoothGattCharacteristic charc, byte[] data) {
         charc.setValue(data);
-        return mGatt.writeCharacteristic(charc);
+        boolean result = mGatt.writeCharacteristic(charc);
+        if (result) {
+            Log.d(TAG, "Wrote to characteristic: " + charc.getUuid() +
+                    ", data: " + Arrays.toString(data));
+        } else {
+            Log.e(TAG, "Write failed to characteristic: " + charc.getUuid() +
+                    ", data: " + Arrays.toString(data));
+        }
+        return result;
     }
 }
