@@ -201,7 +201,13 @@ public class GattClient {
 
                 }
 
-                mGatt.readCharacteristic(characteristic);
+                boolean result = mGatt.readCharacteristic(characteristic);
+                if (result) {
+                    Log.d(TAG, "Read requested for characteristic: " + characteristic.getUuid());
+                } else {
+                    Log.e(TAG, "Read request failed for characteristic: " +
+                            characteristic.getUuid());
+                }
             }
 
             fireCharacteristicChanged(characteristic);
