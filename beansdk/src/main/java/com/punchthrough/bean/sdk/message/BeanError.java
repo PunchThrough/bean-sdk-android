@@ -34,9 +34,9 @@ public enum BeanError {
      */
     STATE_TIMEOUT,
     /**
-     * Firmware metadata could not be parsed from OAD request header
+     * Firmware version to send could not be parsed from OAD request header
      */
-    UNPARSABLE_FW_METADATA,
+    UNPARSABLE_FW_VERSION,
     /**
      * Timed out requesting current firmware version
      */

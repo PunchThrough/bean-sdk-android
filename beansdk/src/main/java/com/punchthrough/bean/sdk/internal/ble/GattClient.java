@@ -21,7 +21,6 @@ import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.Callback;
 import com.punchthrough.bean.sdk.message.UploadProgress;
 import com.punchthrough.bean.sdk.upload.FirmwareBundle;
-import com.punchthrough.bean.sdk.upload.FirmwareImage;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -62,7 +61,7 @@ public class GattClient {
     /**
      * The OAD Block characteristic is used to send firmware chunks and confirm transfer completion
      */
-    private static final UUID CHAR_OAD_BLOCK = UUID.fromString("F000FFC1-0451-4000-B000-000000000000");
+    private static final UUID CHAR_OAD_BLOCK = UUID.fromString("F000FFC2-0451-4000-B000-000000000000");
     /**
      * The OAD Identify characteristic for this device. Assigned when firmware upload is started.
      */
@@ -95,6 +94,14 @@ public class GattClient {
      * Chunks of firmware to be sent in order
      */
     private List<FirmwareChunk> fwChunksToSend;
+    /**
+     * Storage for chunks for firmware image A. This takes a while, so we do it ahead of time.
+     */
+    private List<FirmwareChunk> fwChunksToSendA;
+    /**
+     * Storage for chunks for firmware image B. This takes a while, so we do it ahead of time.
+     */
+    private List<FirmwareChunk> fwChunksToSendB;
     /**
      * Firmware chunk counter. The packet ID must be incremented for each chunk that is sent.
      */
@@ -430,6 +437,12 @@ public class GattClient {
         // Save firmware bundle so we have both images when response header is received
         this.firmwareBundle = bundle;
 
+        Log.d(TAG, "Preparing firmware chunks (give me a second)");
+
+        // Prepare chunks: doing this during the FW upload process takes too long
+        fwChunksToSendA = bundle.imageA().chunks();
+        fwChunksToSendB = bundle.imageB().chunks();
+
         verifyNotifyEnabled();
 
     }
@@ -442,7 +455,7 @@ public class GattClient {
     }
 
     private void verifyNotifyEnabled() {
-        Log.d(TAG, "Verifying OAD notifications are enabled");
+        Log.d(TAG, "Firmware chunks prepared, verifying OAD notifications are enabled");
         // Ensure all characteristics are discovered and notifying
         if (oadIdentify != null && oadBlock != null &&
                 oadIdentifyNotifying && oadBlockNotifying) {
@@ -511,37 +524,39 @@ public class GattClient {
 
     }
 
-    private void prepareResponseHeader(byte[] rawRequestHeader) {
+    private void prepareResponseHeader(byte[] existingHeader) {
 
-        Log.d(TAG, "Preparing response header");
+        Log.d(TAG, "Preparing response header from existing header: " +
+                Arrays.toString(existingHeader));
 
-        FirmwareMetadata existingMeta;
+        FirmwareMetadata oldMeta;
         try {
-            existingMeta = FirmwareMetadata.fromPayload(rawRequestHeader);
+            oldMeta = FirmwareMetadata.fromPayload(existingHeader);
 
         } catch (MetadataParsingException e) {
-            throwBeanError(BeanError.UNPARSABLE_FW_METADATA);
+            throwBeanError(BeanError.UNPARSABLE_FW_VERSION);
             return;
+
         }
 
-        // TODO: Check FW to flash's version against existing FW
+        FirmwareMetadata newMeta;
 
-        FirmwareImageType type = existingMeta.type();
-        FirmwareImage toSend;
+        // If the Bean has image A, send image B and vice versa.
 
-        if (type == FirmwareImageType.A) {
-            toSend = firmwareBundle.imageA();
+        if (oldMeta.type() == FirmwareImageType.A) {
+            newMeta = firmwareBundle.imageB().metadata();
+            fwChunksToSend = fwChunksToSendB;
 
-        } else if (type == FirmwareImageType.B) {
-            toSend = firmwareBundle.imageB();
+        } else if (oldMeta.type() == FirmwareImageType.B) {
+            newMeta = firmwareBundle.imageA().metadata();
+            fwChunksToSend = fwChunksToSendA;
 
         } else {
-            throwBeanError(BeanError.UNPARSABLE_FW_METADATA);
+            throwBeanError(BeanError.UNPARSABLE_FW_VERSION);
             return;
+
         }
 
-        FirmwareMetadata newMeta = toSend.metadata();
-        fwChunksToSend = toSend.chunks();
         firmwareUploadState = FirmwareUploadState.AWAIT_XFER_ACCEPT;
 
         // Write the new image metadata
