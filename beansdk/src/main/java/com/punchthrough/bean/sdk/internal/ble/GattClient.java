@@ -143,37 +143,6 @@ public class GattClient {
                 disconnect();
                 return;
             }
-
-            if (uploadInProgress()) {
-
-                if (isOADIdentifyCharacteristic(characteristic)) {
-                    Log.d(TAG, "OAD Identify characteristic read");
-
-                    resetFirmwareStateTimeout();
-
-                    if (firmwareUploadState == FirmwareUploadState.AWAIT_CURRENT_HEADER) {
-                        prepareResponseHeader(characteristic.getValue());
-
-                    } else if (firmwareUploadState == FirmwareUploadState.AWAIT_XFER_ACCEPT) {
-                        // Existing header read, new header sent, Identify pinged ->
-                        // Bean rejected firmware version
-                        throwBeanError(BeanError.BEAN_REJECTED_FW);
-
-                    }
-
-                } else if (isOADBlockCharacteristic(characteristic)) {
-                    Log.d(TAG, "OAD Block characteristic read");
-
-                    if (firmwareUploadState == FirmwareUploadState.AWAIT_XFER_ACCEPT) {
-                        // Existing header read, new header sent, Block pinged ->
-                        // Bean accepted firmware version, begin transfer
-                        // TODO: Begin transfer
-
-                    }
-
-                }
-            }
-
             fireCharacteristicsRead(characteristic);
             executeNextOperation();
         }
@@ -191,22 +160,33 @@ public class GattClient {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
 
-            if (uploadInProgress() && isOADCharacteristic(characteristic)) {
+            if (uploadInProgress()) {
 
                 if (isOADIdentifyCharacteristic(characteristic)) {
                     Log.d(TAG, "OAD Identify characteristic notified");
 
+                    resetFirmwareStateTimeout();
+
+                    if (firmwareUploadState == FirmwareUploadState.AWAIT_CURRENT_HEADER) {
+                        prepareResponseHeader(characteristic.getValue());
+
+                    } else if (firmwareUploadState == FirmwareUploadState.AWAIT_XFER_ACCEPT) {
+                        // Existing header read, new header sent, Identify pinged ->
+                        // Bean rejected firmware version
+                        throwBeanError(BeanError.BEAN_REJECTED_FW);
+
+                    }
+
                 } else if (isOADBlockCharacteristic(characteristic)) {
                     Log.d(TAG, "OAD Block characteristic notified");
 
-                }
+                    if (firmwareUploadState == FirmwareUploadState.AWAIT_XFER_ACCEPT) {
+                        // Existing header read, new header sent, Block pinged ->
+                        // Bean accepted firmware version, begin transfer
+                        // TODO: Begin transfer
 
-                boolean result = mGatt.readCharacteristic(characteristic);
-                if (result) {
-                    Log.d(TAG, "Read requested for characteristic: " + characteristic.getUuid());
-                } else {
-                    Log.e(TAG, "Read request failed for characteristic: " +
-                            characteristic.getUuid());
+                    }
+
                 }
             }
 
@@ -624,10 +604,6 @@ public class GattClient {
     private boolean isOADIdentifyCharacteristic(BluetoothGattCharacteristic charc) {
         UUID uuid = charc.getUuid();
         return uuid.equals(CHAR_OAD_IDENTIFY);
-    }
-
-    private boolean isOADCharacteristic(BluetoothGattCharacteristic charc) {
-        return isOADBlockCharacteristic(charc) || isOADIdentifyCharacteristic(charc);
     }
 
     private boolean writeToCharacteristic(BluetoothGattCharacteristic charc, byte[] data) {
