@@ -3,12 +3,13 @@ package com.punchthrough.bean.sdk.upload;
 import android.os.Parcelable;
 
 import com.punchthrough.bean.sdk.internal.exception.ImageParsingException;
-import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareChunk;
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareImageType;
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareMetadata;
 import com.punchthrough.bean.sdk.internal.utility.Chunkable;
 import com.punchthrough.bean.sdk.internal.utility.Constants;
+import com.punchthrough.bean.sdk.internal.utility.Misc;
 
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -121,19 +122,34 @@ public abstract class FirmwareImage implements Parcelable, Chunkable {
     }
 
     /**
-     * Get all {@link com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareChunk}s for this
-     * firmware image.
+     * Get all firmware chunks for this image. Chunks are made up of a UINT16 chunk index followed
+     * by a 16-byte data block.
+     *
      * @return All chunks for this image
      */
-    public List<FirmwareChunk> chunks() {
+    public List<byte[]> chunks() {
 
-        List<FirmwareChunk> chunks = new ArrayList<>();
+        /* typedef struct {
+         *     UInt16          nbr;         (length 2, little endian)
+         *     data_block_t    block;       (length 16)
+         * } oad_packet_t;
+         */
 
+        List<byte[]> chunks = new ArrayList<>();
         List<byte[]> rawChunks = chunksFromChunkable(this, FW_CHUNK_SIZE);
-        int i = 0;
+        int index = 0;
         for (byte[] rawChunk : rawChunks) {
-            FirmwareChunk chunk = FirmwareChunk.create(i, rawChunk);
+            byte[] chunk = new byte[18];
+
+            byte[] counter = Misc.intToTwoBytes(index, ByteOrder.LITTLE_ENDIAN);
+            System.arraycopy(counter, 0, chunk, 0, 2);
+
+            // Ensure we copy at most 16 bytes, but that we don't try to copy 16 bytes if the raw
+            // chunk is < 16 bytes
+            System.arraycopy(rawChunk, 0, chunk, 2, Math.min(rawChunk.length, FW_CHUNK_SIZE));
+
             chunks.add(chunk);
+            index++;
         }
 
         return chunks;

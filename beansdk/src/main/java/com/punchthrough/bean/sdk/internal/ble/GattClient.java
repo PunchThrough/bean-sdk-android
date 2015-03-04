@@ -13,7 +13,6 @@ import com.punchthrough.bean.sdk.internal.battery.BatteryProfile;
 import com.punchthrough.bean.sdk.internal.device.DeviceProfile;
 import com.punchthrough.bean.sdk.internal.exception.MetadataParsingException;
 import com.punchthrough.bean.sdk.internal.serial.GattSerialTransportProfile;
-import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareChunk;
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareImageType;
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareMetadata;
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareUploadState;
@@ -93,15 +92,15 @@ public class GattClient {
     /**
      * Chunks of firmware to be sent in order
      */
-    private List<FirmwareChunk> fwChunksToSend;
+    private List<byte[]> fwChunksToSend;
     /**
      * Storage for chunks for firmware image A. This takes a while, so we do it ahead of time.
      */
-    private List<FirmwareChunk> fwChunksToSendA;
+    private List<byte[]> fwChunksToSendA;
     /**
      * Storage for chunks for firmware image B. This takes a while, so we do it ahead of time.
      */
-    private List<FirmwareChunk> fwChunksToSendB;
+    private List<byte[]> fwChunksToSendB;
     /**
      * Firmware chunk counter. The packet ID must be incremented for each chunk that is sent.
      */

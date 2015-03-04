@@ -6,6 +6,8 @@ import com.punchthrough.bean.sdk.internal.exception.ImageParsingException;
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareImageType;
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareMetadata;
 
+import java.util.List;
+
 import static com.punchthrough.bean.sdk.internal.utility.Misc.intArrayToByteArray;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -32,6 +34,13 @@ public class FirmwareImageTest extends AndroidTestCase {
     // Invalid images don't have a long enough header
     byte[] invalidImage = intArrayToByteArray(new int[] {
             0x01, 0x02, 0x03, 0x04
+    });
+
+    // This image is of an odd length
+    byte[] oddLengthImage = intArrayToByteArray(new int[] {
+            0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+            0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,
+            0x21, 0x22, 0x23
     });
 
     public void testParsingValidImage() throws ImageParsingException {
@@ -81,6 +90,23 @@ public class FirmwareImageTest extends AndroidTestCase {
         assertThat(metadata.version()).isEqualTo(100);
         assertThat(metadata.length()).isEqualTo(31744);
         assertThat(metadata.uniqueID()).isEqualTo(new byte[] {0x41, 0x41, 0x41, 0x41});
+
+    }
+
+    public void testFirmwareChunking() throws ImageParsingException {
+
+        FirmwareImage image = FirmwareImage.create(oddLengthImage);
+        List<byte[]> chunks = image.chunks();
+        assertThat(chunks.get(0)).isEqualTo(intArrayToByteArray(new int[] {
+                0x00, 0x00,
+                0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+                0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18
+        }));
+        assertThat(chunks.get(1)).isEqualTo(intArrayToByteArray(new int[] {
+                0x01, 0x00,
+                0x21, 0x22, 0x23, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+        }));
 
     }
 
