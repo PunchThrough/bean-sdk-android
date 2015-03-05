@@ -20,9 +20,5 @@ public enum FirmwareUploadState {
     /**
      * FW transfer accepted, currently sending chunks
      */
-    SEND_FW_CHUNKS,
-    /**
-     * Last FW chunk sent, waiting for device to confirm transfer is complete
-     */
-    AWAIT_COMPLETION
+    SEND_FW_CHUNKS
 }

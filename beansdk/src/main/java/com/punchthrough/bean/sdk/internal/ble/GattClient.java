@@ -16,6 +16,8 @@ import com.punchthrough.bean.sdk.internal.serial.GattSerialTransportProfile;
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareImageType;
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareMetadata;
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareUploadState;
+import com.punchthrough.bean.sdk.internal.utility.Constants;
+import com.punchthrough.bean.sdk.internal.utility.Misc;
 import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.Callback;
 import com.punchthrough.bean.sdk.message.UploadProgress;
@@ -49,6 +51,20 @@ public class GattClient {
      * firmware upload process and throwing an error
      */
     private static final int FIRMWARE_UPLOAD_TIMEOUT = 3000;
+    /**
+     * Once the last chunk is requested, wait this many ms for retransmission requests before we
+     * assume the firmware upload is complete
+     */
+    private static final int FIRMWARE_COMPLETION_TIMEOUT = 500;
+    /**
+     * Max number of firmware blocks in flight at any given time
+     */
+    private static final int BLOCKS_IN_FLIGHT = 18;
+    /**
+     * When number of blocks in flight gets this low, send more blocks. We wait for the number to
+     * get low so we can send a bunch of blocks at once.
+     */
+    private static final int SEND_BLOCKS_LOWER_LIMIT = 3;
     /**
      * The OAD Service contains the OAD Identify and Block characteristics
      */
@@ -86,6 +102,11 @@ public class GattClient {
      */
     private Timer firmwareStateTimeout;
     /**
+     * Started when the last chunk is requested. The Bean indicates firmware update is complete by
+     * requesting the last chunk then doing nothing.
+     */
+    private Timer firmwareCompletionTimeout;
+    /**
      * Firmware bundle with A and B images to send
      */
     FirmwareBundle firmwareBundle;
@@ -102,9 +123,13 @@ public class GattClient {
      */
     private List<byte[]> fwChunksToSendB;
     /**
-     * Firmware chunk counter. The packet ID must be incremented for each chunk that is sent.
+     * Used to keep track of firmware upload state.
      */
-    private int currFwPacketNum = 0;
+    private int nextChunk = 0;
+    /**
+     * used to keep track of firmware upload state.
+     */
+    private int nextChunkRequest = 0;
     /**
      * Called to inform the Bean class when firmware upload progress is made.
      */
@@ -189,7 +214,14 @@ public class GattClient {
                     if (firmwareUploadState == FirmwareUploadState.AWAIT_XFER_ACCEPT) {
                         // Existing header read, new header sent, Block pinged ->
                         // Bean accepted firmware version, begin transfer
-                        // TODO: Begin transfer
+                        beginFirmwareTransfer();
+
+                    } else if (firmwareUploadState == FirmwareUploadState.SEND_FW_CHUNKS) {
+                        // We've already started sending blocks, and the Bean has responded with the
+                        // block number it requests
+                        int blockRequested = Misc.twoBytesToInt(
+                                characteristic.getValue(), Constants.CC2540_BYTE_ORDER);
+                        sendNextFwChunks(blockRequested);
 
                     }
 
@@ -450,6 +482,8 @@ public class GattClient {
 
         firmwareUploadState = FirmwareUploadState.INACTIVE;
         stopFirmwareStateTimeout();
+        nextChunk = 0;
+        nextChunkRequest = 0;
 
     }
 
@@ -562,11 +596,77 @@ public class GattClient {
         writeToCharacteristic(oadIdentify, newMeta.toPayload());
 
     }
+
+    private void beginFirmwareTransfer() {
+
+        Log.d(TAG, "Bean accepted new firmware. Beginning firmware transfer");
+
+        firmwareUploadState = FirmwareUploadState.SEND_FW_CHUNKS;
+        nextChunk = 0;
+        nextChunkRequest = 0;
+
+        sendNextFwChunks(0);
+
+    }
+
+    private void sendNextFwChunks(int requestedChunk) {
+
+        Log.d(TAG, "FW block " + requestedChunk + " requested");
+
+        if (requestedChunk < nextChunkRequest) {
+            // Bean missed a block and requested a retransmit. Roll back nextChunkRequest because we
+            // expect lots of retransmit requests to occur for the same block.
+            Log.d(TAG, "FW block " + requestedChunk + " lost in transit; resending");
+            nextChunkRequest -= nextChunk - requestedChunk - 1;
+            nextChunk = requestedChunk;
+        }
+        nextChunkRequest++;
+
+        if (nextChunk - requestedChunk < SEND_BLOCKS_LOWER_LIMIT) {
+
+            // Lots of blocks have been sent - now we have several blocks to send at once
+            while ( nextChunk - requestedChunk < BLOCKS_IN_FLIGHT &&
+                    nextChunk < fwChunksToSend.size() ) {
+
+                sendSingleChunk(nextChunk);
+                nextChunk++;
+
+            }
+        }
+
+        if (requestedChunk == fwChunksToSend.size() - 1) {
+            // Bean requested last chunk. If we don't hear any retransmit requests within a timeout,
+            // then we're done!
+            Log.d(TAG, "Last chunk requested");
+            stopFirmwareStateTimeout();
+            resetFirmwareCompletionTimeout();
+
+        }
+
+    }
+
+    private void sendSingleChunk(int chunkIndex) {
+        resetFirmwareStateTimeout();
+        byte[] chunkToSend = fwChunksToSend.get(chunkIndex);
+        boolean result = writeToCharacteristic(oadBlock, chunkToSend);
+        if (result) {
+            Log.d(TAG, "FW block " + chunkIndex + " sent");
+        } else {
+            Log.e(TAG, "FW block " + chunkIndex + " failed to send");
+        }
+    }
     
     private void stopFirmwareStateTimeout() {
         if (firmwareStateTimeout != null) {
             firmwareStateTimeout.cancel();
             firmwareStateTimeout = null;
+        }
+    }
+
+    private void stopFirmwareCompletionTimeout() {
+        if (firmwareCompletionTimeout != null) {
+            firmwareCompletionTimeout.cancel();
+            firmwareCompletionTimeout = null;
         }
     }
 
@@ -586,9 +686,6 @@ public class GattClient {
                 } else if (firmwareUploadState == FirmwareUploadState.SEND_FW_CHUNKS) {
                     throwBeanError(BeanError.FW_TRANSFER_TIMEOUT);
 
-                } else if (firmwareUploadState == FirmwareUploadState.AWAIT_COMPLETION) {
-                    throwBeanError(BeanError.FW_COMPLETE_TIMEOUT);
-
                 }
 
             }
@@ -597,6 +694,19 @@ public class GattClient {
         stopFirmwareStateTimeout();
         firmwareStateTimeout = new Timer();
         firmwareStateTimeout.schedule(onTimeout, FIRMWARE_UPLOAD_TIMEOUT);
+    }
+
+    private void resetFirmwareCompletionTimeout() {
+        TimerTask onTimeout = new TimerTask() {
+            @Override
+            public void run() {
+                onComplete.run();
+            }
+        };
+
+        stopFirmwareCompletionTimeout();
+        firmwareCompletionTimeout = new Timer();
+        firmwareCompletionTimeout.schedule(onTimeout, FIRMWARE_COMPLETION_TIMEOUT);
     }
 
     private void throwBeanError(BeanError error) {
