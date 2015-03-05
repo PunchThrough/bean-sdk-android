@@ -559,9 +559,6 @@ public class GattClient {
 
     private void prepareResponseHeader(byte[] existingHeader) {
 
-        Log.d(TAG, "Preparing response header from existing header: " +
-                Arrays.toString(existingHeader));
-
         FirmwareMetadata oldMeta;
         try {
             oldMeta = FirmwareMetadata.fromPayload(existingHeader);
@@ -589,6 +586,9 @@ public class GattClient {
             return;
 
         }
+
+        Log.d(TAG, "Firmware to be replaced: " + oldMeta);
+        Log.d(TAG, "Firmware to be sent: " + newMeta);
 
         firmwareUploadState = FirmwareUploadState.AWAIT_XFER_ACCEPT;
 
