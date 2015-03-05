@@ -425,7 +425,6 @@ public class GattClient {
 
     public void disconnect() {
         close();
-        throwBeanError(BeanError.UNKNOWN);
     }
 
     private synchronized void close() {
