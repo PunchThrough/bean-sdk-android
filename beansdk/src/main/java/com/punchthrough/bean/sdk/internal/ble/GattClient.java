@@ -78,6 +78,12 @@ public class GattClient {
      */
     private static final UUID CHAR_OAD_BLOCK = UUID.fromString("F000FFC2-0451-4000-B000-000000000000");
     /**
+     * Android's BLE stack doesn't have a send buffer. If we want to send lots of packets very
+     * quickly one after another, we have to implement our own buffer and attempt to send failed
+     * packets over and overs ourselves.
+     */
+    private SendBuffer chunkSendBuffer;
+    /**
      * The OAD Identify characteristic for this device. Assigned when firmware upload is started.
      */
     private BluetoothGattCharacteristic oadIdentify;
@@ -130,10 +136,6 @@ public class GattClient {
      * used to keep track of firmware upload state.
      */
     private int nextChunkRequest = 0;
-    /**
-     * Called to inform the Bean class when firmware upload progress is made.
-     */
-    private Callback<UploadProgress> onProgress;
     /**
      * Called to inform the Bean class when firmware upload is complete.
      */
@@ -194,7 +196,6 @@ public class GattClient {
             if (uploadInProgress()) {
 
                 if (isOADIdentifyCharacteristic(characteristic)) {
-                    Log.d(TAG, "OAD Identify characteristic notified");
 
                     resetFirmwareStateTimeout();
 
@@ -209,7 +210,6 @@ public class GattClient {
                     }
 
                 } else if (isOADBlockCharacteristic(characteristic)) {
-                    Log.d(TAG, "OAD Block characteristic notified");
 
                     if (firmwareUploadState == FirmwareUploadState.AWAIT_XFER_ACCEPT) {
                         // Existing header read, new header sent, Block pinged ->
@@ -446,7 +446,7 @@ public class GattClient {
         return mBatteryProfile;
     }
 
-    public void programWithFirmware(FirmwareBundle bundle, Callback<UploadProgress> onProgress,
+    public void programWithFirmware(FirmwareBundle bundle, final Callback<UploadProgress> onProgress,
                                     Runnable onComplete, Callback<BeanError> onError) {
 
         Log.d(TAG, "Programming Bean with firmware");
@@ -460,16 +460,43 @@ public class GattClient {
         }
 
         // Set event handlers
-        this.onProgress = onProgress;
         this.onComplete = onComplete;
         this.onError = onError;
+
+        // Retrieve OAD services and characteristics
+
+        BluetoothGattService oadService = mGatt.getService(SERVICE_OAD);
+        if (oadService == null) {
+            throwBeanError(BeanError.MISSING_OAD_SERVICE);
+            return;
+        }
+
+        oadIdentify = oadService.getCharacteristic(CHAR_OAD_IDENTIFY);
+        if (oadIdentify == null) {
+            throwBeanError(BeanError.MISSING_OAD_IDENTIFY);
+            return;
+        }
+
+        oadBlock = oadService.getCharacteristic(CHAR_OAD_BLOCK);
+        if (oadBlock == null) {
+            throwBeanError(BeanError.MISSING_OAD_BLOCK);
+            return;
+        }
+
+        // Set up rapid packet send buffer and have it update the FW Upload Progress callback
+        chunkSendBuffer = new SendBuffer(mGatt, oadBlock, new Callback<Integer>() {
+            @Override
+            public void onResult(Integer result) {
+                UploadProgress progress = UploadProgress.create(result, fwChunksToSend.size());
+                onProgress.onResult(progress);
+            }
+        });
 
         // Save firmware bundle so we have both images when response header is received
         this.firmwareBundle = bundle;
 
-        Log.d(TAG, "Preparing firmware chunks (give me a second)");
-
         // Prepare chunks: doing this during the FW upload process takes too long
+        Log.d(TAG, "Preparing firmware chunks (give me a second)");
         fwChunksToSendA = bundle.imageA().chunks();
         fwChunksToSendB = bundle.imageB().chunks();
 
@@ -498,35 +525,22 @@ public class GattClient {
     }
 
     private void enableOADNotifications() {
+
         Log.d(TAG, "Enabling OAD notifications");
         firmwareUploadState = FirmwareUploadState.AWAIT_NOTIFY_ENABLED;
 
-        BluetoothGattService oadService = mGatt.getService(SERVICE_OAD);
-        if (oadService == null) {
-            throwBeanError(BeanError.MISSING_OAD_SERVICE);
-            return;
-        }
-
-        oadIdentify = oadService.getCharacteristic(CHAR_OAD_IDENTIFY);
-        if (oadIdentify == null) {
-            throwBeanError(BeanError.MISSING_OAD_IDENTIFY);
-            return;
-        }
-
-        oadBlock = oadService.getCharacteristic(CHAR_OAD_BLOCK);
-        if (oadBlock == null) {
-            throwBeanError(BeanError.MISSING_OAD_BLOCK);
-            return;
-        }
-
         oadIdentifyNotifying = enableNotifyForChar(oadIdentify);
         oadBlockNotifying = enableNotifyForChar(oadBlock);
+
         if (oadIdentifyNotifying && oadBlockNotifying) {
             Log.d(TAG, "Enable notifications successful");
             requestCurrentHeader();
+
         } else {
             throwBeanError(BeanError.ENABLE_OAD_NOTIFY_FAILED);
+
         }
+
     }
 
     // https://developer.android.com/guide/topics/connectivity/bluetooth-le.html#notification
@@ -610,9 +624,31 @@ public class GattClient {
 
     private void sendNextFwChunks(int requestedChunk) {
 
-        Log.d(TAG, "FW block " + requestedChunk + " requested");
+        if (requestedChunk < nextChunkRequest) {
+            // Bean missed a block and requested a retransmit. Roll back nextChunkRequest because we
+            // expect lots of retransmit requests to occur for the same block.
+            Log.d(TAG, "FW chunk " + requestedChunk + " lost in transit; resending");
+            nextChunkRequest -= nextChunk - requestedChunk - 1;
+            nextChunk = requestedChunk;
+        }
+        nextChunkRequest++;
 
-        sendSingleChunk(requestedChunk);
+        if (nextChunk - requestedChunk < SEND_BLOCKS_LOWER_LIMIT) {
+
+            int queued = 0;
+
+            // Lots of blocks have been sent - now we have several blocks to send at once
+            while ( nextChunk - requestedChunk < BLOCKS_IN_FLIGHT &&
+                    nextChunk < fwChunksToSend.size() ) {
+
+                sendSingleChunk(nextChunk);
+                queued++;
+                nextChunk++;
+
+            }
+
+            Log.d(TAG, "Queued " + queued + " chunks");
+        }
 
         if (requestedChunk == fwChunksToSend.size() - 1) {
             // Bean requested last chunk. If we don't hear any retransmit requests within a timeout,
@@ -628,12 +664,7 @@ public class GattClient {
     private void sendSingleChunk(int chunkIndex) {
         resetFirmwareStateTimeout();
         byte[] chunkToSend = fwChunksToSend.get(chunkIndex);
-        boolean result = writeToCharacteristic(oadBlock, chunkToSend);
-        if (result) {
-            Log.d(TAG, "FW block " + chunkIndex + " sent");
-        } else {
-            Log.e(TAG, "FW block " + chunkIndex + " failed to send");
-        }
+        chunkSendBuffer.send(chunkToSend, chunkIndex);
     }
     
     private void stopFirmwareStateTimeout() {
