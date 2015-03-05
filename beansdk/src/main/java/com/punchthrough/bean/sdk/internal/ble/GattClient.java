@@ -612,26 +612,7 @@ public class GattClient {
 
         Log.d(TAG, "FW block " + requestedChunk + " requested");
 
-        if (requestedChunk < nextChunkRequest) {
-            // Bean missed a block and requested a retransmit. Roll back nextChunkRequest because we
-            // expect lots of retransmit requests to occur for the same block.
-            Log.d(TAG, "FW block " + requestedChunk + " lost in transit; resending");
-            nextChunkRequest -= nextChunk - requestedChunk - 1;
-            nextChunk = requestedChunk;
-        }
-        nextChunkRequest++;
-
-        if (nextChunk - requestedChunk < SEND_BLOCKS_LOWER_LIMIT) {
-
-            // Lots of blocks have been sent - now we have several blocks to send at once
-            while ( nextChunk - requestedChunk < BLOCKS_IN_FLIGHT &&
-                    nextChunk < fwChunksToSend.size() ) {
-
-                sendSingleChunk(nextChunk);
-                nextChunk++;
-
-            }
-        }
+        sendSingleChunk(requestedChunk);
 
         if (requestedChunk == fwChunksToSend.size() - 1) {
             // Bean requested last chunk. If we don't hear any retransmit requests within a timeout,
