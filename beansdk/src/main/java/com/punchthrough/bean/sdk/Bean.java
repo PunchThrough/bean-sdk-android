@@ -322,7 +322,7 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Check if the bean is connected
+     * Check if the Bean is connected
      *
      * @return true if connected, false otherwise
      */
@@ -334,7 +334,7 @@ public class Bean implements Parcelable {
      * Attempt to connect to the Bean
      *
      * @param context  the context used for connection
-     * @param listener the bean listener
+     * @param listener the Bean listener
      */
     public void connect(Context context, BeanListener listener) {
         if (connected) {
@@ -345,7 +345,7 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Disconnect the bean
+     * Disconnect the Bean
      */
     public void disconnect() {
         beanListener = internalBeanListener;
@@ -354,7 +354,7 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Return the {@link android.bluetooth.BluetoothDevice} for this bean
+     * Return the {@link android.bluetooth.BluetoothDevice} for this Bean
      *
      * @return the device
      */

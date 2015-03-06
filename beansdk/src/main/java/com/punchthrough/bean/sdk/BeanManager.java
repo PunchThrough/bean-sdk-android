@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * A thin wrapper to discover nearby beans.
+ * A thin wrapper to discover nearby Beans.
  */
 public class BeanManager {
     private static final String TAG = "BeanManager";
@@ -121,9 +121,9 @@ public class BeanManager {
     }
 
     /**
-     * Return the beans found since the last scan started
+     * Return the Beans found since the last scan started
      *
-     * @return a collections of beans found
+     * @return a collection of Beans found
      */
     public Collection<Bean> getBeans() {
         return new ArrayList<>(mBeans.values());
