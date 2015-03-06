@@ -4,14 +4,11 @@ import android.test.AndroidTestCase;
 
 import com.punchthrough.bean.sdk.internal.exception.HexParsingException;
 import com.punchthrough.bean.sdk.internal.exception.NameLengthException;
+import com.punchthrough.bean.sdk.internal.utility.Chunk;
 
 import java.util.List;
 
-import static com.punchthrough.bean.sdk.internal.utility.ChunkUtils.bytesFromChunkable;
-import static com.punchthrough.bean.sdk.internal.utility.ChunkUtils.chunkCountFromChunkable;
-import static com.punchthrough.bean.sdk.internal.utility.ChunkUtils.chunkFromChunkable;
-import static com.punchthrough.bean.sdk.internal.utility.ChunkUtils.chunksFromChunkable;
-import static com.punchthrough.bean.sdk.internal.utility.Misc.intArrayToByteArray;
+import static com.punchthrough.bean.sdk.internal.utility.Convert.intArrayToByteArray;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SketchHexTest extends AndroidTestCase {
@@ -65,37 +62,37 @@ public class SketchHexTest extends AndroidTestCase {
         // Queries that don't extend past the array boundary should work as expected
 
         // Chunk starting at 6 and ending at 7
-        assertThat(bytesFromChunkable(defaultHex, 6, 2)).isEqualTo(intArrayToByteArray(
+        assertThat(Chunk.bytesFrom(defaultHex, 6, 2)).isEqualTo(intArrayToByteArray(
                 new int[]{0x47, 0x01}));
 
         // Chunk starting at 8 and ending at 11
-        assertThat(chunkFromChunkable(defaultHex, 4, 2)).isEqualTo(intArrayToByteArray(
+        assertThat(Chunk.chunkFrom(defaultHex, 4, 2)).isEqualTo(intArrayToByteArray(
                 new int[]{0x36, 0x00, 0x7E, 0xFE}));
 
         // Queries that extend past the array boundary should be truncated
 
         // Chunk starting at 60 and ending at 67, truncated at 63
-        assertThat(bytesFromChunkable(defaultHex, 60, 8)).isEqualTo(intArrayToByteArray(
+        assertThat(Chunk.bytesFrom(defaultHex, 60, 8)).isEqualTo(intArrayToByteArray(
                 new int[]{0x46, 0x01, 0x34, 0x21}));
 
         // Chunk starting at 60 and ending at 64, truncated at 63
-        assertThat(chunkFromChunkable(defaultHex, 5, 12)).isEqualTo(intArrayToByteArray(
+        assertThat(Chunk.chunkFrom(defaultHex, 5, 12)).isEqualTo(intArrayToByteArray(
                 new int[]{0x46, 0x01, 0x34, 0x21}));
 
     }
 
-    public void testGetChunkCountFromChunkable() {
+    public void testGetChunkCount() {
 
-        assertThat(chunkCountFromChunkable(defaultHex, 8)).isEqualTo(8);
-        assertThat(chunkCountFromChunkable(defaultHex, 1)).isEqualTo(64);
-        assertThat(chunkCountFromChunkable(defaultHex, 33)).isEqualTo(2);
-        assertThat(chunkCountFromChunkable(defaultHex, 5)).isEqualTo(13);
+        assertThat(Chunk.chunkCountFrom(defaultHex, 8)).isEqualTo(8);
+        assertThat(Chunk.chunkCountFrom(defaultHex, 1)).isEqualTo(64);
+        assertThat(Chunk.chunkCountFrom(defaultHex, 33)).isEqualTo(2);
+        assertThat(Chunk.chunkCountFrom(defaultHex, 5)).isEqualTo(13);
 
     }
 
     public void testGetChunks() {
 
-        List<byte[]> chunks = chunksFromChunkable(defaultHex, 5);
+        List<byte[]> chunks = Chunk.chunksFrom(defaultHex, 5);
 
         assertThat(chunks.size()).isEqualTo(13);
 

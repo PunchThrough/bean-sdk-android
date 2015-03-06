@@ -1,40 +1,17 @@
 package com.punchthrough.bean.sdk.internal.utility;
 
-import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
-
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
-import java.util.EnumSet;
 
-public class Misc {
-
-    /**
-     * Clamp an int to a min/max value.
-     *
-     * @param n     The value to be clamped
-     * @param min   The minimum
-     * @param max   The maximum
-     * @return      The value passed in, or minimum if n &lt; minimum, or maximum if n &gt; maximum
-     */
-    public static int clamp(int n, int min, int max) {
-        if (n < min) return min;
-        if (n > max) return max;
-        return n;
-    }
-
-    /**
-     * Clamp an int to the uint8 (0-255) range.
-     *
-     * @param n The value to be clamped
-     * @return  The value clamped between 0 and 255
-     */
-    public static int clampToUInt8(int n) {
-        return clamp(n, 0, 255);
-    }
+/**
+ * Utilities to help cast data from one type to another. Useful for working with types Java doesn't
+ * support such as unsigned bytes.
+ */
+public class Convert {
 
     /**
      * Convert a string of ASCII hex characters (e.g. "DEADBEEF0042") to an array of bytes the hex
@@ -43,15 +20,15 @@ public class Misc {
      *
      * @param hex               The string of hex characters
      * @return                  An array of bytes the string represents
-     * @throws DecoderException If the string passed in isn't made up of valid hex bytes
+     * @throws org.apache.commons.codec.DecoderException If the string passed in isn't made up of valid hex bytes
      */
     public static byte[] asciiHexToBytes(String hex) throws DecoderException {
         return Hex.decodeHex(hex.toCharArray());
     }
 
-    // From http://stackoverflow.com/a/4768950/254187
     /**
      * Convert two unsigned bytes to one signed int.
+     * <a href="http://stackoverflow.com/a/4768950/254187">Based on this StackOverflow ansewr.</a>
      *
      * @param high  The high byte
      * @param low   The low byte
@@ -138,55 +115,6 @@ public class Misc {
     public static byte[] intToUInt32(int i, ByteOrder endian) {
         int truncated = (int) ( (long) i );
         return ByteBuffer.allocate(4).order(endian).putInt(truncated).array();
-    }
-
-    // Based on http://stackoverflow.com/a/16406386/254187
-
-    /**
-     * Retrieve the enum of a given type from a given raw value. Enums must implement the
-     * {@link com.punchthrough.bean.sdk.internal.utility.RawValuable} interface to ensure they have
-     * a {@link RawValuable#getRawValue()} method.
-     *
-     * @param enumClass The class of the enum type being parsed, e.g. <code>BeanState.class</code>
-     * @param value     The raw int value of the enum to be retrieved
-     * @param <T>       The enum type being parsed
-     * @return          The enum value with the given raw value
-     *
-     * @throws NoEnumFoundException if the given enum type has no enum value with a raw value
-     *      matching the given value
-     */
-    public static <T extends Enum & RawValuable> T enumWithRawValue(Class<T> enumClass, int value)
-            throws NoEnumFoundException {
-
-        for (Object oneEnumRaw : EnumSet.allOf(enumClass)) {
-            T oneEnum = (T) oneEnumRaw;
-            if (value == oneEnum.getRawValue()) {
-                return oneEnum;
-            }
-        }
-        throw new NoEnumFoundException(String.format(
-                "No enum found for class %s with raw value %d", enumClass.getName(), value));
-
-    }
-
-    /**
-     * Retrieve the enum of a given type from a given raw value. Enums must implement the
-     * {@link com.punchthrough.bean.sdk.internal.utility.RawValuable} interface to ensure they have
-     * a {@link RawValuable#getRawValue()} method.
-     *
-     * @param enumClass The class of the enum type being parsed, e.g. <code>BeanState.class</code>
-     * @param value     The raw byte value of the enum to be retrieved
-     * @param <T>       The enum type being parsed
-     * @return          The enum value with the given raw value
-     *
-     * @throws NoEnumFoundException if the given enum type has no enum value with a raw value
-     *      matching the given value
-     */
-    public static <T extends Enum & RawValuable> T enumWithRawValue(Class<T> enumClass, byte value)
-            throws NoEnumFoundException {
-
-        return enumWithRawValue(enumClass, (int) value);
-
     }
 
 }

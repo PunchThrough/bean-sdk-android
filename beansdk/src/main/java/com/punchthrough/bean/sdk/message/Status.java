@@ -5,12 +5,13 @@ import android.os.Parcelable;
 import com.punchthrough.bean.sdk.internal.upload.sketch.BeanState;
 import com.punchthrough.bean.sdk.internal.upload.sketch.BeanSubstate;
 import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
+import com.punchthrough.bean.sdk.internal.utility.EnumParse;
 
 import auto.parcel.AutoParcel;
 import okio.Buffer;
 
-import static com.punchthrough.bean.sdk.internal.utility.Misc.bytesToInt;
-import static com.punchthrough.bean.sdk.internal.utility.Misc.enumWithRawValue;
+import static com.punchthrough.bean.sdk.internal.utility.Convert.bytesToInt;
+import static com.punchthrough.bean.sdk.internal.utility.EnumParse.enumWithRawValue;
 
 /**
  * Represents a Status message. The Bean sends Status messages to indicate its status has changed.
@@ -46,8 +47,8 @@ public abstract class Status implements Parcelable {
     }
 
     public static Status fromPayload(Buffer buffer) throws NoEnumFoundException {
-        BeanState beanState = enumWithRawValue(BeanState.class, buffer.readByte());
-        BeanSubstate beanSubstate = enumWithRawValue(BeanSubstate.class, buffer.readByte());
+        BeanState beanState = EnumParse.enumWithRawValue(BeanState.class, buffer.readByte());
+        BeanSubstate beanSubstate = EnumParse.enumWithRawValue(BeanSubstate.class, buffer.readByte());
         int blocksSent = bytesToInt(buffer.readByte(), buffer.readByte());
         int bytesSent = bytesToInt(buffer.readByte(), buffer.readByte());
         return Status.create(beanState, beanSubstate, blocksSent, bytesSent);

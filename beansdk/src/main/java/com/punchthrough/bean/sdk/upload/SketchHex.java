@@ -9,6 +9,7 @@ import com.punchthrough.bean.sdk.internal.intelhex.Line;
 import com.punchthrough.bean.sdk.internal.intelhex.LineRecordType;
 import com.punchthrough.bean.sdk.internal.utility.Chunk;
 import com.punchthrough.bean.sdk.internal.utility.Constants;
+import com.punchthrough.bean.sdk.internal.utility.EnumParse;
 
 import org.apache.commons.codec.DecoderException;
 
@@ -19,9 +20,8 @@ import java.util.ListIterator;
 
 import auto.parcel.AutoParcel;
 
-import static com.punchthrough.bean.sdk.internal.utility.Misc.asciiHexToBytes;
-import static com.punchthrough.bean.sdk.internal.utility.Misc.bytesToInt;
-import static com.punchthrough.bean.sdk.internal.utility.Misc.enumWithRawValue;
+import static com.punchthrough.bean.sdk.internal.utility.Convert.asciiHexToBytes;
+import static com.punchthrough.bean.sdk.internal.utility.Convert.bytesToInt;
 
 @AutoParcel
 public abstract class SketchHex implements Parcelable, Chunk.Chunkable {
@@ -107,7 +107,7 @@ public abstract class SketchHex implements Parcelable, Chunk.Chunkable {
             byte rawRecordType = rawBytes[3];
             LineRecordType recordType;
             try {
-                recordType = enumWithRawValue(LineRecordType.class, rawRecordType);
+                recordType = EnumParse.enumWithRawValue(LineRecordType.class, rawRecordType);
             } catch (NoEnumFoundException e) {
                 throw new HexParsingException(String.format(
                         "Couldn't parse hex: line %d had invalid record type %d",

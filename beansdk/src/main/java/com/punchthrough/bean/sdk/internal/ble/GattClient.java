@@ -17,7 +17,7 @@ import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareImageType;
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareMetadata;
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareUploadState;
 import com.punchthrough.bean.sdk.internal.utility.Constants;
-import com.punchthrough.bean.sdk.internal.utility.Misc;
+import com.punchthrough.bean.sdk.internal.utility.Convert;
 import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.Callback;
 import com.punchthrough.bean.sdk.message.UploadProgress;
@@ -219,7 +219,7 @@ public class GattClient {
                     } else if (firmwareUploadState == FirmwareUploadState.SEND_FW_BLOCKS) {
                         // We've already started sending blocks, and the Bean has responded with the
                         // block number it requests
-                        int blockRequested = Misc.twoBytesToInt(
+                        int blockRequested = Convert.twoBytesToInt(
                                 characteristic.getValue(), Constants.CC2540_BYTE_ORDER);
                         sendNextFwBlocks(blockRequested);
 

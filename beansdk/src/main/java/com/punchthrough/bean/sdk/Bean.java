@@ -71,7 +71,7 @@ import java.util.TimerTask;
 import okio.Buffer;
 
 import static com.punchthrough.bean.sdk.internal.Protocol.APP_MSG_RESPONSE_BIT;
-import static com.punchthrough.bean.sdk.internal.utility.Misc.intToByte;
+import static com.punchthrough.bean.sdk.internal.utility.Convert.intToByte;
 
 /**
  * Interacts with the Punch Through Design Bean hardware.

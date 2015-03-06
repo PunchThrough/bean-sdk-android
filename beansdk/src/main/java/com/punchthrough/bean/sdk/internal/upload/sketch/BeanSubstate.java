@@ -1,6 +1,6 @@
 package com.punchthrough.bean.sdk.internal.upload.sketch;
 
-import com.punchthrough.bean.sdk.internal.utility.RawValuable;
+import com.punchthrough.bean.sdk.internal.utility.EnumParse;
 
 /* AppMessages.h -> BL_STATE_T: Bootloader substates (lower-level than HL_STATE)
  *                              (INIT = 0x00, WRITE_ADDRESS = 0x01, etc.)
@@ -33,7 +33,7 @@ import com.punchthrough.bean.sdk.internal.utility.RawValuable;
  *     BL_STATE_ERROR
  * }
  */
-public enum BeanSubstate implements RawValuable {
+public enum BeanSubstate implements EnumParse.ParsableEnum {
     INIT(0x00),
     WRITE_ADDRESS(0x01),
     WRITE_ADDRESS_ACK(0x02),

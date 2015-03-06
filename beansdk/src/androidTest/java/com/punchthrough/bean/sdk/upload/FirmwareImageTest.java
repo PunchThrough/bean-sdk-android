@@ -8,7 +8,7 @@ import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareMetadata;
 
 import java.util.List;
 
-import static com.punchthrough.bean.sdk.internal.utility.Misc.intArrayToByteArray;
+import static com.punchthrough.bean.sdk.internal.utility.Convert.intArrayToByteArray;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class FirmwareImageTest extends AndroidTestCase {

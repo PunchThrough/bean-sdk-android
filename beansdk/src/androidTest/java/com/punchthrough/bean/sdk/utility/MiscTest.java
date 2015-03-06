@@ -5,15 +5,16 @@ import android.test.AndroidTestCase;
 import com.punchthrough.bean.sdk.internal.BeanMessageID;
 import com.punchthrough.bean.sdk.internal.upload.sketch.BeanState;
 import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
+import com.punchthrough.bean.sdk.internal.utility.EnumParse;
 
 import java.nio.ByteOrder;
 
-import static com.punchthrough.bean.sdk.internal.utility.Misc.enumWithRawValue;
-import static com.punchthrough.bean.sdk.internal.utility.Misc.intArrayToByteArray;
-import static com.punchthrough.bean.sdk.internal.utility.Misc.intToByte;
-import static com.punchthrough.bean.sdk.internal.utility.Misc.intToTwoBytes;
-import static com.punchthrough.bean.sdk.internal.utility.Misc.intToUInt32;
-import static com.punchthrough.bean.sdk.internal.utility.Misc.twoBytesToInt;
+import static com.punchthrough.bean.sdk.internal.utility.EnumParse.enumWithRawValue;
+import static com.punchthrough.bean.sdk.internal.utility.Convert.intArrayToByteArray;
+import static com.punchthrough.bean.sdk.internal.utility.Convert.intToByte;
+import static com.punchthrough.bean.sdk.internal.utility.Convert.intToTwoBytes;
+import static com.punchthrough.bean.sdk.internal.utility.Convert.intToUInt32;
+import static com.punchthrough.bean.sdk.internal.utility.Convert.twoBytesToInt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class MiscTest extends AndroidTestCase {
@@ -23,17 +24,17 @@ public class MiscTest extends AndroidTestCase {
     }
 
     public void testEnumWithRawInt() throws NoEnumFoundException {
-        assertThat(enumWithRawValue(BeanMessageID.class, 0x1001)).isEqualTo(BeanMessageID.BL_FW_BLOCK);
+        assertThat(EnumParse.enumWithRawValue(BeanMessageID.class, 0x1001)).isEqualTo(BeanMessageID.BL_FW_BLOCK);
     }
 
     public void testEnumWithRawByte() throws NoEnumFoundException {
         byte state = 5;
-        assertThat(enumWithRawValue(BeanState.class, state)).isEqualTo(BeanState.COMPLETE);
+        assertThat(EnumParse.enumWithRawValue(BeanState.class, state)).isEqualTo(BeanState.COMPLETE);
     }
 
     public void testEnumWithUnparsableValue() {
         try {
-            enumWithRawValue(BeanMessageID.class, 0x9999);
+            EnumParse.enumWithRawValue(BeanMessageID.class, 0x9999);
             fail("Expected a NoEnumFound exception to be thrown when parsing an enum from an " +
                     "invalid value");
         } catch (NoEnumFoundException e) {

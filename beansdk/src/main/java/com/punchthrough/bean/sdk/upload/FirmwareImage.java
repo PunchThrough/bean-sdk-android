@@ -7,7 +7,7 @@ import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareImageType;
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareMetadata;
 import com.punchthrough.bean.sdk.internal.utility.Chunk;
 import com.punchthrough.bean.sdk.internal.utility.Constants;
-import com.punchthrough.bean.sdk.internal.utility.Misc;
+import com.punchthrough.bean.sdk.internal.utility.Convert;
 
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -16,7 +16,7 @@ import java.util.List;
 
 import auto.parcel.AutoParcel;
 
-import static com.punchthrough.bean.sdk.internal.utility.Misc.twoBytesToInt;
+import static com.punchthrough.bean.sdk.internal.utility.Convert.twoBytesToInt;
 
 @AutoParcel
 public abstract class FirmwareImage implements Parcelable, Chunk.Chunkable {
@@ -140,7 +140,7 @@ public abstract class FirmwareImage implements Parcelable, Chunk.Chunkable {
         for (byte[] rawChunk : rawChunks) {
             byte[] chunk = new byte[18];
 
-            byte[] counter = Misc.intToTwoBytes(index, ByteOrder.LITTLE_ENDIAN);
+            byte[] counter = Convert.intToTwoBytes(index, ByteOrder.LITTLE_ENDIAN);
             System.arraycopy(counter, 0, chunk, 0, 2);
 
             // Ensure we copy at most 16 bytes, but that we don't try to copy 16 bytes if the raw

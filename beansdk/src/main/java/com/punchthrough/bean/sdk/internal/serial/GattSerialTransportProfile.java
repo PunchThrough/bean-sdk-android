@@ -12,6 +12,7 @@ import com.punchthrough.bean.sdk.BuildConfig;
 import com.punchthrough.bean.sdk.internal.ble.BaseProfile;
 import com.punchthrough.bean.sdk.internal.ble.GattClient;
 import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
+import com.punchthrough.bean.sdk.internal.utility.EnumParse;
 import com.punchthrough.bean.sdk.message.ScratchBank;
 
 import java.lang.ref.WeakReference;
@@ -22,7 +23,7 @@ import java.util.UUID;
 
 import okio.Buffer;
 
-import static com.punchthrough.bean.sdk.internal.utility.Misc.enumWithRawValue;
+import static com.punchthrough.bean.sdk.internal.utility.EnumParse.enumWithRawValue;
 
 public class GattSerialTransportProfile extends BaseProfile {
     public static final int PACKET_TX_MAX_PAYLOAD_LENGTH = 19;
@@ -140,7 +141,7 @@ public class GattSerialTransportProfile extends BaseProfile {
                 Listener listener = mListener.get();
                 if (listener != null) {
                     try {
-                        ScratchBank bank = enumWithRawValue(ScratchBank.class, index);
+                        ScratchBank bank = EnumParse.enumWithRawValue(ScratchBank.class, index);
                         listener.onScratchValueChanged(bank, characteristic.getValue());
                     } catch (NoEnumFoundException e) {
                         Log.e(TAG, "Couldn't parse bank enum from scratch bank with index " +

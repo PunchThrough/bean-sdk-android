@@ -1,6 +1,6 @@
 package com.punchthrough.bean.sdk.internal.upload.sketch;
 
-import com.punchthrough.bean.sdk.internal.utility.RawValuable;
+import com.punchthrough.bean.sdk.internal.utility.EnumParse;
 
 /* AppMessages.h -> BL_HL_STATE_T: Bootloader high-level states
  *                                 (NULL = 0x00, INIT = 0x01, READY = 0x02, etc.)
@@ -14,7 +14,7 @@ import com.punchthrough.bean.sdk.internal.utility.RawValuable;
  *     BL_HL_STATE_ERROR
  * }
  */
-public enum BeanState implements RawValuable {
+public enum BeanState implements EnumParse.ParsableEnum {
     NULL(0),
     INIT(1),
     READY(2),

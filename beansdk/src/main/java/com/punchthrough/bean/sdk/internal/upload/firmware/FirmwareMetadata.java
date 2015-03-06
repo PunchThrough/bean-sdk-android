@@ -10,8 +10,8 @@ import java.util.Arrays;
 
 import auto.parcel.AutoParcel;
 
-import static com.punchthrough.bean.sdk.internal.utility.Misc.intToTwoBytes;
-import static com.punchthrough.bean.sdk.internal.utility.Misc.twoBytesToInt;
+import static com.punchthrough.bean.sdk.internal.utility.Convert.intToTwoBytes;
+import static com.punchthrough.bean.sdk.internal.utility.Convert.twoBytesToInt;
 
 @AutoParcel
 public abstract class FirmwareMetadata implements Parcelable {

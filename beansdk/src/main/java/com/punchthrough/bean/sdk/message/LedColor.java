@@ -29,7 +29,7 @@ import android.os.Parcelable;
 import auto.parcel.AutoParcel;
 import okio.Buffer;
 
-import static com.punchthrough.bean.sdk.internal.utility.Misc.clampToUInt8;
+import static com.punchthrough.bean.sdk.internal.utility.Range.clampToUInt8;
 
 /**
  * Represents the color of the Bean's LED.

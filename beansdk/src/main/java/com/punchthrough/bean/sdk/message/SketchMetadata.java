@@ -38,8 +38,8 @@ import okio.Buffer;
 import okio.ByteString;
 
 import static com.punchthrough.bean.sdk.internal.utility.Constants.MAX_SKETCH_NAME_LENGTH;
-import static com.punchthrough.bean.sdk.internal.utility.Misc.intToByte;
-import static com.punchthrough.bean.sdk.internal.utility.Misc.intToUInt32;
+import static com.punchthrough.bean.sdk.internal.utility.Convert.intToByte;
+import static com.punchthrough.bean.sdk.internal.utility.Convert.intToUInt32;
 
 /**
  * Represents sketch metadata. This data is sent when programming a Bean so that the Bean knows the
