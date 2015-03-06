@@ -446,6 +446,14 @@ public class GattClient {
         return mBatteryProfile;
     }
 
+    /**
+     * Program the Bean's CC2540 with new firmware.
+     *
+     * @param bundle        The {@link com.punchthrough.bean.sdk.upload.FirmwareBundle} to be sent
+     * @param onProgress    Called when progress is made during the upload
+     * @param onComplete    Called when the upload is complete
+     * @param onError       Called if an error occurs during the upload
+     */
     public void programWithFirmware(FirmwareBundle bundle, final Callback<UploadProgress> onProgress,
                                     Runnable onComplete, Callback<BeanError> onError) {
 
@@ -504,6 +512,9 @@ public class GattClient {
 
     }
 
+    /**
+     * Reset all local variables and abort any block transmissions in progress.
+     */
     private void resetFirmwareUploadState() {
 
         firmwareUploadState = FirmwareUploadState.INACTIVE;
@@ -513,17 +524,22 @@ public class GattClient {
 
     }
 
+    /**
+     * Ensure notifications are enabled for all OAD characteristics, then requests the
+     * Bean's current OAD header.
+     */
     private void verifyNotifyEnabled() {
         Log.d(TAG, "Firmware chunks prepared, verifying OAD notifications are enabled");
-        // Ensure all characteristics are discovered and notifying
-        if (oadIdentify != null && oadBlock != null &&
-                oadIdentifyNotifying && oadBlockNotifying) {
+        if (oadIdentifyNotifying && oadBlockNotifying) {
             requestCurrentHeader();
         } else {
             enableOADNotifications();
         }
     }
 
+    /**
+     * Enables notifications for all OAD characteristics.
+     */
     private void enableOADNotifications() {
 
         Log.d(TAG, "Enabling OAD notifications");
@@ -543,7 +559,15 @@ public class GattClient {
 
     }
 
-    // https://developer.android.com/guide/topics/connectivity/bluetooth-le.html#notification
+    /**
+     * Enable notifications for a given characteristic. See
+     * <a href="https://developer.android.com/guide/topics/connectivity/bluetooth-le.html#notification">
+     *     the Android docs
+     * </a>
+     * on this subject.
+     * @param characteristic    The characteristic to enable notifications for
+     * @return                  true if notifications were enabled successfully
+     */
     private boolean enableNotifyForChar(BluetoothGattCharacteristic characteristic) {
         boolean result = mGatt.setCharacteristicNotification(characteristic, true);
 
@@ -560,6 +584,9 @@ public class GattClient {
         return result;
     }
 
+    /**
+     * Request the Bean's current OAD firmware header.
+     */
     private void requestCurrentHeader() {
 
         Log.d(TAG, "Requesting current header");
@@ -570,6 +597,12 @@ public class GattClient {
 
     }
 
+    /**
+     * Use the Bean's existing OAD firmware header to select a firmware version. Prepare that
+     * image's firmware chunks and send that image's metadata to the Bean.
+     *
+     * @param existingHeader The Bean's existing raw firmware header
+     */
     private void prepareResponseHeader(byte[] existingHeader) {
 
         FirmwareMetadata oldMeta;
@@ -610,6 +643,9 @@ public class GattClient {
 
     }
 
+    /**
+     * Start sending firmware chunks to the Bean.
+     */
     private void beginFirmwareTransfer() {
 
         Log.d(TAG, "Bean accepted new firmware. Beginning firmware transfer");
@@ -622,6 +658,13 @@ public class GattClient {
 
     }
 
+    /**
+     * The Bean requested a chunk. This doesn't necessarily mean we have to send <em>that</em>
+     * chunk: we have an algorithm that sends sets of chunks to speed up firmware upload. Run the
+     * Bean's requested chunk through the algorithm and send chunks if necessary.
+     *
+     * @param requestedChunk The index of the chunk requested by Bean
+     */
     private void sendNextFwChunks(int requestedChunk) {
 
         if (requestedChunk < nextChunkRequest) {
@@ -661,12 +704,22 @@ public class GattClient {
 
     }
 
+    /**
+     * Send a single chunk. This implementation uses a custom send buffer to automatically retry
+     * sending firmware chunks to the Bean when an attempt fails. Android does not implement a send
+     * buffer, so we have to do it ourselves.
+     *
+     * @param chunkIndex The index of the chunk to be sent
+     */
     private void sendSingleChunk(int chunkIndex) {
         resetFirmwareStateTimeout();
         byte[] chunkToSend = fwChunksToSend.get(chunkIndex);
         chunkSendBuffer.send(chunkToSend, chunkIndex);
     }
-    
+
+    /**
+     * Stop and cancel the firmware state timeout timer.
+     */
     private void stopFirmwareStateTimeout() {
         if (firmwareStateTimeout != null) {
             firmwareStateTimeout.cancel();
@@ -674,6 +727,9 @@ public class GattClient {
         }
     }
 
+    /**
+     * Stop and cancel the firmware completion timer.
+     */
     private void stopFirmwareCompletionTimeout() {
         if (firmwareCompletionTimeout != null) {
             firmwareCompletionTimeout.cancel();
@@ -681,6 +737,9 @@ public class GattClient {
         }
     }
 
+    /**
+     * Reset the firmware state timeout timer.
+     */
     private void resetFirmwareStateTimeout() {
         TimerTask onTimeout = new TimerTask() {
             @Override
@@ -707,6 +766,9 @@ public class GattClient {
         firmwareStateTimeout.schedule(onTimeout, FIRMWARE_UPLOAD_TIMEOUT);
     }
 
+    /**
+     * Reset the firmware completion timer.
+     */
     private void resetFirmwareCompletionTimeout() {
         TimerTask onTimeout = new TimerTask() {
             @Override
@@ -720,6 +782,11 @@ public class GattClient {
         firmwareCompletionTimeout.schedule(onTimeout, FIRMWARE_COMPLETION_TIMEOUT);
     }
 
+    /**
+     * Stop the firmware upload and return an error to the user's {@link #onError} handler.
+     *
+     * @param error The error to be returned to the user
+     */
     private void throwBeanError(BeanError error) {
         resetFirmwareUploadState();
         if (onError != null) {
@@ -727,20 +794,35 @@ public class GattClient {
         }
     }
 
+    /**
+     * @return true if an upload is in progress
+     */
     private boolean uploadInProgress() {
         return firmwareUploadState != FirmwareUploadState.INACTIVE;
     }
 
+    /**
+     * @param charc The characteristic being inspected
+     * @return      true if it's the OAD Block characteristic
+     */
     private boolean isOADBlockCharacteristic(BluetoothGattCharacteristic charc) {
         UUID uuid = charc.getUuid();
         return uuid.equals(CHAR_OAD_BLOCK);
     }
 
+    /**
+     * @param charc The characteristic being inspected
+     * @return      true if it's the OAD Identify characteristic
+     */
     private boolean isOADIdentifyCharacteristic(BluetoothGattCharacteristic charc) {
         UUID uuid = charc.getUuid();
         return uuid.equals(CHAR_OAD_IDENTIFY);
     }
 
+    /**
+     * @param charc The characteristic being inspected
+     * @return      true if it's the OAD Block characteristic
+     */
     private boolean writeToCharacteristic(BluetoothGattCharacteristic charc, byte[] data) {
         charc.setValue(data);
         boolean result = mGatt.writeCharacteristic(charc);
