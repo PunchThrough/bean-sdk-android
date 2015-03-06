@@ -7,10 +7,10 @@ import com.punchthrough.bean.sdk.internal.exception.NameLengthException;
 
 import java.util.List;
 
-import static com.punchthrough.bean.sdk.internal.utility.Misc.bytesFromChunkable;
-import static com.punchthrough.bean.sdk.internal.utility.Misc.chunkCountFromChunkable;
-import static com.punchthrough.bean.sdk.internal.utility.Misc.chunkFromChunkable;
-import static com.punchthrough.bean.sdk.internal.utility.Misc.chunksFromChunkable;
+import static com.punchthrough.bean.sdk.internal.utility.ChunkUtils.bytesFromChunkable;
+import static com.punchthrough.bean.sdk.internal.utility.ChunkUtils.chunkCountFromChunkable;
+import static com.punchthrough.bean.sdk.internal.utility.ChunkUtils.chunkFromChunkable;
+import static com.punchthrough.bean.sdk.internal.utility.ChunkUtils.chunksFromChunkable;
 import static com.punchthrough.bean.sdk.internal.utility.Misc.intArrayToByteArray;
 import static org.assertj.core.api.Assertions.assertThat;
 

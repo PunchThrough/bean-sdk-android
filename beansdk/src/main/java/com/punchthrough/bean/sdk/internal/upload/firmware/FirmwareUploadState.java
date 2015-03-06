@@ -18,7 +18,7 @@ public enum FirmwareUploadState {
      */
     AWAIT_XFER_ACCEPT,
     /**
-     * FW transfer accepted, currently sending chunks
+     * FW transfer accepted, currently sending blocks
      */
-    SEND_FW_CHUNKS
+    SEND_FW_BLOCKS
 }

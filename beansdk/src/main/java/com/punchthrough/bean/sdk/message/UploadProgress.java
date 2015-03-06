@@ -13,19 +13,19 @@ import auto.parcel.AutoParcel;
 public abstract class UploadProgress implements Parcelable {
 
     /**
-     * The number of chunks sent to the Bean so far.
-     * @return The number of chunks sent
+     * The number of blocks sent to the Bean so far.
+     * @return The number of blocks sent
      */
-    public abstract int chunksSent();
+    public abstract int blocksSent();
 
     /**
-     * The total number of chunks being sent to the Bean.
-     * @return The total number of chunks being sent
+     * The total number of blocks being sent to the Bean.
+     * @return The total number of blocks being sent
      */
-    public abstract int totalChunks();
+    public abstract int totalBlocks();
 
-    public static UploadProgress create(int chunksSent, int totalChunks) {
-        return new AutoParcel_UploadProgress(chunksSent, totalChunks);
+    public static UploadProgress create(int blocksSent, int totalBlocks) {
+        return new AutoParcel_UploadProgress(blocksSent, totalBlocks);
     }
 
     /**
@@ -34,7 +34,7 @@ public abstract class UploadProgress implements Parcelable {
      * @return Completion percentage, from 0.0 to 1.0
      */
     public float percent() {
-        return ( (float) chunksSent() ) / totalChunks();
+        return ( (float) blocksSent() ) / totalBlocks();
     }
 
 }

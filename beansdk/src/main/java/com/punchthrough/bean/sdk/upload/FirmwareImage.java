@@ -5,7 +5,7 @@ import android.os.Parcelable;
 import com.punchthrough.bean.sdk.internal.exception.ImageParsingException;
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareImageType;
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareMetadata;
-import com.punchthrough.bean.sdk.internal.utility.Chunkable;
+import com.punchthrough.bean.sdk.internal.utility.Chunk;
 import com.punchthrough.bean.sdk.internal.utility.Constants;
 import com.punchthrough.bean.sdk.internal.utility.Misc;
 
@@ -16,16 +16,15 @@ import java.util.List;
 
 import auto.parcel.AutoParcel;
 
-import static com.punchthrough.bean.sdk.internal.utility.Misc.chunksFromChunkable;
 import static com.punchthrough.bean.sdk.internal.utility.Misc.twoBytesToInt;
 
 @AutoParcel
-public abstract class FirmwareImage implements Parcelable, Chunkable {
+public abstract class FirmwareImage implements Parcelable, Chunk.Chunkable {
 
     /**
-     * The chunk size of firmware packets being sent
+     * The block size of firmware packets being sent
      */
-    private static final int FW_CHUNK_SIZE = 16;
+    private static final int FW_BLOCK_SIZE = 16;
 
     /**
      * The raw firmware image data.
@@ -122,12 +121,12 @@ public abstract class FirmwareImage implements Parcelable, Chunkable {
     }
 
     /**
-     * Get all firmware chunks for this image. Chunks are made up of a UINT16 chunk index followed
+     * Get all firmware blocks for this image. Blocks are made up of a UINT16 block index followed
      * by a 16-byte data block.
      *
-     * @return All chunks for this image
+     * @return All blocks for this image
      */
-    public List<byte[]> chunks() {
+    public List<byte[]> blocks() {
 
         /* typedef struct {
          *     UInt16          nbr;         (length 2, little endian)
@@ -136,7 +135,7 @@ public abstract class FirmwareImage implements Parcelable, Chunkable {
          */
 
         List<byte[]> chunks = new ArrayList<>();
-        List<byte[]> rawChunks = chunksFromChunkable(this, FW_CHUNK_SIZE);
+        List<byte[]> rawChunks = Chunk.chunksFrom(this, FW_BLOCK_SIZE);
         int index = 0;
         for (byte[] rawChunk : rawChunks) {
             byte[] chunk = new byte[18];
@@ -146,7 +145,7 @@ public abstract class FirmwareImage implements Parcelable, Chunkable {
 
             // Ensure we copy at most 16 bytes, but that we don't try to copy 16 bytes if the raw
             // chunk is < 16 bytes
-            System.arraycopy(rawChunk, 0, chunk, 2, Math.min(rawChunk.length, FW_CHUNK_SIZE));
+            System.arraycopy(rawChunk, 0, chunk, 2, Math.min(rawChunk.length, FW_BLOCK_SIZE));
 
             chunks.add(chunk);
             index++;

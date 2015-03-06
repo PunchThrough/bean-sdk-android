@@ -52,7 +52,7 @@ public class GattClient {
      */
     private static final int FIRMWARE_UPLOAD_TIMEOUT = 3000;
     /**
-     * Once the last chunk is requested, wait this many ms for retransmission requests before we
+     * Once the last block is requested, wait this many ms for retransmission requests before we
      * assume the firmware upload is complete
      */
     private static final int FIRMWARE_COMPLETION_TIMEOUT = 500;
@@ -74,7 +74,7 @@ public class GattClient {
      */
     private static final UUID CHAR_OAD_IDENTIFY = UUID.fromString("F000FFC1-0451-4000-B000-000000000000");
     /**
-     * The OAD Block characteristic is used to send firmware chunks and confirm transfer completion
+     * The OAD Block characteristic is used to send firmware blocks and confirm transfer completion
      */
     private static final UUID CHAR_OAD_BLOCK = UUID.fromString("F000FFC2-0451-4000-B000-000000000000");
     /**
@@ -82,7 +82,7 @@ public class GattClient {
      * quickly one after another, we have to implement our own buffer and attempt to send failed
      * packets over and overs ourselves.
      */
-    private SendBuffer chunkSendBuffer;
+    private SendBuffer blockSendBuffer;
     /**
      * The OAD Identify characteristic for this device. Assigned when firmware upload is started.
      */
@@ -108,8 +108,8 @@ public class GattClient {
      */
     private Timer firmwareStateTimeout;
     /**
-     * Started when the last chunk is requested. The Bean indicates firmware update is complete by
-     * requesting the last chunk then doing nothing.
+     * Started when the last block is requested. The Bean indicates firmware update is complete by
+     * requesting the last block then doing nothing.
      */
     private Timer firmwareCompletionTimeout;
     /**
@@ -117,25 +117,25 @@ public class GattClient {
      */
     FirmwareBundle firmwareBundle;
     /**
-     * Chunks of firmware to be sent in order
+     * Blocks of firmware to be sent in order
      */
-    private List<byte[]> fwChunksToSend;
+    private List<byte[]> fwBlocksToSend;
     /**
-     * Storage for chunks for firmware image A. This takes a while, so we do it ahead of time.
+     * Storage for blocks for firmware image A. This takes a while, so we do it ahead of time.
      */
-    private List<byte[]> fwChunksToSendA;
+    private List<byte[]> fwBlocksToSendA;
     /**
-     * Storage for chunks for firmware image B. This takes a while, so we do it ahead of time.
+     * Storage for blocks for firmware image B. This takes a while, so we do it ahead of time.
      */
-    private List<byte[]> fwChunksToSendB;
+    private List<byte[]> fwBlocksToSendB;
     /**
      * Used to keep track of firmware upload state.
      */
-    private int nextChunk = 0;
+    private int nextBlock = 0;
     /**
      * used to keep track of firmware upload state.
      */
-    private int nextChunkRequest = 0;
+    private int nextBlockRequest = 0;
     /**
      * Called to inform the Bean class when firmware upload is complete.
      */
@@ -216,12 +216,12 @@ public class GattClient {
                         // Bean accepted firmware version, begin transfer
                         beginFirmwareTransfer();
 
-                    } else if (firmwareUploadState == FirmwareUploadState.SEND_FW_CHUNKS) {
+                    } else if (firmwareUploadState == FirmwareUploadState.SEND_FW_BLOCKS) {
                         // We've already started sending blocks, and the Bean has responded with the
                         // block number it requests
                         int blockRequested = Misc.twoBytesToInt(
                                 characteristic.getValue(), Constants.CC2540_BYTE_ORDER);
-                        sendNextFwChunks(blockRequested);
+                        sendNextFwBlocks(blockRequested);
 
                     }
 
@@ -492,10 +492,10 @@ public class GattClient {
         }
 
         // Set up rapid packet send buffer and have it update the FW Upload Progress callback
-        chunkSendBuffer = new SendBuffer(mGatt, oadBlock, new Callback<Integer>() {
+        blockSendBuffer = new SendBuffer(mGatt, oadBlock, new Callback<Integer>() {
             @Override
             public void onResult(Integer result) {
-                UploadProgress progress = UploadProgress.create(result, fwChunksToSend.size());
+                UploadProgress progress = UploadProgress.create(result, fwBlocksToSend.size());
                 onProgress.onResult(progress);
             }
         });
@@ -503,10 +503,10 @@ public class GattClient {
         // Save firmware bundle so we have both images when response header is received
         this.firmwareBundle = bundle;
 
-        // Prepare chunks: doing this during the FW upload process takes too long
-        Log.d(TAG, "Preparing firmware chunks (give me a second)");
-        fwChunksToSendA = bundle.imageA().chunks();
-        fwChunksToSendB = bundle.imageB().chunks();
+        // Prepare blocks: doing this during the FW upload process takes too long
+        Log.d(TAG, "Preparing firmware blocks (give me a second)");
+        fwBlocksToSendA = bundle.imageA().blocks();
+        fwBlocksToSendB = bundle.imageB().blocks();
 
         verifyNotifyEnabled();
 
@@ -519,8 +519,8 @@ public class GattClient {
 
         firmwareUploadState = FirmwareUploadState.INACTIVE;
         stopFirmwareStateTimeout();
-        nextChunk = 0;
-        nextChunkRequest = 0;
+        nextBlock = 0;
+        nextBlockRequest = 0;
 
     }
 
@@ -529,7 +529,7 @@ public class GattClient {
      * Bean's current OAD header.
      */
     private void verifyNotifyEnabled() {
-        Log.d(TAG, "Firmware chunks prepared, verifying OAD notifications are enabled");
+        Log.d(TAG, "Firmware blocks prepared, verifying OAD notifications are enabled");
         if (oadIdentifyNotifying && oadBlockNotifying) {
             requestCurrentHeader();
         } else {
@@ -599,7 +599,7 @@ public class GattClient {
 
     /**
      * Use the Bean's existing OAD firmware header to select a firmware version. Prepare that
-     * image's firmware chunks and send that image's metadata to the Bean.
+     * image's firmware blocks and send that image's metadata to the Bean.
      *
      * @param existingHeader The Bean's existing raw firmware header
      */
@@ -621,11 +621,11 @@ public class GattClient {
 
         if (oldMeta.type() == FirmwareImageType.A) {
             newMeta = firmwareBundle.imageB().metadata();
-            fwChunksToSend = fwChunksToSendB;
+            fwBlocksToSend = fwBlocksToSendB;
 
         } else if (oldMeta.type() == FirmwareImageType.B) {
             newMeta = firmwareBundle.imageA().metadata();
-            fwChunksToSend = fwChunksToSendA;
+            fwBlocksToSend = fwBlocksToSendA;
 
         } else {
             throwBeanError(BeanError.UNPARSABLE_FW_VERSION);
@@ -644,59 +644,59 @@ public class GattClient {
     }
 
     /**
-     * Start sending firmware chunks to the Bean.
+     * Start sending firmware blocks to the Bean.
      */
     private void beginFirmwareTransfer() {
 
         Log.d(TAG, "Bean accepted new firmware. Beginning firmware transfer");
 
-        firmwareUploadState = FirmwareUploadState.SEND_FW_CHUNKS;
-        nextChunk = 0;
-        nextChunkRequest = 0;
+        firmwareUploadState = FirmwareUploadState.SEND_FW_BLOCKS;
+        nextBlock = 0;
+        nextBlockRequest = 0;
 
-        sendNextFwChunks(0);
+        sendNextFwBlocks(0);
 
     }
 
     /**
-     * The Bean requested a chunk. This doesn't necessarily mean we have to send <em>that</em>
-     * chunk: we have an algorithm that sends sets of chunks to speed up firmware upload. Run the
-     * Bean's requested chunk through the algorithm and send chunks if necessary.
+     * The Bean requested a block. This doesn't necessarily mean we have to send <em>that</em>
+     * block: we have an algorithm that sends sets of blocks to speed up firmware upload. Run the
+     * Bean's requested block through the algorithm and send blocks if necessary.
      *
-     * @param requestedChunk The index of the chunk requested by Bean
+     * @param requestedBlock The index of the block requested by Bean
      */
-    private void sendNextFwChunks(int requestedChunk) {
+    private void sendNextFwBlocks(int requestedBlock) {
 
-        if (requestedChunk < nextChunkRequest) {
-            // Bean missed a block and requested a retransmit. Roll back nextChunkRequest because we
+        if (requestedBlock < nextBlockRequest) {
+            // Bean missed a block and requested a retransmit. Roll back nextBlockRequest because we
             // expect lots of retransmit requests to occur for the same block.
-            Log.d(TAG, "FW chunk " + requestedChunk + " lost in transit; resending");
-            nextChunkRequest -= nextChunk - requestedChunk - 1;
-            nextChunk = requestedChunk;
+            Log.d(TAG, "FW block " + requestedBlock + " lost in transit; resending");
+            nextBlockRequest -= nextBlock - requestedBlock - 1;
+            nextBlock = requestedBlock;
         }
-        nextChunkRequest++;
+        nextBlockRequest++;
 
-        if (nextChunk - requestedChunk < SEND_BLOCKS_LOWER_LIMIT) {
+        if (nextBlock - requestedBlock < SEND_BLOCKS_LOWER_LIMIT) {
 
             int queued = 0;
 
             // Lots of blocks have been sent - now we have several blocks to send at once
-            while ( nextChunk - requestedChunk < BLOCKS_IN_FLIGHT &&
-                    nextChunk < fwChunksToSend.size() ) {
+            while ( nextBlock - requestedBlock < BLOCKS_IN_FLIGHT &&
+                    nextBlock < fwBlocksToSend.size() ) {
 
-                sendSingleChunk(nextChunk);
+                sendSingleBlock(nextBlock);
                 queued++;
-                nextChunk++;
+                nextBlock++;
 
             }
 
-            Log.d(TAG, "Queued " + queued + " chunks");
+            Log.d(TAG, "Queued " + queued + " blocks");
         }
 
-        if (requestedChunk == fwChunksToSend.size() - 1) {
-            // Bean requested last chunk. If we don't hear any retransmit requests within a timeout,
+        if (requestedBlock == fwBlocksToSend.size() - 1) {
+            // Bean requested last block. If we don't hear any retransmit requests within a timeout,
             // then we're done!
-            Log.d(TAG, "Last chunk requested");
+            Log.d(TAG, "Last block requested");
             stopFirmwareStateTimeout();
             resetFirmwareCompletionTimeout();
 
@@ -705,16 +705,16 @@ public class GattClient {
     }
 
     /**
-     * Send a single chunk. This implementation uses a custom send buffer to automatically retry
-     * sending firmware chunks to the Bean when an attempt fails. Android does not implement a send
+     * Send a single block. This implementation uses a custom send buffer to automatically retry
+     * sending firmware blocks to the Bean when an attempt fails. Android does not implement a send
      * buffer, so we have to do it ourselves.
      *
-     * @param chunkIndex The index of the chunk to be sent
+     * @param blockIndex The index of the block to be sent
      */
-    private void sendSingleChunk(int chunkIndex) {
+    private void sendSingleBlock(int blockIndex) {
         resetFirmwareStateTimeout();
-        byte[] chunkToSend = fwChunksToSend.get(chunkIndex);
-        chunkSendBuffer.send(chunkToSend, chunkIndex);
+        byte[] blockToSend = fwBlocksToSend.get(blockIndex);
+        blockSendBuffer.send(blockToSend, blockIndex);
     }
 
     /**
@@ -753,7 +753,7 @@ public class GattClient {
                 } else if (firmwareUploadState == FirmwareUploadState.AWAIT_XFER_ACCEPT) {
                     throwBeanError(BeanError.FW_START_TIMEOUT);
 
-                } else if (firmwareUploadState == FirmwareUploadState.SEND_FW_CHUNKS) {
+                } else if (firmwareUploadState == FirmwareUploadState.SEND_FW_BLOCKS) {
                     throwBeanError(BeanError.FW_TRANSFER_TIMEOUT);
 
                 }

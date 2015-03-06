@@ -29,7 +29,7 @@ public enum BeanError {
      */
     ENABLE_OAD_NOTIFY_FAILED,
     /**
-     * Timed out during sketch programming, before sending chunks: Bean took too long to update its
+     * Timed out during sketch programming, before sending blocks: Bean took too long to update its
      * current state
      */
     STATE_TIMEOUT,

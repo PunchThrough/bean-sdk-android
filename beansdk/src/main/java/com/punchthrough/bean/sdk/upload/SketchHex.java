@@ -7,7 +7,7 @@ import com.punchthrough.bean.sdk.internal.exception.NameLengthException;
 import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
 import com.punchthrough.bean.sdk.internal.intelhex.Line;
 import com.punchthrough.bean.sdk.internal.intelhex.LineRecordType;
-import com.punchthrough.bean.sdk.internal.utility.Chunkable;
+import com.punchthrough.bean.sdk.internal.utility.Chunk;
 import com.punchthrough.bean.sdk.internal.utility.Constants;
 
 import org.apache.commons.codec.DecoderException;
@@ -24,7 +24,7 @@ import static com.punchthrough.bean.sdk.internal.utility.Misc.bytesToInt;
 import static com.punchthrough.bean.sdk.internal.utility.Misc.enumWithRawValue;
 
 @AutoParcel
-public abstract class SketchHex implements Parcelable, Chunkable {
+public abstract class SketchHex implements Parcelable, Chunk.Chunkable {
 
     public abstract String sketchName();
 

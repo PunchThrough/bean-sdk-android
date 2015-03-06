@@ -93,16 +93,16 @@ public class FirmwareImageTest extends AndroidTestCase {
 
     }
 
-    public void testFirmwareChunking() throws ImageParsingException {
+    public void testFirmwareBlocks() throws ImageParsingException {
 
         FirmwareImage image = FirmwareImage.create(oddLengthImage);
-        List<byte[]> chunks = image.chunks();
-        assertThat(chunks.get(0)).isEqualTo(intArrayToByteArray(new int[] {
+        List<byte[]> blocks = image.blocks();
+        assertThat(blocks.get(0)).isEqualTo(intArrayToByteArray(new int[]{
                 0x00, 0x00,
                 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
                 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18
         }));
-        assertThat(chunks.get(1)).isEqualTo(intArrayToByteArray(new int[] {
+        assertThat(blocks.get(1)).isEqualTo(intArrayToByteArray(new int[]{
                 0x01, 0x00,
                 0x21, 0x22, 0x23, 0x00, 0x00, 0x00, 0x00, 0x00,
                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
