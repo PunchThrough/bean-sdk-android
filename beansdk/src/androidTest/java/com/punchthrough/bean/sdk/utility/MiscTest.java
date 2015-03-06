@@ -9,7 +9,6 @@ import com.punchthrough.bean.sdk.internal.utility.EnumParse;
 
 import java.nio.ByteOrder;
 
-import static com.punchthrough.bean.sdk.internal.utility.EnumParse.enumWithRawValue;
 import static com.punchthrough.bean.sdk.internal.utility.Convert.intArrayToByteArray;
 import static com.punchthrough.bean.sdk.internal.utility.Convert.intToByte;
 import static com.punchthrough.bean.sdk.internal.utility.Convert.intToTwoBytes;

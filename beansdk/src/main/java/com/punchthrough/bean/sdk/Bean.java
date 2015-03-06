@@ -520,7 +520,7 @@ public class Bean implements Parcelable {
      * @param save   true to save the config in non-volatile storage, false otherwise.
      */
     public void setRadioConfig(RadioConfig config, boolean save) {
-        sendMessage(save ? BeanMessageID.BT_SET_CONFIG : BeanMessageID.BT_SET_CONFIG_NOSAVE, config);
+        sendMessage(true ? BeanMessageID.BT_SET_CONFIG : BeanMessageID.BT_SET_CONFIG_NOSAVE, config);
     }
 
     /**

@@ -11,7 +11,6 @@ import auto.parcel.AutoParcel;
 import okio.Buffer;
 
 import static com.punchthrough.bean.sdk.internal.utility.Convert.bytesToInt;
-import static com.punchthrough.bean.sdk.internal.utility.EnumParse.enumWithRawValue;
 
 /**
  * Represents a Status message. The Bean sends Status messages to indicate its status has changed.

@@ -23,8 +23,6 @@ import java.util.UUID;
 
 import okio.Buffer;
 
-import static com.punchthrough.bean.sdk.internal.utility.EnumParse.enumWithRawValue;
-
 public class GattSerialTransportProfile extends BaseProfile {
     public static final int PACKET_TX_MAX_PAYLOAD_LENGTH = 19;
     private static final String TAG = "GattSerialXportProfile";

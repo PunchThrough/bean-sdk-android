@@ -33,7 +33,10 @@ public class EnumParse {
     public static <T extends Enum & ParsableEnum> T enumWithRawValue(Class<T> enumClass, int value)
             throws NoEnumFoundException {
 
-        for (Object oneEnumRaw : EnumSet.allOf(enumClass)) {
+        for (T oneEnumRaw : EnumSet.allOf(enumClass)) {
+            // This is an awkward hack: we _know_ T oneEnumRaw is of type T, since allOf(TClass)
+            // only returns T-type enums, but allOf doesn't guarantee this
+            //noinspection unchecked,RedundantCast
             T oneEnum = (T) oneEnumRaw;
             if (value == oneEnum.getRawValue()) {
                 return oneEnum;

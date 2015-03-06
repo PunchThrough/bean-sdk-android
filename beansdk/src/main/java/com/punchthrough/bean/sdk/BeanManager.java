@@ -159,7 +159,7 @@ public class BeanManager {
     }
 
     private List<UUID> parseUUIDs(final byte[] advertisedData) {
-        List<UUID> uuids = new ArrayList<UUID>();
+        List<UUID> uuids = new ArrayList<>();
 
         int offset = 0;
         while (offset < (advertisedData.length - 2)) {
