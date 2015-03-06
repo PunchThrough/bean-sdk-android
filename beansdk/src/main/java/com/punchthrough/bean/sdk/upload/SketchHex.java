@@ -45,8 +45,12 @@ public abstract class SketchHex implements Parcelable, Chunk.Chunkable {
 
     /**
      * Initialize a SketchHex object with a string of Intel Hex data.
+     *
      * @param sketchName The name of the sketch.
      * @param hexString The Intel Hex data as a string
+     * @return The new SketchHex object
+     * @throws com.punchthrough.bean.sdk.internal.exception.HexParsingException if the string data being parsed is not valid Intel Hex
+     * @throws com.punchthrough.bean.sdk.internal.exception.NameLengthException if the sketch name is too long
      */
     public static SketchHex create(String sketchName, String hexString)
             throws HexParsingException, NameLengthException {

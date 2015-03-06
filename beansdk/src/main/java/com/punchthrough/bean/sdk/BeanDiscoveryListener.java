@@ -25,7 +25,7 @@
 package com.punchthrough.bean.sdk;
 
 /**
- * Callback for discovery events
+ * Provides callbacks for Bean discovery events.
  */
 public interface BeanDiscoveryListener {
     /**

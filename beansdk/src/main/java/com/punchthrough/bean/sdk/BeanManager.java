@@ -77,21 +77,21 @@ public class BeanManager {
     }
 
     /**
-     * Get the {@link BeanManager} instance
+     * Get the shared {@link BeanManager} instance.
      *
-     * @return the instance
+     * @return The shared BeanManager instance.
      */
     public static BeanManager getInstance() {
         return sInstance;
     }
 
     /**
-     * Start a discovery. If a discovery is in progress, it will be canceled. A discovery will run for a limited time after which
+     * Start discovering nearby Beans. If a discovery is in progress, it will be canceled. A
+     * discovery will run for a limited time after which
      * {@link BeanDiscoveryListener#onDiscoveryComplete()} will be called.
      *
      * @param listener the listener for reporting progress
-     * @return true if the discovery started, false otherwise. False may be returned if the Bluetooth stack is unable
-     *         to start the scan.
+     * @return false if the Bluetooth stack was unable to start the scan.
      */
     public boolean startDiscovery(BeanDiscoveryListener listener) {
         if (listener == null) {
@@ -111,7 +111,7 @@ public class BeanManager {
     }
 
     /**
-     * Cancel an ongoing scan. If not scanning, does nothing.
+     * Cancel a scan currently in progress. If no scan is in progress, this method does nothing.
      */
     public void cancelDiscovery() {
         if (mScanning) {
@@ -121,7 +121,7 @@ public class BeanManager {
     }
 
     /**
-     * Return the Beans found since the last scan started
+     * Return the Beans found since the last scan started.
      *
      * @return a collection of Beans found
      */
@@ -151,7 +151,7 @@ public class BeanManager {
      *
      * @param scanRecord    The scanRecord provided by
      *                      {@link android.bluetooth.BluetoothAdapter.LeScanCallback}
-     * @return              true if device is a Bean, false otherwise
+     * @return              true if device is a Bean
      */
     private boolean isBean(byte[] scanRecord) {
         List<UUID> uuids = parseUUIDs(scanRecord);

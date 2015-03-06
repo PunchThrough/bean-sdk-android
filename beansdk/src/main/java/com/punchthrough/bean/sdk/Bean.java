@@ -74,10 +74,13 @@ import static com.punchthrough.bean.sdk.internal.Protocol.APP_MSG_RESPONSE_BIT;
 import static com.punchthrough.bean.sdk.internal.utility.Convert.intToByte;
 
 /**
- * Interacts with the Punch Through Design Bean hardware.
+ * Represents a physical Bean.
  */
 public class Bean implements Parcelable {
 
+    /**
+     * Used to build a Bean from an Android {@link android.os.Parcel}.
+     */
     public static final Creator<Bean> CREATOR = new Creator<Bean>() {
         @Override
         public Bean createFromParcel(Parcel source) {
@@ -322,18 +325,18 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Check if the Bean is connected
+     * Check if the Bean is connected.
      *
-     * @return true if connected, false otherwise
+     * @return true if the Bean is connected
      */
     public boolean isConnected() {
         return connected;
     }
 
     /**
-     * Attempt to connect to the Bean
+     * Attempt to connect to this Bean.
      *
-     * @param context  the context used for connection
+     * @param context  the Android Context used for connection, usually the current activity
      * @param listener the Bean listener
      */
     public void connect(Context context, BeanListener listener) {
@@ -354,7 +357,7 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Return the {@link android.bluetooth.BluetoothDevice} for this Bean
+     * Return the {@link android.bluetooth.BluetoothDevice} backing this Bean object
      *
      * @return the device
      */
@@ -399,7 +402,7 @@ public class Bean implements Parcelable {
     /**
      * Set the advertising flag.
      *
-     * @param enable true to enable, false otherwise
+     * @param enable true to enable, false to disable
      */
     public void setAdvertising(boolean enable) {
         Buffer buffer = new Buffer();
@@ -410,7 +413,7 @@ public class Bean implements Parcelable {
     /**
      * Request a temperature reading.
      *
-     * @param callback the callback for the temperature result, in degrees C
+     * @param callback the callback for the temperature result, in degrees Celsius
      */
     public void readTemperature(Callback<Integer> callback) {
         addCallback(BeanMessageID.CC_TEMP_READ, callback);
@@ -524,7 +527,7 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Send a serial message
+     * Send raw bytes to the Bean as a serial message.
      *
      * @param value the message payload
      */
@@ -535,9 +538,9 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Set the pin code
+     * Set the Bean's security code.
      *
-     * @param pin    the 6 digit pin as a number, for example <code>123456</code>
+     * @param pin    the 6 digit pin as a number, e.g. <code>123456</code>
      * @param active true to enable authenticated mode, false to disable the current pin
      */
     public void setPin(int pin, boolean active) {
@@ -548,7 +551,7 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Send a serial message.
+     * Send a UTF-8 string to the Bean as a serial message.
      *
      * @param value the message to send as UTF-8 bytes
      */
@@ -577,7 +580,7 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Enable or disable the Arduino
+     * Enable or disable the Arduino.
      *
      * @param enable true to enable, false to disable
      */
@@ -588,9 +591,9 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Read the Arduino power state
+     * Read the Arduino power state.
      *
-     * @param callback the callback for the result, true if the Arduino is enabled, false otherwise.
+     * @param callback the callback for the power state result: true if the Arduino is on
      */
     public void readArduinoPowerState(final Callback<Boolean> callback) {
         addCallback(BeanMessageID.CC_GET_AR_POWER, callback);
@@ -598,9 +601,10 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Read the battery level
+     * Read the battery level.
      *
-     * @param callback the callback for the result, the battery level in the range of 0-100%
+     * @param callback the callback for the {@link com.punchthrough.bean.sdk.message.BatteryLevel}
+     *                 result
      */
     public void readBatteryLevel(final Callback<BatteryLevel> callback) {
         gattClient.getBatteryProfile().getBatteryLevel(new BatteryLevelCallback() {
@@ -616,7 +620,8 @@ public class Bean implements Parcelable {
      * connected Android client.
      *
      * The serial gate exists to prevent chatty sketches from interfering with the behavior of
-     * clients that want to send commands to the ATmega.
+     * clients that want to send commands to the ATmega. It is enabled on initial connection to the
+     * Bean.
      */
     public void endSerialGate() {
         sendMessageWithoutPayload(BeanMessageID.BT_END_GATE);
@@ -624,8 +629,8 @@ public class Bean implements Parcelable {
 
     /**
      * Programs the Bean with an Arduino sketch in hex form. The Bean's sketch name and
-     * programmed-at timestamp will be set from
-     * {@link com.punchthrough.bean.sdk.upload.SketchHex#sketchName()}.
+     * programmed-at timestamp will be set from the
+     * {@link com.punchthrough.bean.sdk.upload.SketchHex} object.
      *
      * @param hex           The sketch to be sent to the Bean
      * @param onProgress    Called with progress while the sketch upload is occurring
@@ -813,7 +818,7 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Reset the block send timer. When this timer fires, another firmware block is sent.
+     * Reset the block send timer. When this timer fires, another sketch block is sent.
      */
     private void resetSketchBlockSendTimeout() {
         TimerTask onTimeout = new TimerTask() {
@@ -829,7 +834,7 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Send one block of sketch or firmware data to the Bean and increment the block counter.
+     * Send one block of sketch data to the Bean and increment the block counter.
      */
     private void sendNextSketchBlock() {
         byte[] rawBlock = sketchBlocksToSend.get(currSketchBlockNum);

@@ -18,6 +18,9 @@ import auto.parcel.AutoParcel;
 
 import static com.punchthrough.bean.sdk.internal.utility.Convert.twoBytesToInt;
 
+/**
+ * Holds data for a single A or B firmware image.
+ */
 @AutoParcel
 public abstract class FirmwareImage implements Parcelable, Chunk.Chunkable {
 
@@ -160,6 +163,7 @@ public abstract class FirmwareImage implements Parcelable, Chunk.Chunkable {
      *
      * @param data  The bytes of image data
      * @return      The FirmwareImage object for those bytes of data
+     * @throws com.punchthrough.bean.sdk.internal.exception.ImageParsingException if the image is too short to be valid
      */
     public static FirmwareImage create(byte[] data) throws ImageParsingException {
         FirmwareImage image = new AutoParcel_FirmwareImage(data);

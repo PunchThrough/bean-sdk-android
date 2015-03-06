@@ -28,7 +28,7 @@ import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.ScratchBank;
 
 /**
- * Listener for communicating with the Bean
+ * A Listener interface for communicating with the Bean.
  */
 public interface BeanListener {
 
@@ -58,7 +58,7 @@ public interface BeanListener {
     public void onSerialMessageReceived(byte[] data);
 
     /**
-     * Called when one of the scratch characteristics of the Bean has an updated value
+     * Called when one of the scratch characteristics of the Bean has updated its value.
      *
      * @param bank  the {@link com.punchthrough.bean.sdk.message.ScratchBank} that was updated
      * @param value the bank's new value
@@ -66,7 +66,7 @@ public interface BeanListener {
     public void onScratchValueChanged(ScratchBank bank, byte[] value);
 
     /**
-     * Called when an error occurs during sketch or firmware upload
+     * Called when an error occurs during sketch or firmware upload.
      *
      * @param error The {@link com.punchthrough.bean.sdk.message.BeanError} that occurred
      */
