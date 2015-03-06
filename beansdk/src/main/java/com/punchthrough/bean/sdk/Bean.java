@@ -478,7 +478,7 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Set a scratch bank data value.
+     * Set a scratch bank data value with raw bytes.
      *
      * @param bank The {@link com.punchthrough.bean.sdk.message.ScratchBank} being set
      * @param data The bytes to write into the scratch bank
@@ -489,10 +489,10 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Set a scratch bank data value.
+     * Set a scratch bank data value with a string in the form of UTF-8 bytes.
      *
      * @param bank The {@link com.punchthrough.bean.sdk.message.ScratchBank} being set
-     * @param data The string data to write into the scratch bank
+     * @param data The string data to write into the scratch bank as UTF-8
      */
     public void setScratchData(ScratchBank bank, String data) {
         ScratchData sd = ScratchData.create(bank, data);
