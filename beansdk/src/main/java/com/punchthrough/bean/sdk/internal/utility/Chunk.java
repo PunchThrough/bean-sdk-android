@@ -4,8 +4,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * A set of utilities to make it easy for classes to generate discrete "chunks" from byte arrays of
+ * arbitrary data.
+ */
 public class Chunk {
 
+    /**
+     * Chunkable classes must provide an array of byte data to be split into chunks.
+     */
     public interface Chunkable {
         public byte[] getChunkableData();
     }
