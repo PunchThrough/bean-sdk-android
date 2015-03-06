@@ -79,7 +79,7 @@ import static com.punchthrough.bean.sdk.internal.utility.Convert.intToByte;
 public class Bean implements Parcelable {
 
     /**
-     * Used to build a Bean from an Android {@link android.os.Parcel}.
+     * Used by Android {@link android.os.Parcel}.
      */
     public static final Creator<Bean> CREATOR = new Creator<Bean>() {
         @Override
@@ -1050,11 +1050,17 @@ public class Bean implements Parcelable {
         sendMessage(type, (Buffer) null);
     }
 
+    /**
+     * Used by Android {@link android.os.Parcel}.
+     */
     @Override
     public int describeContents() {
         return 0;
     }
 
+    /**
+     * Used by Android {@link android.os.Parcel}.
+     */
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeParcelable(device, 0);
