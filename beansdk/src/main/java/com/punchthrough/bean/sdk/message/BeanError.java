@@ -50,10 +50,6 @@ public enum BeanError {
      */
     FW_TRANSFER_TIMEOUT,
     /**
-     * Timed out while waiting for confirmation of firmware upload completion
-     */
-    FW_COMPLETE_TIMEOUT,
-    /**
      * Bean rejected firmware version for being older than the current version
      */
     BEAN_REJECTED_FW,
