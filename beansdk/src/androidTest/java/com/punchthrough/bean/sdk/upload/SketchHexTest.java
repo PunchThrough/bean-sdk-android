@@ -3,7 +3,6 @@ package com.punchthrough.bean.sdk.upload;
 import android.test.AndroidTestCase;
 
 import com.punchthrough.bean.sdk.internal.exception.HexParsingException;
-import com.punchthrough.bean.sdk.internal.exception.NameLengthException;
 import com.punchthrough.bean.sdk.internal.utility.Chunk;
 
 import java.util.List;
@@ -39,25 +38,22 @@ public class SketchHexTest extends AndroidTestCase {
 
     final SketchHex defaultHex;
 
-    public SketchHexTest() throws NameLengthException, HexParsingException {
+    public SketchHexTest() throws HexParsingException {
         defaultHex = SketchHex.create("", asciiHexData);
     }
 
-    public void testHexParsingAndSketchNaming() throws HexParsingException, NameLengthException {
+    public void testHexParsingAndSketchNaming() throws HexParsingException {
 
         assertThat(SketchHex.create("StairCar").sketchName()).isEqualTo("StairCar");
 
-        try {
-            SketchHex.create("LongerThan20CharactersByQuiteABit_TheSequel_TurboEdition");
-            fail();
-        } catch (NameLengthException e) {
-            assertThat(e).isNotNull();
-        }
+        assertThat(SketchHex.create(
+                "LongerThan20CharactersByQuiteABit_TheSequel_TurboEdition")
+                .sketchName()).isEqualTo("LongerThan20Characte");
 
         assertThat(defaultHex.bytes()).isEqualTo(rawHexData);
     }
 
-    public void testGetBytesAndChunks() throws NameLengthException, HexParsingException {
+    public void testGetBytesAndChunks() throws HexParsingException {
 
         // Queries that don't extend past the array boundary should work as expected
 

@@ -3,7 +3,6 @@ package com.punchthrough.bean.sdk.upload;
 import android.os.Parcelable;
 
 import com.punchthrough.bean.sdk.internal.exception.HexParsingException;
-import com.punchthrough.bean.sdk.internal.exception.NameLengthException;
 import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
 import com.punchthrough.bean.sdk.internal.intelhex.Line;
 import com.punchthrough.bean.sdk.internal.intelhex.LineRecordType;
@@ -38,8 +37,7 @@ public abstract class SketchHex implements Parcelable, Chunk.Chunkable {
     /**
      * Initialize a SketchHex object with no data.
      */
-    public static SketchHex create(String sketchName)
-            throws NameLengthException, HexParsingException {
+    public static SketchHex create(String sketchName) throws HexParsingException {
         return SketchHex.create(sketchName, "");
     }
 
@@ -49,16 +47,13 @@ public abstract class SketchHex implements Parcelable, Chunk.Chunkable {
      * @param sketchName The name of the sketch.
      * @param hexString The Intel Hex data as a string
      * @return The new SketchHex object
-     * @throws com.punchthrough.bean.sdk.internal.exception.HexParsingException if the string data being parsed is not valid Intel Hex
-     * @throws com.punchthrough.bean.sdk.internal.exception.NameLengthException if the sketch name is too long
+     * @throws com.punchthrough.bean.sdk.internal.exception.HexParsingException
+     *         if the string data being parsed is not valid Intel Hex
      */
-    public static SketchHex create(String sketchName, String hexString)
-            throws HexParsingException, NameLengthException {
+    public static SketchHex create(String sketchName, String hexString) throws HexParsingException {
 
         if (sketchName.length() > Constants.MAX_SKETCH_NAME_LENGTH) {
-            throw new NameLengthException(String.format(
-                    "Sketch name must be less than %d characters",
-                    Constants.MAX_SKETCH_NAME_LENGTH));
+            sketchName = sketchName.substring(0, Constants.MAX_SKETCH_NAME_LENGTH);
         }
 
         List<Line> lines = parseHexStringToLines(hexString);
