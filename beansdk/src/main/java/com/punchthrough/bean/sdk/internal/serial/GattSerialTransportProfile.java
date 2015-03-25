@@ -15,7 +15,6 @@ import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
 import com.punchthrough.bean.sdk.internal.utility.EnumParse;
 import com.punchthrough.bean.sdk.message.ScratchBank;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -37,7 +36,7 @@ public class GattSerialTransportProfile extends BaseProfile {
             UUID.fromString("a495ff24-c5b1-4b44-b512-1370f02d74de"),
             UUID.fromString("a495ff25-c5b1-4b44-b512-1370f02d74de")
     );
-    private WeakReference<Listener> mListener = new WeakReference<>(null);
+    private Listener mListener;
     private BluetoothGattCharacteristic mSerialCharacteristic;
     private boolean mReadyToSend = false;
 
@@ -122,7 +121,7 @@ public class GattSerialTransportProfile extends BaseProfile {
                 if (BuildConfig.DEBUG) {
                     Log.d(TAG, "Received data");
                 }
-                Listener listener = mListener.get();
+                Listener listener = mListener;
                 if (listener != null) {
                     listener.onMessageReceived(data);
                 } else {
@@ -136,7 +135,7 @@ public class GattSerialTransportProfile extends BaseProfile {
                 if (BuildConfig.DEBUG) {
                     Log.d(TAG, "Received scratch bank update (" + index + ")");
                 }
-                Listener listener = mListener.get();
+                Listener listener = mListener;
                 if (listener != null) {
                     try {
                         ScratchBank bank = EnumParse.enumWithRawValue(ScratchBank.class, index);
@@ -166,7 +165,7 @@ public class GattSerialTransportProfile extends BaseProfile {
                     Log.i(TAG, "Setup complete");
                 }
 
-                Listener listener = mListener.get();
+                Listener listener = mListener;
                 if (listener != null) {
                     listener.onConnected();
                 } else {
@@ -180,7 +179,7 @@ public class GattSerialTransportProfile extends BaseProfile {
     private void abort() {
         boolean wasConnected = mSerialCharacteristic != null;
         mSerialCharacteristic = null;
-        Listener listener = mListener.get();
+        Listener listener = mListener;
         if (listener != null) {
             if (wasConnected) {
                 listener.onDisconnected();
@@ -208,7 +207,7 @@ public class GattSerialTransportProfile extends BaseProfile {
     }
 
     public void setListener(Listener listener) {
-        this.mListener = new WeakReference<>(listener);
+        this.mListener = listener;
     }
 
 
