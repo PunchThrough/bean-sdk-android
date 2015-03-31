@@ -57,10 +57,18 @@ public class GattClient {
      */
     private static final int FIRMWARE_COMPLETION_TIMEOUT = 500;
     /**
+     * The TI algorithm is implemented in the Obj-C SDK and is based on TI's SensorTag sample app.
+     * It speeds up firmware uploads by sending many WriteWithoutResponse packets at once and
+     * backing up if an error occurs.
+     */
+    private static final boolean USE_TI_ALGORITHM = false;
+    /**
+     * TI algorithm variable
      * Max number of firmware blocks in flight at any given time
      */
     private static final int BLOCKS_IN_FLIGHT = 18;
     /**
+     * TI algorithm variable
      * When number of blocks in flight gets this low, send more blocks. We wait for the number to
      * get low so we can send a bunch of blocks at once.
      */
@@ -659,38 +667,52 @@ public class GattClient {
     }
 
     /**
-     * The Bean requested a block. This doesn't necessarily mean we have to send <em>that</em>
-     * block: we have an algorithm that sends sets of blocks to speed up firmware upload. Run the
-     * Bean's requested block through the algorithm and send blocks if necessary.
+     * The Bean requested a block. Send one or more blocks based on that request.
      *
      * @param requestedBlock The index of the block requested by Bean
      */
     private void sendNextFwBlocks(int requestedBlock) {
 
-        if (requestedBlock < nextBlockRequest) {
-            // Bean missed a block and requested a retransmit. Roll back nextBlockRequest because we
-            // expect lots of retransmit requests to occur for the same block.
-            Log.d(TAG, "FW block " + requestedBlock + " lost in transit; resending");
-            nextBlockRequest -= nextBlock - requestedBlock - 1;
-            nextBlock = requestedBlock;
-        }
-        nextBlockRequest++;
+        if (USE_TI_ALGORITHM) {
 
-        if (nextBlock - requestedBlock < SEND_BLOCKS_LOWER_LIMIT) {
+            /* The Bean requested a block. This doesn't necessarily mean we have to send
+             * <em>that</em> block: we have an algorithm that sends sets of blocks to speed up
+             * firmware upload. Run the Bean's requested block through the algorithm and send
+             * blocks if necessary.
+             */
 
-            int queued = 0;
+            if (requestedBlock < nextBlockRequest) {
+                // Bean missed a block and requested a retransmit. Roll back nextBlockRequest
+                // because we expect lots of retransmit requests to occur for the same block.
+                Log.d(TAG, "FW block " + requestedBlock + " lost in transit; resending");
+                nextBlockRequest -= nextBlock - requestedBlock - 1;
+                nextBlock = requestedBlock;
+            }
+            nextBlockRequest++;
 
-            // Lots of blocks have been sent - now we have several blocks to send at once
-            while ( nextBlock - requestedBlock < BLOCKS_IN_FLIGHT &&
-                    nextBlock < fwBlocksToSend.size() ) {
+            if (nextBlock - requestedBlock < SEND_BLOCKS_LOWER_LIMIT) {
 
-                sendSingleBlock(nextBlock);
-                queued++;
-                nextBlock++;
+                int queued = 0;
 
+                // Lots of blocks have been sent - now we have several blocks to send at once
+                while (nextBlock - requestedBlock < BLOCKS_IN_FLIGHT &&
+                        nextBlock < fwBlocksToSend.size()) {
+
+                    sendSingleBlock(nextBlock);
+                    queued++;
+                    nextBlock++;
+
+                }
+
+                Log.d(TAG, "Queued " + queued + " blocks");
             }
 
-            Log.d(TAG, "Queued " + queued + " blocks");
+        } else {
+
+            // Naive algorithm: send the block requested by Bean.
+            Log.d(TAG, "Sending requested FW block " + requestedBlock);
+            sendSingleBlock(requestedBlock);
+
         }
 
         if (requestedBlock == fwBlocksToSend.size() - 1) {
