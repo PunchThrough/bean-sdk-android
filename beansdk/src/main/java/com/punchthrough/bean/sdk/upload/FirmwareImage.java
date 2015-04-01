@@ -135,7 +135,7 @@ public abstract class FirmwareImage implements Parcelable, Chunk.Chunkable {
      * @return The block at the given index
      */
     public byte[] block(int index) {
-        byte[] theBlock = new byte[FW_BLOCK_SIZE];
+        byte[] theBlock = new byte[FW_BLOCK_SIZE + 2];
 
         byte[] rawIndex = Convert.intToTwoBytes(index, Constants.CC2540_BYTE_ORDER);
         System.arraycopy(rawIndex, 0, theBlock, 0, 2);
