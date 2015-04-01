@@ -9,10 +9,7 @@ import com.punchthrough.bean.sdk.internal.utility.Chunk;
 import com.punchthrough.bean.sdk.internal.utility.Constants;
 import com.punchthrough.bean.sdk.internal.utility.Convert;
 
-import java.nio.ByteOrder;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import auto.parcel.AutoParcel;
 
@@ -124,38 +121,31 @@ public abstract class FirmwareImage implements Parcelable, Chunk.Chunkable {
     }
 
     /**
-     * Get all firmware blocks for this image. Blocks are made up of a UINT16 block index followed
+     * @return The number of blocks in this firmware image
+     */
+    public int blockCount() {
+        return (int) Math.ceil((double) data().length / FW_BLOCK_SIZE);
+    }
+
+    /**
+     * Get a firmware block for this image. Blocks are made up of a UINT16 block index followed
      * by a 16-byte data block.
      *
-     * @return All blocks for this image
+     * @param index The index of the block to be returned
+     * @return The block at the given index
      */
-    public List<byte[]> blocks() {
+    public byte[] block(int index) {
+        byte[] theBlock = new byte[FW_BLOCK_SIZE + 2];
 
-        /* typedef struct {
-         *     UInt16          nbr;         (length 2, little endian)
-         *     data_block_t    block;       (length 16)
-         * } oad_packet_t;
-         */
+        byte[] rawIndex = Convert.intToTwoBytes(index, Constants.CC2540_BYTE_ORDER);
+        System.arraycopy(rawIndex, 0, theBlock, 0, 2);
 
-        List<byte[]> chunks = new ArrayList<>();
-        List<byte[]> rawChunks = Chunk.chunksFrom(this, FW_BLOCK_SIZE);
-        int index = 0;
-        for (byte[] rawChunk : rawChunks) {
-            byte[] chunk = new byte[18];
+        int blockStart = index * FW_BLOCK_SIZE;
+        int length = FW_BLOCK_SIZE;
+        while (blockStart + length >= data().length) { length--; }
+        System.arraycopy(data(), blockStart, theBlock, 2, length);
 
-            byte[] counter = Convert.intToTwoBytes(index, ByteOrder.LITTLE_ENDIAN);
-            System.arraycopy(counter, 0, chunk, 0, 2);
-
-            // Ensure we copy at most 16 bytes, but that we don't try to copy 16 bytes if the raw
-            // chunk is < 16 bytes
-            System.arraycopy(rawChunk, 0, chunk, 2, Math.min(rawChunk.length, FW_BLOCK_SIZE));
-
-            chunks.add(chunk);
-            index++;
-        }
-
-        return chunks;
-
+        return theBlock;
     }
 
     /**
