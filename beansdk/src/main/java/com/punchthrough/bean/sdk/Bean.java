@@ -737,8 +737,12 @@ public class Bean implements Parcelable {
             }
 
         } else {
-            Log.e(TAG, "Received message of unknown type " + Integer.toHexString(type));
-            disconnect();
+            String fourDigitHex = Integer.toHexString(type);
+            while (fourDigitHex.length() < 4) {
+                fourDigitHex = "0" + fourDigitHex;
+            }
+            Log.e(TAG, "Received message of unknown type 0x" + fourDigitHex);
+            returnError(BeanError.UNKNOWN_MESSAGE_ID);
 
         }
     }

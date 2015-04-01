@@ -54,6 +54,10 @@ public enum BeanError {
      */
     BEAN_REJECTED_FW,
     /**
+     * Bean responded with a message with an ID we don't know anything about
+     */
+    UNKNOWN_MESSAGE_ID,
+    /**
      * Bean did not provide a reason for the error
      */
     UNKNOWN
