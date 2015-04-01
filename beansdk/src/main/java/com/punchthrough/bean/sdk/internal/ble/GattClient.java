@@ -22,6 +22,7 @@ import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.Callback;
 import com.punchthrough.bean.sdk.message.UploadProgress;
 import com.punchthrough.bean.sdk.upload.FirmwareBundle;
+import com.punchthrough.bean.sdk.upload.FirmwareImage;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -125,17 +126,9 @@ public class GattClient {
      */
     FirmwareBundle firmwareBundle;
     /**
-     * Blocks of firmware to be sent in order
+     * Firmware image (A or B) to send
      */
-    private List<byte[]> fwBlocksToSend;
-    /**
-     * Storage for blocks for firmware image A. This takes a while, so we do it ahead of time.
-     */
-    private List<byte[]> fwBlocksToSendA;
-    /**
-     * Storage for blocks for firmware image B. This takes a while, so we do it ahead of time.
-     */
-    private List<byte[]> fwBlocksToSendB;
+    FirmwareImage firmwareImage;
     /**
      * Used to keep track of firmware upload state.
      */
@@ -503,18 +496,13 @@ public class GattClient {
         blockSendBuffer = new SendBuffer(mGatt, oadBlock, new Callback<Integer>() {
             @Override
             public void onResult(Integer result) {
-                UploadProgress progress = UploadProgress.create(result, fwBlocksToSend.size());
+                UploadProgress progress = UploadProgress.create(result, firmwareImage.blockCount());
                 onProgress.onResult(progress);
             }
         });
 
         // Save firmware bundle so we have both images when response header is received
         this.firmwareBundle = bundle;
-
-        // Prepare blocks: doing this during the FW upload process takes too long
-        Log.d(TAG, "Preparing firmware blocks (give me a second)");
-        fwBlocksToSendA = bundle.imageA().blocks();
-        fwBlocksToSendB = bundle.imageB().blocks();
 
         verifyNotifyEnabled();
 
@@ -629,11 +617,11 @@ public class GattClient {
 
         if (oldMeta.type() == FirmwareImageType.A) {
             newMeta = firmwareBundle.imageB().metadata();
-            fwBlocksToSend = fwBlocksToSendB;
+            firmwareImage = firmwareBundle.imageB();
 
         } else if (oldMeta.type() == FirmwareImageType.B) {
             newMeta = firmwareBundle.imageA().metadata();
-            fwBlocksToSend = fwBlocksToSendA;
+            firmwareImage = firmwareBundle.imageA();
 
         } else {
             throwBeanError(BeanError.UNPARSABLE_FW_VERSION);
@@ -696,7 +684,7 @@ public class GattClient {
 
                 // Lots of blocks have been sent - now we have several blocks to send at once
                 while (nextBlock - requestedBlock < BLOCKS_IN_FLIGHT &&
-                        nextBlock < fwBlocksToSend.size()) {
+                        nextBlock < firmwareImage.blockCount()) {
 
                     sendSingleBlock(nextBlock);
                     queued++;
@@ -715,7 +703,7 @@ public class GattClient {
 
         }
 
-        if (requestedBlock == fwBlocksToSend.size() - 1) {
+        if (requestedBlock == firmwareImage.blockCount() - 1) {
             // Bean requested last block. If we don't hear any retransmit requests within a timeout,
             // then we're done!
             Log.d(TAG, "Last block requested");
@@ -735,7 +723,7 @@ public class GattClient {
      */
     private void sendSingleBlock(int blockIndex) {
         resetFirmwareStateTimeout();
-        byte[] blockToSend = fwBlocksToSend.get(blockIndex);
+        byte[] blockToSend = firmwareImage.block(blockIndex);
         blockSendBuffer.send(blockToSend, blockIndex);
     }
 
