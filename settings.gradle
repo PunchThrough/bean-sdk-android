@@ -1,1 +1,1 @@
-include ':beansdk'
+include ':sdk'

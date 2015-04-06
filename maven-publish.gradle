@@ -33,20 +33,15 @@ afterEvaluate { project ->
                 }
 
                 pom.project {
-                    parent {
-                        groupId = "org.sonatype.oss"
-                        artifactId = "oss-parent"
-                        version = "7"
-                    }
-
-                    name 'Beanlib'
+                    name 'sdk'
                     packaging 'aar'
-                    description 'Unofficial SDK to work with the Punch Through Design Bean hardware on Android'
-                    url 'https://bitbucket.org/littlerobots/beanlib'
+                    description 'Punch Through Design\'s SDK for speeding up development ' +
+                            'with the LightBlue Bean development platform'
+                    url 'https://github.com/PunchThrough/Bean-Android-SDK'
 
                     scm {
-                        url "https://bitbucket.org/littlerobots/beanlib"
-                        connection "ssh://hg@bitbucket.org/littlerobots/beanlib"
+                        url "https://github.com/PunchThrough/Bean-Android-SDK"
+                        connection "https://github.com/PunchThrough/Bean-Android-SDK.git"
                     }
 
                     licenses {
@@ -59,8 +54,8 @@ afterEvaluate { project ->
 
                     developers {
                         developer {
-                            id "hvisser"
-                            name "Hugo Visser"
+                            id "punchthrough"
+                            name "Punch Through Design"
                         }
                     }
                 }

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
 import os
 import shutil
@@ -22,7 +22,7 @@ except OSError:
 
 os.chdir(OUTPUT_DIR_NAME)
 call_unsafe('rm *.jar')
-call_unsafe('cp ../beansdk/build/libs/*.jar .')
+call_unsafe('cp ../sdk/build/libs/*.jar .')
 
 commit = check_output(['git', 'rev-parse', 'HEAD'])[:7]
 
