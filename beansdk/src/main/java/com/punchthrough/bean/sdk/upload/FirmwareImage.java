@@ -142,7 +142,7 @@ public abstract class FirmwareImage implements Parcelable, Chunk.Chunkable {
 
         int blockStart = index * FW_BLOCK_SIZE;
         int length = FW_BLOCK_SIZE;
-        while (blockStart + length >= data().length) { length--; }
+        while (blockStart + length > data().length) { length--; }
         System.arraycopy(data(), blockStart, theBlock, 2, length);
 
         return theBlock;
