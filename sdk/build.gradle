@@ -2,7 +2,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'com.neenbedankt.android-apt'
 
 group = 'com.punchthrough.bean.sdk'
-version = "1.0.0"
+version = "1.0.1"
 
 android {
     compileSdkVersion 21
