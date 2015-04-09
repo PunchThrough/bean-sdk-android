@@ -91,28 +91,30 @@ public class GattSerialTransportProfile extends BaseProfile {
                     client.writeDescriptor(descriptor);
                 }
             }
+
             service = client.getService(BEAN_SCRATCH_SERVICE_UUID);
+
+            for (BluetoothGattCharacteristic characteristic : service.getCharacteristics()) {
+                if (characteristic.getDescriptors().size() < 2) {
+                    /* This Bean has a scratch characteristic with less than two
+                     * descriptors.
+                     *
+                     * This is a very old (probably factory-firmware) Bean. These Beans have
+                     * malformed scratch characteristic tables. If Android writes to one of
+                     * these Beans' scratch characteristic tables, it will close the
+                     * connection.
+                     *
+                     * To fix this problem, update these Beans to the latest firmware before
+                     * use.
+                     */
+                    return;
+                }
+            }
+
             for (BluetoothGattCharacteristic characteristic : service.getCharacteristics()) {
                 client.setCharacteristicNotification(characteristic, true);
-
                 for (BluetoothGattDescriptor descriptor : characteristic.getDescriptors()) {
                     if ((descriptor.getUuid().getMostSignificantBits() >> 32) == 0x2902) {
-
-
-                        if (characteristic.getDescriptors().size() < 2) {
-                            /* This Bean has a scratch characteristic with less than two
-                             * descriptors.
-                             *
-                             * This is a very old (probably factory-firmware) Bean. These Beans have
-                             * malformed scratch characteristic tables. If Android writes to one of
-                             * these Beans' scratch characteristic tables, it will close the
-                             * connection.
-                             *
-                             * To fix this problem, update these Beans to the latest firmware before
-                             * use.
-                             */
-                            continue;
-                        }
 
                         descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
                         client.writeDescriptor(descriptor);
