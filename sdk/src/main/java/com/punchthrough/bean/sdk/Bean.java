@@ -684,7 +684,7 @@ public class Bean implements Parcelable {
 
         // Since TI OAD FW uploads access BLE characteristics directly, we need to delegate this
         // to GattClient
-        gattClient.programWithFirmware(bundle, onProgress, onComplete, onError);
+        gattClient.getOADProfile().programWithFirmware(bundle, onProgress, onComplete, onError);
     }
 
     /**

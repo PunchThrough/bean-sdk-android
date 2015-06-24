@@ -1,6 +1,5 @@
 package com.punchthrough.bean.sdk.internal.ble;
 
-import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.util.Log;
 
@@ -16,7 +15,7 @@ public class SendBuffer {
     private static final String TAG = "SendBuffer";
     public static final int SEND_INTERVAL = 5;  // ms
 
-    private final BluetoothGatt gatt;
+    private final GattClient gattClient;
     private final BluetoothGattCharacteristic charc;
     private final List<byte[]> packets = new ArrayList<>();
     private final List<Integer> ids = new ArrayList<>();
@@ -29,14 +28,13 @@ public class SendBuffer {
      * Set up a send buffer to manage outgoing packets for a specific
      * {@link android.bluetooth.BluetoothGatt} device and
      * {@link android.bluetooth.BluetoothGattCharacteristic}.
-     *
-     * @param gatt          The device associated with the characteristic
+     *  @param gattClient          The device associated with the characteristic
      * @param charc         The characteristic to send packets to
      * @param onPacketSent  Called with the ID of a packet when that packet is sent successfully
      */
-    public SendBuffer(BluetoothGatt gatt, BluetoothGattCharacteristic charc,
+    public SendBuffer(GattClient gattClient, BluetoothGattCharacteristic charc,
                       Callback<Integer> onPacketSent) {
-        this.gatt = gatt;
+        this.gattClient = gattClient;
         this.charc = charc;
         this.onPacketSent = onPacketSent;
     }
@@ -81,7 +79,7 @@ public class SendBuffer {
                 }
 
                 charc.setValue(packet);
-                boolean result = gatt.writeCharacteristic(charc);
+                boolean result = gattClient.writeCharacteristic(charc);
 
                 if (result) {
                     packets.remove(0);
