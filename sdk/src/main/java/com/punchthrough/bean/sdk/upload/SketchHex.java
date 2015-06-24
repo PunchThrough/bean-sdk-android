@@ -22,6 +22,9 @@ import auto.parcel.AutoParcel;
 import static com.punchthrough.bean.sdk.internal.utility.Convert.asciiHexToBytes;
 import static com.punchthrough.bean.sdk.internal.utility.Convert.bytesToInt;
 
+/**
+ * Represents a Sketch (Arduino code snippet) in hex form.
+ */
 @AutoParcel
 public abstract class SketchHex implements Parcelable, Chunk.Chunkable {
 
