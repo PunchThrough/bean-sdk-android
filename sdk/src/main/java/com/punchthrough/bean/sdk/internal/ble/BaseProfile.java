@@ -3,6 +3,10 @@ package com.punchthrough.bean.sdk.internal.ble;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 
+
+/**
+ * Base class that all GATT based Bluetooth profiles should extend
+ */
 public class BaseProfile {
 
     protected final GattClient mGattClient;
