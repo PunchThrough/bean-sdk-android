@@ -57,5 +57,11 @@ public class TestBeanManager extends AndroidTestCase {
         assertThat(startedOK).isTrue();
         beanLatch.await();
         assertThat(beans.size()).isGreaterThan(0);
+        this.bm.cancelDiscovery();
+        for (Bean bean : beans) {
+            if (bean.isConnected()) {
+                bean.disconnect();
+            }
+        }
     }
 }
