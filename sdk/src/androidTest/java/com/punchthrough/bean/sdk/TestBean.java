@@ -1,6 +1,6 @@
 package com.punchthrough.bean.sdk;
 
-import android.os.Looper;
+import com.punchthrough.bean.sdk.TestingUtils.LooperRunner;
 import android.test.AndroidTestCase;
 
 import com.punchthrough.bean.sdk.message.BeanError;
@@ -20,20 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Note: This requires an actual bean nearby to pass!
  */
 public class TestBean extends AndroidTestCase {
-
-    public class LooperRunner implements Runnable {
-
-        private Looper looper = BeanManager.getInstance().mHandler.getLooper();
-
-        public void run() {
-            this.looper.prepare();
-            this.looper.loop();
-        }
-
-        public void quit() {
-            this.looper.quitSafely();
-        }
-    }
 
     private LooperRunner lr = new LooperRunner();
     private Thread lrThread = new Thread(lr);
