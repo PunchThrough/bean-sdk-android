@@ -5,11 +5,11 @@ group = 'com.punchthrough.bean.sdk'
 version = "1.0.1"
 
 android {
-    compileSdkVersion 21
+    compileSdkVersion 22
     buildToolsVersion '19.1.0'
     defaultConfig {
         minSdkVersion 18
-        targetSdkVersion 21
+        targetSdkVersion 22
         versionCode 1
         versionName version
     }
