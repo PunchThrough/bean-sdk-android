@@ -16,3 +16,16 @@ allprojects {
     }
 }
 
+task buildDocs << {
+    String outdir = 'build/javadoc'
+    String srcdir = 'sdk/src/main/java'
+    String rootPackage = 'com.punchthrough.bean.sdk'
+    println "Creating Javadocs recursively from pacakge: " + rootPackage
+    String cmd = sprintf('javadoc -d %s -sourcepath %s -subpackages %s', [outdir, srcdir, rootPackage])
+    def sout = new StringBuffer()
+    def serr = new StringBuffer()
+    def proc = cmd.execute()
+    proc.consumeProcessOutput(sout, serr)
+    proc.waitForOrKill(10000)
+    println "Javadocs have been generated in dir: " + outdir
+}

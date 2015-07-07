@@ -8,6 +8,10 @@ import java.util.List;
 import com.punchthrough.bean.sdk.internal.ble.BaseProfile;
 import com.punchthrough.bean.sdk.internal.ble.GattClient;
 
+
+/**
+ * Encapsulation of the <a href="https://developer.bluetooth.org/TechnologyOverview/Pages/BAS.aspx">Device Information Service Profile (DIS).</a>
+ */
 public class BatteryProfile extends BaseProfile {
 
     private static final int BATTERY_SERVICE_UID = 0x180F;

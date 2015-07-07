@@ -33,6 +33,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 
+/**
+ * Encapsulation of a GATT client in a typical central/peripheral BLE connection where the
+ * GATT client is running on the central device.
+ */
 public class GattClient {
     private static final String TAG = "GattClient";
     private final GattSerialTransportProfile mSerialProfile;

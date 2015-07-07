@@ -10,6 +10,9 @@ import com.punchthrough.bean.sdk.internal.ble.BaseProfile;
 import com.punchthrough.bean.sdk.internal.ble.GattClient;
 import com.punchthrough.bean.sdk.message.DeviceInfo;
 
+/**
+ * Encapsulation of the <a href="https://developer.bluetooth.org/TechnologyOverview/Pages/DIS.aspx">Device Information Service Profile (DIS).</a>
+ */
 public class DeviceProfile extends BaseProfile {
 
     private static final int DEVICE_SERVICE_UUID = 0x180a;

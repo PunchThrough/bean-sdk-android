@@ -45,7 +45,7 @@ public class BeanManager {
     private static final UUID BEAN_UUID = UUID.fromString("a495ff10-c5b1-4b44-b512-1370f02d74de");
     private static final long SCAN_TIMEOUT = 30000;
     private static BeanManager sInstance = new BeanManager();
-    private Handler mHandler = new Handler();
+    protected Handler mHandler = new Handler();
     private BeanDiscoveryListener mListener;
     private boolean mScanning = false;
     private Runnable mCompleteDiscoveryCallback = new Runnable() {
