@@ -1,10 +1,11 @@
-# [PRE-RELEASE] LightBlue Bean Android SDK
+# [PRE-RELEASE]
+# LightBlue Bean Android SDK
+---
 
 This software is still under heavy development and design, use at your own risk!
 
 # Learn!
-
-***
+---
 
 ### List nearby Bean(s)
 
