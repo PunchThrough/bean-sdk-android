@@ -29,7 +29,8 @@ BeanDiscoveryListener listener = new BeanDiscoveryListener() {
 BeanManager.getInstance().startDiscovery(listener);
 java.lang.Thread.sleep(5000);
 for (Bean bean : beans) {
-    System.out.println(bean.getName());
+    System.out.println(bean.getDevice().getName());   // "Bean"              (example)
+    System.out.println(bean.getDevice().mAddress);    // "B4:99:4C:1E:BC:75" (example)
 }
 
 ```
