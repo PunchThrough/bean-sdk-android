@@ -1,0 +1,13 @@
+com.punchthrough.bean.sdk
+com.punchthrough.bean.sdk.internal
+com.punchthrough.bean.sdk.internal.battery
+com.punchthrough.bean.sdk.internal.ble
+com.punchthrough.bean.sdk.internal.device
+com.punchthrough.bean.sdk.internal.exception
+com.punchthrough.bean.sdk.internal.intelhex
+com.punchthrough.bean.sdk.internal.serial
+com.punchthrough.bean.sdk.internal.upload.firmware
+com.punchthrough.bean.sdk.internal.upload.sketch
+com.punchthrough.bean.sdk.internal.utility
+com.punchthrough.bean.sdk.message
+com.punchthrough.bean.sdk.upload
