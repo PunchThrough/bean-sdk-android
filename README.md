@@ -1,11 +1,10 @@
-# [PRE-RELEASE]
-# LightBlue Bean Android SDK
----
+# [PRE-RELEASE] LightBlue Bean Android SDK
 
 This software is still under heavy development and design, use at your own risk!
 
+* [Javadocs](http://punchthrough.github.io/Bean-Android-SDK/docs/javadoc/index.html)
+
 # Learn!
----
 
 ### List nearby Bean(s)
 
