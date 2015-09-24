@@ -22,15 +22,15 @@ BeanDiscoveryListener listener = new BeanDiscoveryListener() {
 
     @Override
     public void onDiscoveryComplete() {
+        for (Bean bean : beans) {
+            System.out.println(bean.getDevice().getName());   // "Bean"              (example)
+            System.out.println(bean.getDevice().mAddress);    // "B4:99:4C:1E:BC:75" (example)
+        }
+
     }
 };
 
 BeanManager.getInstance().startDiscovery(listener);
-java.lang.Thread.sleep(5000);
-for (Bean bean : beans) {
-    System.out.println(bean.getDevice().getName());   // "Bean"              (example)
-    System.out.println(bean.getDevice().mAddress);    // "B4:99:4C:1E:BC:75" (example)
-}
 
 ```
 
@@ -41,12 +41,20 @@ Device Information Service (DIS) BLE profile.
 
 ```java
 // Assume we have a reference to the 'beans' ArrayList from above.
-Bean bean = beans[0];
+final Bean bean = beans[0];
 
 BeanListener beanListener = new BeanListener() {
     @Override
     public void onConnected() {
         System.out.prinln("connected to Bean!");
+        bean.readDeviceInfo(new Callback<DeviceInfo>() {
+            @Override
+            public void onResult(DeviceInfo deviceInfo) {
+                System.out.println(deviceInfo.hardwareVersion());
+                System.out.println(deviceInfo.firmwareVersion());
+                System.out.println(deviceInfo.softwareVersion());
+            }
+        });
     }
 
     // In practice you must implement the other Listener methods
@@ -56,20 +64,6 @@ BeanListener beanListener = new BeanListener() {
 // Assuming you are in an Activity, use 'this' for the context
 bean.connect(this, beanListener);
 
-java.lang.Thread.sleep(5000);  //  Wait for connection!
-
-bean.readDeviceInfo(new Callback<DeviceInfo>() {
-    @Override
-    public void onResult(DeviceInfo deviceInfo) {
-        System.out.println(deviceInfo.hardwareVersion());
-        System.out.println(deviceInfo.firmwareVersion());
-        System.out.println(deviceInfo.softwareVersion());
-    }
-});
-
-if (bean.isConnected()) {
-    bean.disconnect();
-}
 ```
 
 ### Loading a Sketch
