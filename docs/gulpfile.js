@@ -6,8 +6,12 @@ var config = {
   push: true
 }
 
+var buildOptions = {
+  cwd: '..'
+}
+
 gulp.task('build', function(done) {
-  exec('./gradlew -q buildDocs', function(err, stdout, stderr) {
+  exec('./gradlew -q buildDocs', buildOptions, function(err, stdout, stderr) {
     if (err) throw err
     process.stdout.write(stdout)
     process.stderr.write(stderr)
@@ -16,6 +20,6 @@ gulp.task('build', function(done) {
 })
 
 gulp.task('deploy', ['build'], function() {
-  return gulp.src('build/javadoc/**/*')
+  return gulp.src('../build/javadoc/**/*')
     .pipe(ghPages(config))
 })

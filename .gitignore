@@ -57,3 +57,4 @@ crashlytics-build.properties
 # Doc generation
 
 docs/node_modules/
+docs/.publish
