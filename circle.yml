@@ -21,7 +21,7 @@ test:
 
 deployment:
   release:  # docs are released when master is updated
-    branch: auto-docs  # TODO: Change me back to "master"
+    branch: master
     commands:
       - git config --global user.email 'circleci@punchthrough.com'
       - git config --global user.name 'CircleCI Automated Build'
