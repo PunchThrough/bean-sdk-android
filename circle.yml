@@ -1,0 +1,29 @@
+general:
+  branches:
+    ignore:
+      - gh-pages
+
+machine:
+  node:
+    version: 0.12.0
+
+dependencies:
+  cache_directories:
+    - docs/node_modules
+  override:
+    - npm install:
+        pwd: docs
+
+test:
+  override:
+    - npm run gulp build:
+        pwd: docs
+
+deployment:
+  release:  # docs are released when master is updated
+    branch: master
+    commands:
+      - git config --global user.email 'circleci@punchthrough.com'
+      - git config --global user.name 'CircleCI Automated Build'
+      - npm run gulp deploy:
+          pwd: docs
