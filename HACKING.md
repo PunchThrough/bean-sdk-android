@@ -23,7 +23,7 @@ None yet :(
 ## Building javadocs
 
 ```sh
-$ .gradlew -q buildDocs
+$ ./gradlew -q buildDocs
 ```
 
 Now look at the new Javadocs!
