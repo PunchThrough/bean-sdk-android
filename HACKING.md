@@ -31,3 +31,19 @@ Now look at the new Javadocs!
 ```sh
 $ firefox build/javadoc/index.html
 ```
+
+## Deploying Docs
+
+The section above (Building javadocs) can be entirely automated, including the deployment to `gh-pages`.
+
+First, `cd` into `docs/` and install the script dependencies:
+
+```bash
+$ npm install
+```
+
+Then deploy to `gh-pages`!
+
+```bash
+$ npm run gulp deploy
+```
