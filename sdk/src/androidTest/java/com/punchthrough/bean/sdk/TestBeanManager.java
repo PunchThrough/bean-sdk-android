@@ -12,7 +12,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Integration tests for the BeanManager.
- * Note: This requires an actual bean nearby to pass!
+ *
+ * Prerequisites:
+ *  - Bean within range
+ *  - Android device connected over USB
+ *
  */
 public class TestBeanManager extends AndroidTestCase {
 

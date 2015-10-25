@@ -1,7 +1,9 @@
 package com.punchthrough.bean.sdk;
 
 import com.punchthrough.bean.sdk.TestingUtils.LooperRunner;
+
 import android.test.AndroidTestCase;
+import android.test.suitebuilder.annotation.Suppress;
 
 import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.Callback;
@@ -12,12 +14,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Integration tests for the Bean.
- * Note: This requires an actual bean nearby to pass!
+ * <p/>
+ * Prerequisites:
+ * - Bean within range
+ * - Android device connected over USB
  */
 public class TestBean extends AndroidTestCase {
 
@@ -39,8 +45,8 @@ public class TestBean extends AndroidTestCase {
 //        lrThread.join();
     }
 
-    private Bean getBean() throws InterruptedException {
-        final CountDownLatch beanLatch = new CountDownLatch(1);
+    private List<Bean> getBeans(int num) throws InterruptedException {
+        final CountDownLatch beanLatch = new CountDownLatch(num);
         final List<Bean> beans = new ArrayList<>();
 
         BeanDiscoveryListener listener = new BeanDiscoveryListener() {
@@ -58,13 +64,13 @@ public class TestBean extends AndroidTestCase {
 
         boolean startedOK = BeanManager.getInstance().startDiscovery(listener);
         assertThat(startedOK).isTrue();
-        beanLatch.await();
-        assertThat(beans.size()).isGreaterThan(0);
-        return beans.get(0);
+        beanLatch.await(60, TimeUnit.SECONDS);
+        assertThat(beans.size()).isEqualTo(num);
+        return beans;
     }
 
     public void testBeanDeviceInfo() throws InterruptedException {
-        Bean bean = this.getBean();
+        Bean bean = this.getBeans(1).get(0);
         final CountDownLatch connectionLatch = new CountDownLatch(1);
         final HashMap testState = new HashMap();
         testState.put("connected", false);
@@ -78,27 +84,24 @@ public class TestBean extends AndroidTestCase {
 
             @Override
             public void onConnectionFailed() {
-                connectionLatch.countDown();
+                fail("Connection failed!");
             }
 
             @Override
             public void onDisconnected() {
-                connectionLatch.countDown();
             }
 
             @Override
             public void onSerialMessageReceived(byte[] data) {
-                connectionLatch.countDown();
             }
 
             @Override
             public void onScratchValueChanged(ScratchBank bank, byte[] value) {
-                connectionLatch.countDown();
             }
 
             @Override
             public void onError(BeanError error) {
-                connectionLatch.countDown();
+                fail(error.toString());
             }
         };
 
@@ -121,5 +124,70 @@ public class TestBean extends AndroidTestCase {
         if (bean.isConnected()) {
             bean.disconnect();
         }
+    }
+
+    @Suppress
+    public void testConnectMultipleBeansWithSameListener() throws InterruptedException {
+        /* This test requires at least 3 beans nearby to pass */
+
+        final List<Bean> beans = this.getBeans(3);
+        final Bean beanA = beans.get(0);
+        final Bean beanB = beans.get(1);
+        final Bean beanC = beans.get(2);
+        final CountDownLatch connectionLatch = new CountDownLatch(2);
+        final HashMap<String, Boolean> connectionState = new HashMap<>();
+        connectionState.put("bean_a_connected", false);
+        connectionState.put("bean_b_connected", false);
+
+        BeanListener beanListener = new BeanListener() {
+
+            @Override
+            public void onConnected() {
+                if (connectionState.get("bean_a_connected") == false) {
+                    if (beanA.isConnected()) {
+                        connectionState.put("bean_a_connected", true);
+                        connectionLatch.countDown();
+                    }
+                }
+
+                if (connectionState.get("bean_b_connected") == false) {
+                    if (beanB.isConnected()) {
+                        connectionState.put("bean_b_connected", true);
+                        connectionLatch.countDown();
+                    }
+                }
+
+                if (beanC.isConnected()) {
+                    fail("Bean C not suppose to connect!");
+                }
+            }
+
+            @Override
+            public void onConnectionFailed() {
+                fail("Connection failed!");
+            }
+
+            @Override
+            public void onDisconnected() {
+            }
+
+            @Override
+            public void onSerialMessageReceived(byte[] data) {
+            }
+
+            @Override
+            public void onScratchValueChanged(ScratchBank bank, byte[] value) {
+            }
+
+            @Override
+            public void onError(BeanError error) {
+                fail(error.toString());
+            }
+        };
+
+        beanA.connect(getContext(), beanListener);
+        beanB.connect(getContext(), beanListener);
+        connectionLatch.await(60, TimeUnit.SECONDS);
+        // No need to assert anything, implicit success based on connection latch
     }
 }
