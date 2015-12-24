@@ -37,7 +37,7 @@ import okio.Buffer;
 @AutoParcel
 public abstract class ScratchData implements Parcelable, Message {
     public static ScratchData fromPayload(Buffer buffer) {
-        return new AutoParcel_ScratchData((buffer.readByte() & 0xff) - 1, buffer.readByteArray());
+        return new AutoParcel_ScratchData((buffer.readByte() & 0xff), buffer.readByteArray());
     }
 
     public static ScratchData create(ScratchBank bank, byte[] data) {
@@ -68,7 +68,7 @@ public abstract class ScratchData implements Parcelable, Message {
     @Override
     public byte[] toPayload() {
         Buffer buffer = new Buffer();
-        buffer.writeByte((number() + 1) & 0xff);
+        buffer.writeByte((number()) & 0xff);
         buffer.write(data());
         return buffer.readByteArray();
     }

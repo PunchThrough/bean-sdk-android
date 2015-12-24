@@ -8,7 +8,7 @@ import com.punchthrough.bean.sdk.internal.utility.EnumParse;
  * Represents the scratch bank data is being sent to/read from.
  */
 public enum ScratchBank implements EnumParse.ParsableEnum {
-    BANK_1(0), BANK_2(1), BANK_3(2), BANK_4(3), BANK_5(4);
+    BANK_1(1), BANK_2(2), BANK_3(3), BANK_4(4), BANK_5(5);
 
     private final int value;
 
