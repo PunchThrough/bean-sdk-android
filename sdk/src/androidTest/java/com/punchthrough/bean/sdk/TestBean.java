@@ -70,6 +70,38 @@ public class TestBean extends AndroidTestCase {
         return beans;
     }
 
+    private Bean getBeanByName(String name) throws InterruptedException {
+        final CountDownLatch beanLatch = new CountDownLatch(1);
+        final List<Bean> beans = new ArrayList<>();
+
+        final String targetName = name;
+
+        BeanDiscoveryListener listener = new BeanDiscoveryListener() {
+            @Override
+            public void onBeanDiscovered(Bean bean, int rssi) {
+                if (bean.getDevice().getName().equals(targetName)) {
+                    System.out.println("Found Bean!!!!!!!");
+                    beans.add(bean);
+                    beanLatch.countDown();
+                }
+            }
+
+            @Override
+            public void onDiscoveryComplete() {
+                System.out.println("Nothing");
+                beanLatch.countDown();
+            }
+        };
+
+        boolean startedOK = BeanManager.getInstance().startDiscovery(listener);
+        assertThat(startedOK).isTrue();
+        beanLatch.await(60, TimeUnit.SECONDS);
+        if (beans.isEmpty()) {
+            fail("Couldn't find bean by name: " + name);
+        }
+        return beans.get(0);
+    }
+
     public void testBeanDeviceInfo() throws InterruptedException {
         Bean bean = this.getBeans(1).get(0);
         final CountDownLatch connectionLatch = new CountDownLatch(1);
