@@ -6,6 +6,8 @@ def isReleaseBuild() {
 }
 
 def sonatypeRepositoryUrl
+def nexusUsername
+def nexusPassword
 
 if (isReleaseBuild()) {
     println 'RELEASE BUILD'
@@ -13,11 +15,6 @@ if (isReleaseBuild()) {
 } else {
     println 'DEBUG BUILD'
     sonatypeRepositoryUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
-}
-
-ext {
-    nexusUsername = ext.has('nexusUsername') ? ext.nexusUsername : 'not-set'
-    nexusPassword = ext.has('nexusPassword') ? ext.nexusPassword : 'not-set'
 }
 
 afterEvaluate { project ->
@@ -89,5 +86,12 @@ afterEvaluate { project ->
         archives bundleRelease
         archives androidSourcesJar
         archives androidJavadocsJar
+    }
+}
+
+for (startTask in gradle.startParameter.taskNames) {
+    if (startTask == "uploadArchives") {
+        nexusUsername = System.console().readLine("\nNexus Username: ")
+        nexusPassword = System.console().readLine("Nexus Password: ")
     }
 }
