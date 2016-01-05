@@ -35,7 +35,7 @@ afterEvaluate { project ->
                 pom.project {
                     name 'sdk'
                     packaging 'aar'
-                    description 'Punch Through Design\'s SDK for speeding up development ' +
+                    description 'Punch Through\'s SDK for speeding up development ' +
                             'with the LightBlue Bean development platform'
                     url 'https://github.com/PunchThrough/Bean-Android-SDK'
 

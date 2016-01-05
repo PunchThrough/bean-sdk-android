@@ -1,6 +1,6 @@
 # LightBlue Bean SDK for Android
 
-Punch Through Design's SDK for speeding up development with the LightBlue Bean development platform. Build Android apps that talk to your Beans.
+Punch Through's SDK for speeding up development with the LightBlue Bean development platform. Build Android apps that talk to your Beans.
 
 * [Bean SDK API Documentation](http://punchthrough.github.io/Bean-Android-SDK/docs/javadoc/index.html)
 * [Bean SDK listing at Maven Central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.punchthrough.bean.sdk%22)
