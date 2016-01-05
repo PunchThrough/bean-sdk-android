@@ -2,9 +2,18 @@
 
 This file contains instructions that apply to developers only.
 
-## Run integration tests
+# List Tasks
 
-You can build, install and execute the android integration tests with gradle:
+Gradle will list all tasks with a brief description of what they do:
+
+```sh
+./gradlew tasks
+```
+
+# Integration Testing
+
+
+You can build, install and execute the Android integration tests with Gradle:
 
 ```sh
 ./gradlew connectedAndroidTest --continue
@@ -16,11 +25,9 @@ And then take a peek at the results:
 firefox sdk/build/outputs/reports/androidTests/connected/index.html
 ```
 
-## Run unit tests
+# Javadocs
 
-None yet :(
-
-## Building javadocs
+## Building
 
 ```sh
 ./gradlew -q buildDocs
@@ -32,9 +39,9 @@ Now look at the new Javadocs!
 firefox build/javadoc/index.html
 ```
 
-## Deploying Docs
+## Deploying to GitHub Pages
 
-The section above (Building javadocs) can be entirely automated, including the deployment to `gh-pages`.
+Building and deploying Javadocs to GitHub Pages is an automated process.
 
 First, `cd` into `docs/` and install the script dependencies:
 
