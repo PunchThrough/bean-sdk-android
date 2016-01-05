@@ -103,7 +103,12 @@ public class TestBean extends AndroidTestCase {
     }
 
     public void testBeanDeviceInfo() throws InterruptedException {
-        Bean bean = this.getBeans(1).get(0);
+        /** Read device information from a bean
+         *
+         * Warning: This test requires a nearby bean named "TESTBEAN"
+         */
+
+        Bean bean = this.getBeanByName("TESTBEAN");
         final CountDownLatch connectionLatch = new CountDownLatch(1);
         final HashMap testState = new HashMap();
         testState.put("connected", false);
@@ -160,7 +165,11 @@ public class TestBean extends AndroidTestCase {
     }
 
     public void testBeanReadWriteScratchBank() throws InterruptedException {
-        Bean bean = this.getBeans(1).get(0);
+        /** Test Scratch characteristic functionality
+         *
+         * Warning: This test requires a nearby bean named "TESTBEAN"
+         */
+        Bean bean = this.getBeanByName("TESTBEAN");
         final CountDownLatch connectionLatch = new CountDownLatch(1);
         final HashMap testState = new HashMap();
         testState.put("connected", false);
