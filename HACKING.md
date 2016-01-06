@@ -22,7 +22,7 @@ This project is built using [Gradle](http://gradle.org/) and hosted on [Maven Ce
 
 ## Build Process
 
-Here is a high level description of the build process.
+Here is a high-level description of the build process.
 
 1. Compile code
 2. Generate (build) artifacts
@@ -30,7 +30,7 @@ Here is a high level description of the build process.
 4. Upload __staging__ artifacts to [Sonatype Nexus](https://oss.sonatype.org/#welcome)
 5. Promote staging artifacts to production
 
-You can automate steps 1-4 by running a single command:
+Start by configuring your build environment (see **Build Environment Configuration** below). Once that's done, you can automate steps 1-4 by running a single command:
 
 ```bash
 ./gradlew uploadArchives
@@ -38,21 +38,19 @@ You can automate steps 1-4 by running a single command:
 
 If that command completes without error, you can view the _Staging Repository_ that was just published by the build script on the [Nexus Dashboard](https://oss.sonatype.org/#stagingRepositories). Find the repository that was just published in the list and click "Close" which will automatically promote it as an official release!
 
-Note: Make sure you have your build environment configured properly. Check out the the section below "Build Environment Setup".
+## Build Environment Configuration
 
-## Build Environment Setup
-
-You need to create a configuration file: `/Users/me/.gradle/gradle.properties`.
-
-Once created, it should contain the following contents. Replace all `<..>` with the appropriate information. This information can be given to you by a project administrator ([Stephen Stack](http://github.com/swstack) and [Matthew Lewis](http://github.com/mplewis)).
+Create a configuration file at `~/.gradle/gradle.properties` and fill it with the following:
 
 ```
-systemProp.nexusUsername=<...>
-systemProp.nexusPassword=<...>
-signing.keyId=<...>
-signing.password=<...>
-signing.secretKeyRingFile=<...>
+systemProp.nexusUsername=punchthrough
+systemProp.nexusPassword=PUNCH_THROUGH_NEXUS_PASSWORD
+signing.keyId=YOUR_RSA_KEY_ID
+signing.password=YOUR_RSA_KEY_PASSPHRASE
+signing.secretKeyRingFile=/Users/YOUR_USERNAME/.gnupg/secring.gpg
 ```
+
+Replace the placeholder values with the appropriate information. This information can be given to you by a project administrator ([Stephen Stack](http://github.com/swstack) and [Matthew Lewis](http://github.com/mplewis)).
 
 # Javadocs
 
