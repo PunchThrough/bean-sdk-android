@@ -21,12 +21,14 @@ afterEvaluate { project ->
     uploadArchives {
         repositories {
             mavenDeployer {
-                beforeDeployment { deployment -> signing.signPom(deployment) }
+                beforeDeployment {
+                    deployment -> signing.signPom(deployment)
+                }
 
                 pom.packaging = "aar"
 
                 repository(url: sonatypeRepositoryUrl) {
-                    authentication(userName: nexusUsername, password: nexusPassword)
+                    authentication(userName: System.properties['nexusUsername'], password: System.properties['nexusPassword'])
                 }
 
                 pom.project {
@@ -61,7 +63,9 @@ afterEvaluate { project ->
     }
 
     signing {
-        required { isReleaseBuild() && gradle.taskGraph.hasTask("uploadArchives") }
+        required {
+            isReleaseBuild()
+        }
         sign configurations.archives
     }
 
@@ -86,12 +90,5 @@ afterEvaluate { project ->
         archives bundleRelease
         archives androidSourcesJar
         archives androidJavadocsJar
-    }
-}
-
-for (startTask in gradle.startParameter.taskNames) {
-    if (startTask == "uploadArchives") {
-        nexusUsername = System.console().readLine("\nNexus Username: ")
-        nexusPassword = System.console().readLine("Nexus Password: ")
     }
 }
