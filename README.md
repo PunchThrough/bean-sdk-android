@@ -2,7 +2,7 @@
 
 Punch Through's SDK for speeding up development with the LightBlue Bean development platform. Build Android apps that talk to your Beans.
 
-* [Bean SDK API Documentation](http://punchthrough.github.io/Bean-Android-SDK/docs/javadoc/index.html)
+* [Bean SDK API Documentation](http://punchthrough.github.io/Bean-Android-SDK/)
 * [Bean SDK listing at Maven Central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.punchthrough.bean.sdk%22)
 
 # Install
@@ -25,7 +25,7 @@ Then sync with Gradle and Android Studio will install the Bean SDK from Maven Ce
 
 # Use the SDK
 
-Check out our [Bean SDK API Documentation](http://punchthrough.github.io/Bean-Android-SDK/docs/javadoc/index.html) to learn more about the Bean SDK's available methods.
+Check out our [Bean SDK API Documentation](http://punchthrough.github.io/Bean-Android-SDK/) to learn more about the Bean SDK's available methods.
 
 ## List nearby Bean(s)
 
