@@ -16,10 +16,12 @@ Inside your Gradle build file, add the Bean SDK to the `dependencies` block:
 ```groovy
 dependencies {
     ...
-    compile 'com.punchthrough.bean.sdk:sdk:1.0.1'
+    compile 'com.punchthrough.bean.sdk:sdk:v.v.v'
     ...
 }
 ```
+
+*Note:* Make sure you replace `v.v.v` above with a valid version number!
 
 Then sync with Gradle and Android Studio will install the Bean SDK from Maven Central.
 
