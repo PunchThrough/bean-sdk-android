@@ -23,6 +23,20 @@ dependencies {
 
 *Note:* Make sure you replace `v.v.v` above with a valid version number!
 
+Also, the Bean SDK has a minimum Android API requirement of `18`. Make sure that this is configured properly by editing the following in the Gradle build file:
+
+```groovy
+android {
+    ...
+    
+    defaultConfig {
+        ...
+        
+        minSdkVersion 18
+    }
+}
+```
+
 Then sync with Gradle and Android Studio will install the Bean SDK from Maven Central.
 
 # Use the SDK
