@@ -21,4 +21,4 @@ def call_unsafe(*args, **kwargs):
 
 call_unsafe('./gradlew clean jarRelease')
 for src in glob('./sdk/build/libs/*.jar'):
-    shutil.move(src, target_project_libs_folder)
+    shutil.copy(src, target_project_libs_folder)
