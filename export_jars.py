@@ -1,11 +1,17 @@
 #!/usr/bin/python
 
-import os
+import sys
 import shutil
 from glob import glob
 from subprocess import call, check_output
 
-OUTPUT_DIR_NAME = 'jars'
+
+if len(sys.argv) < 2:
+    print('Please provide an absolute path to a projects libs/ folder')
+    sys.exit(1)
+
+
+target_project_libs_folder = sys.argv[1]
 
 
 def call_unsafe(*args, **kwargs):
@@ -13,22 +19,6 @@ def call_unsafe(*args, **kwargs):
     call(*args, **kwargs)
 
 
-call_unsafe('./gradlew clean javadocRelease jarRelease')
-
-try:
-    os.mkdir(OUTPUT_DIR_NAME)
-except OSError:
-    pass
-
-os.chdir(OUTPUT_DIR_NAME)
-call_unsafe('rm *.jar')
-call_unsafe('cp ../sdk/build/libs/*.jar .')
-
-commit = check_output(['git', 'rev-parse', 'HEAD'])[:7]
-
-for src in glob('*.jar'):
-    name, ext = os.path.splitext(src)
-    dest = name + '-' + commit + ext
-    shutil.move(src, dest)
-
-call_unsafe('open .')
+call_unsafe('./gradlew clean jarRelease')
+for src in glob('./sdk/build/libs/*.jar'):
+    shutil.move(src, target_project_libs_folder)
