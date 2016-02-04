@@ -5,6 +5,7 @@ import android.test.AndroidTestCase;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import com.punchthrough.bean.sdk.TestingUtils.LooperRunner;
 
@@ -59,7 +60,7 @@ public class TestBeanManager extends AndroidTestCase {
 
         boolean startedOK = this.bm.startDiscovery(listener);
         assertThat(startedOK).isTrue();
-        beanLatch.await();
+        beanLatch.await(60, TimeUnit.SECONDS);
         assertThat(beans.size()).isGreaterThan(0);
         this.bm.cancelDiscovery();
         for (Bean bean : beans) {
