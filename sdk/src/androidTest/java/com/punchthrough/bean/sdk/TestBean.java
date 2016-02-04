@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Integration tests for the Bean.
  * <p/>
  * Prerequisites:
- * - Bean within range
+ * - Bean within range named TESTBEAN
  * - Android device connected over USB
  */
 public class TestBean extends AndroidTestCase {

@@ -10,6 +10,8 @@ You can build, install and execute the Android integration tests with Gradle:
 ./gradlew connectedAndroidTest --continue
 ```
 
+__Note:__ Requires bean nearby called TESTBEAN
+
 And then take a peek at the results:
 
 ```sh
