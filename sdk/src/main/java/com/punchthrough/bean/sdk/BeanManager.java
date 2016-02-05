@@ -28,6 +28,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothAdapter.LeScanCallback;
 import android.bluetooth.BluetoothDevice;
 import android.os.Handler;
+import android.os.Looper;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -59,7 +60,7 @@ public class BeanManager {
         public void onLeScan(BluetoothDevice device, final int rssi, byte[] scanRecord) {
             if (!mBeans.containsKey(device.getAddress()) && isBean(scanRecord)) {
                 mHandler.removeCallbacks(mCompleteDiscoveryCallback);
-                final Bean bean = new Bean(device);
+                final Bean bean = new Bean(device, new Handler(Looper.getMainLooper()));
                 mBeans.put(device.getAddress(), bean);
                 mHandler.post(new Runnable() {
                     @Override

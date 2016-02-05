@@ -58,12 +58,18 @@ public class GattSerialTransportProfile extends BaseProfile {
         }
     };
     private List<GattSerialPacket> mPendingPackets = new ArrayList<>(32);
-    private Handler mHandler = new Handler(Looper.getMainLooper());
+    private Handler mHandler;
     private int mOutgoingMessageCount = 0;
     private MessageAssembler mMessageAssembler = new MessageAssembler();
 
     public GattSerialTransportProfile(GattClient client) {
         super(client);
+        mHandler = new Handler(Looper.getMainLooper());
+    }
+
+    public GattSerialTransportProfile(GattClient client, Handler handler) {
+        super(client);
+        mHandler = handler;
     }
 
     @Override

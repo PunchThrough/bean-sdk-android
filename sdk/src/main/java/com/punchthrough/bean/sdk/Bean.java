@@ -89,7 +89,7 @@ public class Bean implements Parcelable {
             if (device == null) {
                 throw new IllegalStateException("Device is null");
             }
-            return new Bean(device);
+            return new Bean(device, new Handler(Looper.getMainLooper()));
         }
 
         @Override
@@ -144,22 +144,21 @@ public class Bean implements Parcelable {
      * {@link com.punchthrough.bean.sdk.Bean#connect(android.content.Context, BeanListener)}.
      */
     private BeanListener beanListener = internalBeanListener;
+
     /**
      * The GattClient associated with this Bean.
      */
     private final GattClient gattClient;
+
     /**
      * The BluetoothDevice representing this physical Bean.
      */
     private final BluetoothDevice device;
+
     /**
      * Whether the Bean is connected or not.
      */
     private boolean connected;
-    /**
-     * Used to provide async calls to the Bean class.
-     */
-    private Handler handler = new Handler(Looper.getMainLooper());
 
     /**
      * <p>
@@ -257,14 +256,25 @@ public class Bean implements Parcelable {
     private Runnable onSketchUploadComplete;
 
 
+    public Bean(BluetoothDevice device) {
+        this.device = device;
+        gattClient = new GattClient();
+        init(new Handler(Looper.getMainLooper()));
+    }
+
     /**
      * Create a Bean using its {@link android.bluetooth.BluetoothDevice}
      * The Bean will not be connected until {@link #connect(android.content.Context, BeanListener)} is called.
      *
      * @param device The BluetoothDevice representing a Bean
      */
-    public Bean(BluetoothDevice device) {
+    public Bean(BluetoothDevice device, final Handler handler) {
         this.device = device;
+        gattClient = new GattClient(handler);
+        init(handler);
+    }
+
+    private void init(final Handler handler) {
         GattSerialTransportProfile.Listener listener = new GattSerialTransportProfile.Listener() {
             @Override
             public void onConnected() {
@@ -320,7 +330,6 @@ public class Bean implements Parcelable {
                 });
             }
         };
-        gattClient = new GattClient();
         gattClient.getSerialProfile().setListener(listener);
     }
 
