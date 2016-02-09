@@ -1,15 +1,16 @@
 package com.punchthrough.bean.sdk.upload;
 
-import android.test.AndroidTestCase;
-
 import com.punchthrough.bean.sdk.internal.exception.ImageParsingException;
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareImageType;
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareMetadata;
 
+import org.junit.Test;
+
 import static com.punchthrough.bean.sdk.internal.utility.Convert.intArrayToByteArray;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
-public class FirmwareImageTest extends AndroidTestCase {
+public class FirmwareImageTest {
 
     // Valid images have all necessary headers
     byte[] validImageA = intArrayToByteArray(new int[] {
@@ -41,6 +42,7 @@ public class FirmwareImageTest extends AndroidTestCase {
             0x21, 0x22, 0x23
     });
 
+    @Test
     public void testParsingValidImage() throws ImageParsingException {
 
         FirmwareImage image = FirmwareImage.create(validImageA);
@@ -54,6 +56,7 @@ public class FirmwareImageTest extends AndroidTestCase {
 
     }
 
+    @Test
     public void testParsingTypeB() throws ImageParsingException {
 
         FirmwareImage image = FirmwareImage.create(validImageB);
@@ -61,6 +64,7 @@ public class FirmwareImageTest extends AndroidTestCase {
 
     }
 
+    @Test
     public void testParsingTypeInvalid() throws ImageParsingException {
 
         FirmwareImage image = FirmwareImage.create(validImageNoType);
@@ -68,19 +72,20 @@ public class FirmwareImageTest extends AndroidTestCase {
 
     }
 
+    @Test
     public void testParsingInvalidImage() {
 
         try {
             FirmwareImage.create(invalidImage);
-            fail();
+            fail("Shouldn't have worked");
 
         } catch (ImageParsingException e) {
             assertThat(e).isNotNull();
-
         }
 
     }
 
+    @Test
     public void testGetMetadata() throws ImageParsingException {
 
         FirmwareImage image = FirmwareImage.create(validImageA);
@@ -91,6 +96,7 @@ public class FirmwareImageTest extends AndroidTestCase {
 
     }
 
+    @Test
     public void testFirmwareBlocks() throws ImageParsingException {
 
         FirmwareImage image = FirmwareImage.create(oddLengthImage);
