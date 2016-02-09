@@ -89,7 +89,7 @@ public class Bean implements Parcelable {
             if (device == null) {
                 throw new IllegalStateException("Device is null");
             }
-            return new Bean(device, new Handler(Looper.getMainLooper()));
+            return new Bean(device);
         }
 
         @Override
@@ -215,46 +215,54 @@ public class Bean implements Parcelable {
      * sketch upload process is aborted
      */
     private static final int SKETCH_UPLOAD_STATE_TIMEOUT = 3000;
+
     /**
      * The time, in ms, between block being sent. Blocks are sent to the Bean without waiting for
      * acks, so setting this value lower will accelerate sketch programming. Setting this value too
      * low will send blocks faster than BLE/the Bean can handle them.
      */
     private static final int SKETCH_BLOCK_SEND_INTERVAL = 200;
+
     /**
      * The maximum sketch block size. The last block may be smaller.
      */
     private static final int MAX_BLOCK_SIZE_BYTES = 64;
+
     /**
      * State of the current sketch upload process.
      */
     private SketchUploadState sketchUploadState = SketchUploadState.INACTIVE;
+
     /**
      * sketchStateTimeout throws an error if too much time passes without an update from the Bean
      * asking programming to begin
      */
     private Timer sketchStateTimeout;
+
     /**
      * Sends the next block of sketch data
      */
     private Timer sketchBlockSendTimeout;
+
     /**
      * Holds all blocks of sketch data being sent to Bean
      */
     private List<byte[]> sketchBlocksToSend;
+
     /**
      * Index of the next sketch block to be sent to Bean
      */
     private int currSketchBlockNum;
+
     /**
      * Passes in an UploadProgress object when progress is made in the sketch upload process
      */
     private Callback<UploadProgress> onSketchUploadProgress;
+
     /**
      * Called when the sketch upload process completes successfully
      */
     private Runnable onSketchUploadComplete;
-
 
     public Bean(BluetoothDevice device) {
         this.device = device;

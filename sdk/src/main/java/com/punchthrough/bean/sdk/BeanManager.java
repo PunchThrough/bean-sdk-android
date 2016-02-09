@@ -60,7 +60,7 @@ public class BeanManager {
         public void onLeScan(BluetoothDevice device, final int rssi, byte[] scanRecord) {
             if (!mBeans.containsKey(device.getAddress()) && isBean(scanRecord)) {
                 mHandler.removeCallbacks(mCompleteDiscoveryCallback);
-                final Bean bean = new Bean(device, new Handler(Looper.getMainLooper()));
+                final Bean bean = new Bean(device);
                 mBeans.put(device.getAddress(), bean);
                 mHandler.post(new Runnable() {
                     @Override
