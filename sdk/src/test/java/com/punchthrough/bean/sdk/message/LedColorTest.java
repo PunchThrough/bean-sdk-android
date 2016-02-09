@@ -10,7 +10,7 @@ public class LedColorTest {
     public void testLedColorEquals() {
         LedColor color = LedColor.create(112, 113, 114);
         assertThat(color.equals(LedColor.create(112, 113, 114))).isTrue();
-        assertThat(color.equals(LedColor.create(7, 8, 9))).isTrue();
+        assertThat(color.equals(LedColor.create(7, 8, 9))).isFalse();
     }
 
 }
