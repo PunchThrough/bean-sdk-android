@@ -2,15 +2,27 @@
 
 This file contains instructions that apply to developers only.
 
-# Integration Testing
 
-You can build, install and execute the Android integration tests with Gradle:
+
+# Automated Testing
+
+## Unit Tests
+
+Unit tests can be run on your development PC and __do not__ require an Android device or emulator. Run them frequently!
+
+```sh
+./gradlew clean assembleDebug assembleRelease test
+```
+
+## Instrumentation Tests
+
+These tests are designed to run on an Android device or emulator. You can build, install and execute the Android integration tests with Gradle.
 
 ```sh
 ./gradlew connectedAndroidTest --continue
 ```
 
-__Note:__ Requires bean nearby called TESTBEAN
+__Note:__ Requires bean nearby called `TESTBEAN`
 
 And then take a peek at the results:
 
