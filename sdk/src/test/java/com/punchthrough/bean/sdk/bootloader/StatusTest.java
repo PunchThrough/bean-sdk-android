@@ -1,19 +1,20 @@
 package com.punchthrough.bean.sdk.bootloader;
 
-import android.test.AndroidTestCase;
-
 import com.punchthrough.bean.sdk.internal.upload.sketch.BeanState;
 import com.punchthrough.bean.sdk.internal.upload.sketch.BeanSubstate;
 import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
 import com.punchthrough.bean.sdk.message.Status;
 
+import org.junit.Test;
+
 import okio.Buffer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class StatusTest extends AndroidTestCase {
+public class StatusTest {
 
-    public void TestStatusFromPayload() throws NoEnumFoundException {
+    @Test
+    public void testStatusFromPayload() throws NoEnumFoundException {
         Buffer buffer = new Buffer();
 
         buffer.writeByte(0x04);  // State: VERIFY

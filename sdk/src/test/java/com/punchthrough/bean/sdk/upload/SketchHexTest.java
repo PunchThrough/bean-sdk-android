@@ -5,12 +5,15 @@ import android.test.AndroidTestCase;
 import com.punchthrough.bean.sdk.internal.exception.HexParsingException;
 import com.punchthrough.bean.sdk.internal.utility.Chunk;
 
+import org.junit.Before;
+import org.junit.Test;
+
 import java.util.List;
 
 import static com.punchthrough.bean.sdk.internal.utility.Convert.intArrayToByteArray;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class SketchHexTest extends AndroidTestCase {
+public class SketchHexTest {
 
     // From http://en.wikipedia.org/wiki/Intel_HEX
     final String asciiHexData =
@@ -36,12 +39,14 @@ public class SketchHexTest extends AndroidTestCase {
 
     final byte[] rawHexData = intArrayToByteArray(rawHexDataInts);
 
-    final SketchHex defaultHex;
+    SketchHex defaultHex;
 
-    public SketchHexTest() throws HexParsingException {
+    @Before
+    public void setup() throws HexParsingException {
         defaultHex = SketchHex.create("", asciiHexData);
     }
 
+    @Test
     public void testHexParsingAndSketchNaming() throws HexParsingException {
 
         assertThat(SketchHex.create("StairCar").sketchName()).isEqualTo("StairCar");
@@ -53,6 +58,7 @@ public class SketchHexTest extends AndroidTestCase {
         assertThat(defaultHex.bytes()).isEqualTo(rawHexData);
     }
 
+    @Test
     public void testGetBytesAndChunks() throws HexParsingException {
 
         // Queries that don't extend past the array boundary should work as expected
@@ -77,6 +83,7 @@ public class SketchHexTest extends AndroidTestCase {
 
     }
 
+    @Test
     public void testGetChunkCount() {
 
         assertThat(Chunk.chunkCountFrom(defaultHex, 8)).isEqualTo(8);
@@ -86,6 +93,7 @@ public class SketchHexTest extends AndroidTestCase {
 
     }
 
+    @Test
     public void testGetChunks() {
 
         List<byte[]> chunks = Chunk.chunksFrom(defaultHex, 5);
