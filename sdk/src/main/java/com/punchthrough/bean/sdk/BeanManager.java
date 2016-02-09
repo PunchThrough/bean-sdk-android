@@ -28,7 +28,6 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothAdapter.LeScanCallback;
 import android.bluetooth.BluetoothDevice;
 import android.os.Handler;
-import android.os.Looper;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
