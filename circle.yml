@@ -18,6 +18,7 @@ test:
   override:
     - npm run gulp build:
         pwd: docs
+    - ./gradlew clean assembleDebug assembleRelease test
 
 deployment:
   release:  # docs are released when master is updated
