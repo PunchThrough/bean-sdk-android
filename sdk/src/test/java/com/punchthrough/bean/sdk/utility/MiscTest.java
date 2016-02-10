@@ -1,11 +1,11 @@
 package com.punchthrough.bean.sdk.utility;
 
-import android.test.AndroidTestCase;
-
 import com.punchthrough.bean.sdk.internal.BeanMessageID;
 import com.punchthrough.bean.sdk.internal.upload.sketch.BeanState;
 import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
 import com.punchthrough.bean.sdk.internal.utility.EnumParse;
+
+import org.junit.Test;
 
 import java.nio.ByteOrder;
 
@@ -14,33 +14,38 @@ import static com.punchthrough.bean.sdk.internal.utility.Convert.intToByte;
 import static com.punchthrough.bean.sdk.internal.utility.Convert.intToTwoBytes;
 import static com.punchthrough.bean.sdk.internal.utility.Convert.intToUInt32;
 import static com.punchthrough.bean.sdk.internal.utility.Convert.twoBytesToInt;
+import static junit.framework.Assert.fail;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class MiscTest extends AndroidTestCase {
+public class MiscTest {
 
+    @Test
     public void testIntToByte() {
         assertThat(intToByte(0xFF)).isEqualTo((byte) 0xFF);
     }
 
+    @Test
     public void testEnumWithRawInt() throws NoEnumFoundException {
         assertThat(EnumParse.enumWithRawValue(BeanMessageID.class, 0x1001)).isEqualTo(BeanMessageID.BL_FW_BLOCK);
     }
 
+    @Test
     public void testEnumWithRawByte() throws NoEnumFoundException {
         byte state = 5;
         assertThat(EnumParse.enumWithRawValue(BeanState.class, state)).isEqualTo(BeanState.COMPLETE);
     }
 
+    @Test
     public void testEnumWithUnparsableValue() {
         try {
             EnumParse.enumWithRawValue(BeanMessageID.class, 0x9999);
-            fail("Expected a NoEnumFound exception to be thrown when parsing an enum from an " +
-                    "invalid value");
+            fail("Expected a NoEnumFound exception to be thrown when parsing an enum from an invalid value");
         } catch (NoEnumFoundException e) {
             assertThat(e).isNotNull();
         }
     }
 
+    @Test
     public void testUnsigningInts() {
 
         assertThat(intToUInt32(0, ByteOrder.BIG_ENDIAN)).isEqualTo(intArrayToByteArray(
@@ -63,6 +68,7 @@ public class MiscTest extends AndroidTestCase {
 
     }
 
+    @Test
     public void testParsingTwoBytesWithOrder() {
 
         assertThat(twoBytesToInt(
@@ -87,6 +93,7 @@ public class MiscTest extends AndroidTestCase {
 
     }
 
+    @Test
     public void testIntToTwoBytes() {
 
         assertThat(intToTwoBytes(17164, ByteOrder.BIG_ENDIAN))

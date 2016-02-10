@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.content.Context;
+import android.os.Handler;
 import android.util.Log;
 
 import com.punchthrough.bean.sdk.internal.battery.BatteryProfile;
@@ -266,6 +267,15 @@ public class GattClient {
 
     public GattClient() {
         mSerialProfile = new GattSerialTransportProfile(this);
+        mDeviceProfile = new DeviceProfile(this);
+        mBatteryProfile = new BatteryProfile(this);
+        mProfiles.add(mSerialProfile);
+        mProfiles.add(mDeviceProfile);
+        mProfiles.add(mBatteryProfile);
+    }
+
+    public GattClient(Handler handler) {
+        mSerialProfile = new GattSerialTransportProfile(this, handler);
         mDeviceProfile = new DeviceProfile(this);
         mBatteryProfile = new BatteryProfile(this);
         mProfiles.add(mSerialProfile);

@@ -144,22 +144,21 @@ public class Bean implements Parcelable {
      * {@link com.punchthrough.bean.sdk.Bean#connect(android.content.Context, BeanListener)}.
      */
     private BeanListener beanListener = internalBeanListener;
+
     /**
      * The GattClient associated with this Bean.
      */
     private final GattClient gattClient;
+
     /**
      * The BluetoothDevice representing this physical Bean.
      */
     private final BluetoothDevice device;
+
     /**
      * Whether the Bean is connected or not.
      */
     private boolean connected;
-    /**
-     * Used to provide async calls to the Bean class.
-     */
-    private Handler handler = new Handler(Looper.getMainLooper());
 
     /**
      * <p>
@@ -216,46 +215,60 @@ public class Bean implements Parcelable {
      * sketch upload process is aborted
      */
     private static final int SKETCH_UPLOAD_STATE_TIMEOUT = 3000;
+
     /**
      * The time, in ms, between block being sent. Blocks are sent to the Bean without waiting for
      * acks, so setting this value lower will accelerate sketch programming. Setting this value too
      * low will send blocks faster than BLE/the Bean can handle them.
      */
     private static final int SKETCH_BLOCK_SEND_INTERVAL = 200;
+
     /**
      * The maximum sketch block size. The last block may be smaller.
      */
     private static final int MAX_BLOCK_SIZE_BYTES = 64;
+
     /**
      * State of the current sketch upload process.
      */
     private SketchUploadState sketchUploadState = SketchUploadState.INACTIVE;
+
     /**
      * sketchStateTimeout throws an error if too much time passes without an update from the Bean
      * asking programming to begin
      */
     private Timer sketchStateTimeout;
+
     /**
      * Sends the next block of sketch data
      */
     private Timer sketchBlockSendTimeout;
+
     /**
      * Holds all blocks of sketch data being sent to Bean
      */
     private List<byte[]> sketchBlocksToSend;
+
     /**
      * Index of the next sketch block to be sent to Bean
      */
     private int currSketchBlockNum;
+
     /**
      * Passes in an UploadProgress object when progress is made in the sketch upload process
      */
     private Callback<UploadProgress> onSketchUploadProgress;
+
     /**
      * Called when the sketch upload process completes successfully
      */
     private Runnable onSketchUploadComplete;
 
+    public Bean(BluetoothDevice device) {
+        this.device = device;
+        gattClient = new GattClient();
+        init(new Handler(Looper.getMainLooper()));
+    }
 
     /**
      * Create a Bean using its {@link android.bluetooth.BluetoothDevice}
@@ -263,8 +276,13 @@ public class Bean implements Parcelable {
      *
      * @param device The BluetoothDevice representing a Bean
      */
-    public Bean(BluetoothDevice device) {
+    public Bean(BluetoothDevice device, final Handler handler) {
         this.device = device;
+        gattClient = new GattClient(handler);
+        init(handler);
+    }
+
+    private void init(final Handler handler) {
         GattSerialTransportProfile.Listener listener = new GattSerialTransportProfile.Listener() {
             @Override
             public void onConnected() {
@@ -320,7 +338,6 @@ public class Bean implements Parcelable {
                 });
             }
         };
-        gattClient = new GattClient();
         gattClient.getSerialProfile().setListener(listener);
     }
 

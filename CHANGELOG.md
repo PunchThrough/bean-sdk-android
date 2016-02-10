@@ -1,8 +1,25 @@
+# 1.0.3
+
+2016-02-10
+
+Release Notes - Bean Android SDK - Version 1.0.3
+
+## Bug Fixes
+
+* onCharacteristicChanged (Scratch) fails with version 1.0.2
+
+## Tests
+
+* Add unit tests for Bean class
+* Setup CircleCI to run JUnit tests
+* Convert most Instrumentation tests to unit tests
+
 # 1.0.2
 
 2016-01-05
 
 ## Bug Fixes
+
 * Fixed an issue causing scratch data reads to come from the wrong scratch bank (thanks @loune)
 
 ## Tests
