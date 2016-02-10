@@ -11,7 +11,7 @@ import com.punchthrough.bean.sdk.message.ScratchBank;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.UUID;
 
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith(RobolectricTestRunner.class)
+@RunWith(MockitoJUnitRunner.class)
 public class GattSerialTransportProfileTest {
 
     private static final UUID SCRATCH_1_UUID = UUID.fromString("a495ff21-c5b1-4b44-b512-1370f02d74de");
