@@ -58,6 +58,9 @@ public class TestBeanAdvanced extends AndroidTestCase {
          * This test does not test failure callbacks:
          *  - onConnectionFailed
          *  - onError
+         *
+         * Note: This test requires a Bean named TESTBEAN with a particular sketch loaded. The
+         * Sketch needed can be found in sdk/src/androidTest/resources/bean_fw_advanced_callbacks.
          */
 
         final Bean bean = TestingUtils.BeanUtils.getBeanByName("TESTBEAN");
