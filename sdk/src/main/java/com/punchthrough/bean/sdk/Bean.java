@@ -276,9 +276,9 @@ public class Bean implements Parcelable {
      *
      * @param device The BluetoothDevice representing a Bean
      */
-    public Bean(BluetoothDevice device, final Handler handler) {
+    public Bean(BluetoothDevice device, GattClient client, final Handler handler) {
         this.device = device;
-        gattClient = new GattClient(handler);
+        this.gattClient = client;
         init(handler);
     }
 
