@@ -2,8 +2,6 @@
 
 This file contains instructions that apply to developers only.
 
-
-
 # Automated Testing
 
 ## Unit Tests
