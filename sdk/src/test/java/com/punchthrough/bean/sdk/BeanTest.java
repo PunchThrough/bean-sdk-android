@@ -11,8 +11,11 @@ import org.junit.Test;
 
 public class BeanTest {
 
+    // Mocks
     BluetoothDevice mockDevice;
     Handler mockHandler;
+
+    // Class under test
     Bean bean;
 
     @Before
