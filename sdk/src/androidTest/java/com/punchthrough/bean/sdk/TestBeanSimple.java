@@ -121,6 +121,7 @@ public class TestBeanSimple extends AndroidTestCase {
 
             @Override
             public void onDisconnected() {
+                System.out.println("Disconnected");
             }
 
             @Override
