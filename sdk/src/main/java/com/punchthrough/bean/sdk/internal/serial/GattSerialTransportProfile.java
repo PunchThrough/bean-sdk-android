@@ -161,6 +161,7 @@ public class GattSerialTransportProfile extends BaseProfile {
             // scratch
             int index = BEAN_SCRATCH_UUIDS.indexOf(characteristic.getUuid());
             if (index > -1) {
+                index += 1;
                 if (BuildConfig.DEBUG) {
                     Log.d(TAG, "Received scratch bank update (" + index + ")");
                 }
