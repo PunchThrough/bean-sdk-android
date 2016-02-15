@@ -353,6 +353,7 @@ public class GattClient {
         } else if (newState == BluetoothGatt.STATE_CONNECTED) {
             mConnected = true;
         }
+
         for (BaseProfile profile : mProfiles) {
             profile.onConnectionStateChange(newState);
         }
@@ -439,10 +440,10 @@ public class GattClient {
     }
 
     public void disconnect() {
-        close();
+        mGatt.disconnect();
     }
 
-    private synchronized void close() {
+    public synchronized void close() {
         if (mGatt != null) {
             mGatt.close();
         }
