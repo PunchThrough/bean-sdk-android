@@ -161,6 +161,16 @@ public class Bean implements Parcelable {
     private boolean connected;
 
     /**
+     * Auto reconnect state flag
+     */
+    private boolean autoReconnect = false;
+
+    /**
+     * Last known Android Context (Activity)
+     */
+    private Context lastKnownContext;
+
+    /**
      * <p>
      * Holds callbacks initiated by messages coming from the Bean.
      *
@@ -351,6 +361,27 @@ public class Bean implements Parcelable {
     }
 
     /**
+     * Set the auto-reconnect behavior for this Bean. (True means auto reconnect).
+     *
+     * @param reconnect Boolean value setting auto reconnect behavior
+     */
+    public void setAutoReconnect(boolean reconnect) {
+        autoReconnect = reconnect;
+    }
+
+    public boolean shouldReconnect() {
+        return autoReconnect;
+    }
+
+    public Context getLastKnownContext() {
+        return lastKnownContext;
+    }
+
+    public BeanListener getBeanListener() {
+        return beanListener;
+    }
+
+    /**
      * Attempt to connect to this Bean.
      *
      * @param context  the Android Context used for connection, usually the current activity
@@ -360,6 +391,7 @@ public class Bean implements Parcelable {
         if (connected) {
             return;
         }
+        lastKnownContext = context;
         beanListener = listener;
         gattClient.connect(context, device);
     }
@@ -368,7 +400,6 @@ public class Bean implements Parcelable {
      * Disconnect the Bean
      */
     public void disconnect() {
-        beanListener = internalBeanListener;
         gattClient.disconnect();
         connected = false;
     }

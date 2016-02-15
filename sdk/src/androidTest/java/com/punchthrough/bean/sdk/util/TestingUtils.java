@@ -73,7 +73,7 @@ public class TestingUtils {
                 @Override
                 public void onBeanDiscovered(Bean bean, int rssi) {
                     if (bean.getDevice().getName().equals(targetName)) {
-                        System.out.println("Found Bean!!!!!!!");
+                        System.out.println("[BeanUtils] Found Bean by name: " + targetName);
                         beans.add(bean);
                         beanLatch.countDown();
                     }
@@ -81,7 +81,7 @@ public class TestingUtils {
 
                 @Override
                 public void onDiscoveryComplete() {
-                    System.out.println("Nothing");
+                    System.out.println("[BeanUtils] Discovery Complete!");
                     beanLatch.countDown();
                 }
             };

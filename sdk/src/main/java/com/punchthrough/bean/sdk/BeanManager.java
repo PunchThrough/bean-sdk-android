@@ -38,29 +38,61 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * A thin wrapper to discover nearby Beans.
+ * Singleton object that provides an interface for discovery Beans.
  */
 public class BeanManager {
+
+    // Singleton
+    private static BeanManager self = null;
+
+    // Constants
     private static final String TAG = "BeanManager";
     private static final UUID BEAN_UUID = UUID.fromString("a495ff10-c5b1-4b44-b512-1370f02d74de");
     private static final long SCAN_TIMEOUT = 30000;
-    private static BeanManager sInstance = new BeanManager();
+
+    // Dependencies
+    private BluetoothAdapter btAdapter;
     protected Handler mHandler = new Handler();
     private BeanDiscoveryListener mListener;
+
+    // Internal State
     private boolean mScanning = false;
+    private HashMap<String, Bean> mBeans = new HashMap<>(32);
+
+    private BeanManager() {
+        btAdapter = BluetoothAdapter.getDefaultAdapter();
+    }
+
     private Runnable mCompleteDiscoveryCallback = new Runnable() {
         @Override
         public void run() {
             completeDiscovery();
         }
     };
+
     private final LeScanCallback mCallback = new LeScanCallback() {
         @Override
         public void onLeScan(BluetoothDevice device, final int rssi, byte[] scanRecord) {
-            if (!mBeans.containsKey(device.getAddress()) && isBean(scanRecord)) {
+            if (isBean(scanRecord)) {
                 mHandler.removeCallbacks(mCompleteDiscoveryCallback);
-                final Bean bean = new Bean(device);
-                mBeans.put(device.getAddress(), bean);
+
+                final Bean bean;
+
+                // We already know about this bean
+                if (mBeans.containsKey(device.getAddress())) {
+                    bean = mBeans.get(device.getAddress());
+                    if (bean.shouldReconnect()) {
+                        System.out.println("Auto reconnecting to Bean: " + bean.getDevice().getName());
+                        bean.connect(bean.getLastKnownContext(), bean.getBeanListener());
+                    }
+                }
+
+                // New Bean
+                else {
+                    bean = new Bean(device);
+                    mBeans.put(device.getAddress(), bean);
+                }
+
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -68,13 +100,10 @@ public class BeanManager {
                     }
                 });
                 mHandler.postDelayed(mCompleteDiscoveryCallback, SCAN_TIMEOUT / 2);
+
             }
         }
     };
-    private HashMap<String, Bean> mBeans = new HashMap<>(32);
-
-    private BeanManager() {
-    }
 
     /**
      * Get the shared {@link BeanManager} instance.
@@ -82,7 +111,11 @@ public class BeanManager {
      * @return The shared BeanManager instance.
      */
     public static BeanManager getInstance() {
-        return sInstance;
+        if (self == null) {
+            self = new BeanManager();
+        }
+
+        return self;
     }
 
     /**
@@ -100,13 +133,15 @@ public class BeanManager {
         if (mScanning) {
             cancelDiscovery();
         }
-        mBeans.clear();
+
         mListener = listener;
         mScanning = true;
-        if (BluetoothAdapter.getDefaultAdapter().startLeScan(mCallback)) {
+
+        if (btAdapter.startLeScan(mCallback)) {
             mHandler.postDelayed(mCompleteDiscoveryCallback, SCAN_TIMEOUT);
             return true;
         }
+
         return false;
     }
 
@@ -127,6 +162,13 @@ public class BeanManager {
      */
     public Collection<Bean> getBeans() {
         return new ArrayList<>(mBeans.values());
+    }
+
+    /**
+     * Clear our internal Bean collection
+     */
+    public void forgetBeans() {
+        mBeans.clear();
     }
 
     /**
