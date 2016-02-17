@@ -28,6 +28,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothAdapter.LeScanCallback;
 import android.bluetooth.BluetoothDevice;
 import android.os.Handler;
+import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -78,19 +79,20 @@ public class BeanManager {
 
                 final Bean bean;
 
-                // We already know about this bean
                 if (mBeans.containsKey(device.getAddress())) {
+                    // We already know about this bean
                     bean = mBeans.get(device.getAddress());
-                    if (bean.shouldReconnect()) {
-                        System.out.println("Auto reconnecting to Bean: " + bean.getDevice().getName());
-                        bean.connect(bean.getLastKnownContext(), bean.getBeanListener());
-                    }
-                }
-
-                // New Bean
-                else {
+                } else {
+                    // New Bean
                     bean = new Bean(device);
                     mBeans.put(device.getAddress(), bean);
+                }
+
+                if (bean.shouldReconnect()) {
+                    // bean.shouldReconnect() is false by default, so newly-discovered Beans won't
+                    // be auto-reconnected to
+                    Log.i(TAG, "Auto reconnecting to Bean: " + bean.getDevice().getName());
+                    bean.connect(bean.getLastKnownContext(), bean.getBeanListener());
                 }
 
                 mHandler.post(new Runnable() {
@@ -165,7 +167,9 @@ public class BeanManager {
     }
 
     /**
-     * Clear our internal Bean collection
+     * Clear the Beans that this BeanManager has discovered.
+     *
+     * This disables auto-reconnect on all Beans handled by this BeanManager.
      */
     public void forgetBeans() {
         mBeans.clear();

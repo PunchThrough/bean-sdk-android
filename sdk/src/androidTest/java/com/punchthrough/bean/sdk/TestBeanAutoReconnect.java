@@ -7,7 +7,6 @@ import com.punchthrough.bean.sdk.util.TestingUtils.BeanUtils;
 
 import android.test.AndroidTestCase;
 
-import java.sql.Time;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -41,13 +40,10 @@ public class TestBeanAutoReconnect extends AndroidTestCase {
                 // Should be the second time this callback has been called
                 reconnectionLatch.countDown();
             }
-
         }
 
         @Override
-        public void onConnectionFailed() {
-
-        }
+        public void onConnectionFailed() {}
 
         @Override
         public void onDisconnected() {
@@ -56,26 +52,20 @@ public class TestBeanAutoReconnect extends AndroidTestCase {
         }
 
         @Override
-        public void onSerialMessageReceived(byte[] data) {
-
-        }
+        public void onSerialMessageReceived(byte[] data) {}
 
         @Override
-        public void onScratchValueChanged(ScratchBank bank, byte[] value) {
-
-        }
+        public void onScratchValueChanged(ScratchBank bank, byte[] value) {}
 
         @Override
-        public void onError(BeanError error) {
-
-        }
+        public void onError(BeanError error) {}
     };
 
-    private void waitForConnected() throws InterruptedException {
+    private void waitForConnect() throws InterruptedException {
         connectionLatch.await(20, TimeUnit.SECONDS);
     }
 
-    private void waitForDisconnected() throws InterruptedException {
+    private void waitForDisconnect() throws InterruptedException {
         disconnectionLatch.await(20, TimeUnit.SECONDS);
     }
 
@@ -85,7 +75,7 @@ public class TestBeanAutoReconnect extends AndroidTestCase {
 
     public void testBeanAutoReconnect() throws Exception {
 
-        // Get a Bean
+        // Scan for and retrieve a Bean without connecting to it
         Bean bean = BeanUtils.getBeanByName("TESTBEAN");
 
         // Set it to auto reconnect
@@ -98,22 +88,22 @@ public class TestBeanAutoReconnect extends AndroidTestCase {
         bean.connect(getContext(), beanListener);
 
         // Wait for connection
-        waitForConnected();
+        waitForConnect();
         assertThat(bean.isConnected()).isTrue();
 
         // Start async disconnection process
         bean.disconnect();
 
         // Wait for disconnection
-        waitForDisconnected();
+        waitForDisconnect();
         assertThat(bean.isConnected()).isFalse();
 
-        // Get the same Bean
-        Bean beanAgain = BeanUtils.getBeanByName("TESTBEAN");
+        // Scan for and retrieve our test bean, without connecting to it explicitly
+        BeanUtils.getBeanByName("TESTBEAN");
 
         // It should be connected WITHOUT calling .connect() again!
         waitForReconnect();
-        assertThat(beanAgain.isConnected()).isTrue();
+        assertThat(bean.isConnected()).isTrue();
 
     }
 }
