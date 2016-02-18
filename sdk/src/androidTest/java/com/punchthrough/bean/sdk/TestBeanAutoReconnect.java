@@ -2,10 +2,8 @@ package com.punchthrough.bean.sdk;
 
 import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.ScratchBank;
-import com.punchthrough.bean.sdk.util.TestingUtils;
+import com.punchthrough.bean.sdk.util.BeanTestCase;
 import com.punchthrough.bean.sdk.util.TestingUtils.BeanUtils;
-
-import android.test.AndroidTestCase;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -13,32 +11,23 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
-public class TestBeanAutoReconnect extends AndroidTestCase {
+public class TestBeanAutoReconnect extends BeanTestCase {
 
-    private TestingUtils.LooperRunner lr = new TestingUtils.LooperRunner(BeanManager.getInstance().mHandler.getLooper());
-    private Thread lrThread = new Thread(lr);
-
-    protected void setUp() {
-        lrThread.start();
-    }
-
-    protected void tearDown() {}
-
-    private final CountDownLatch connectionLatch = new CountDownLatch(1);
-    private final CountDownLatch disconnectionLatch = new CountDownLatch(1);
-    private final CountDownLatch reconnectionLatch = new CountDownLatch(1);
+    private final CountDownLatch connectLatch = new CountDownLatch(1);
+    private final CountDownLatch disconnectLatch = new CountDownLatch(1);
+    private final CountDownLatch reconnectLatch = new CountDownLatch(1);
 
     private BeanListener beanListener = new BeanListener() {
         @Override
         public void onConnected() {
             System.out.println("Bean Connected");
 
-            if (connectionLatch.getCount() > 0 ) {
+            if (connectLatch.getCount() > 0 ) {
                 // Should be the first time this callback has been called
-                connectionLatch.countDown();
+                connectLatch.countDown();
             } else {
                 // Should be the second time this callback has been called
-                reconnectionLatch.countDown();
+                reconnectLatch.countDown();
             }
         }
 
@@ -48,7 +37,7 @@ public class TestBeanAutoReconnect extends AndroidTestCase {
         @Override
         public void onDisconnected() {
             System.out.println("Bean Disconnected");
-            disconnectionLatch.countDown();
+            disconnectLatch.countDown();
         }
 
         @Override
@@ -62,15 +51,15 @@ public class TestBeanAutoReconnect extends AndroidTestCase {
     };
 
     private void waitForConnect() throws InterruptedException {
-        connectionLatch.await(20, TimeUnit.SECONDS);
+        connectLatch.await(20, TimeUnit.SECONDS);
     }
 
     private void waitForDisconnect() throws InterruptedException {
-        disconnectionLatch.await(20, TimeUnit.SECONDS);
+        disconnectLatch.await(20, TimeUnit.SECONDS);
     }
 
     private void waitForReconnect() throws InterruptedException {
-        reconnectionLatch.await(20, TimeUnit.SECONDS);
+        reconnectLatch.await(20, TimeUnit.SECONDS);
     }
 
     public void testBeanAutoReconnect() throws Exception {

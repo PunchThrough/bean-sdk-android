@@ -1,12 +1,10 @@
 package com.punchthrough.bean.sdk;
 
-import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.Suppress;
 
 import com.punchthrough.bean.sdk.message.BeanError;
-import com.punchthrough.bean.sdk.message.Callback;
 import com.punchthrough.bean.sdk.message.ScratchBank;
-import com.punchthrough.bean.sdk.message.ScratchData;
+import com.punchthrough.bean.sdk.util.BeanTestCase;
 import com.punchthrough.bean.sdk.util.TestingUtils;
 
 import java.util.HashMap;
@@ -23,18 +21,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * the @Suppress annotation.
  *
  */
-public class TestBeanAdvanced extends AndroidTestCase {
+public class TestBeanAdvanced extends BeanTestCase {
 
     private final byte START_FRAME = 0x77;
-
-    private TestingUtils.LooperRunner lr = new TestingUtils.LooperRunner(BeanManager.getInstance().mHandler.getLooper());
-    private Thread lrThread = new Thread(lr);
-
-    protected void setUp() {
-        lrThread.start();
-    }
-
-    protected void tearDown() throws InterruptedException {}
 
     private void triggerBeanScratchChange(Bean bean) {
         byte[] msg = {START_FRAME, 0x01};
