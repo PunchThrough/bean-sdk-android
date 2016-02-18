@@ -1,8 +1,9 @@
-package com.punchthrough.bean.sdk.upload;
+package com.punchthrough.bean.sdk.upload.firmware;
 
 import com.punchthrough.bean.sdk.internal.exception.ImageParsingException;
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareImageType;
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareMetadata;
+import com.punchthrough.bean.sdk.upload.FirmwareImage;
 
 import org.junit.Test;
 

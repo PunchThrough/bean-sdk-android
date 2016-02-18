@@ -1,4 +1,4 @@
-package com.punchthrough.bean.sdk.upload;
+package com.punchthrough.bean.sdk.upload.firmware;
 
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareMetadata;
 
