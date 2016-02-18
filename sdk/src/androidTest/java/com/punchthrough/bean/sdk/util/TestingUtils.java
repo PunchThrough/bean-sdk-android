@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestingUtils {
 
-    private static class LooperRunner implements Runnable {
+    public static class LooperRunner extends Thread {
 
         private Looper looper;
 
@@ -28,30 +28,10 @@ public class TestingUtils {
         }
 
         public void run() {
-            this.looper.prepare();
-            this.looper.loop();
+            Looper.prepare();
+            Looper.loop();
         }
 
-        public void quit() {
-            this.looper.quitSafely();
-        }
-    }
-
-    public static class AsyncUtils {
-
-        private static LooperRunner lr;
-        private static Thread lrThread;
-
-        public static void startLooper(Looper looper) {
-            lr = new LooperRunner(looper);
-            lrThread = new Thread(lr);
-            lrThread.start();
-        }
-
-        public static void stopLooper() throws InterruptedException {
-            lr.quit();
-            lrThread.join();
-        }
     }
 
     public static class BeanUtils {
