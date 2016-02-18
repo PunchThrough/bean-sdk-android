@@ -3,7 +3,6 @@ package com.punchthrough.bean.sdk;
 import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.ScratchBank;
 import com.punchthrough.bean.sdk.util.BeanTestCase;
-import com.punchthrough.bean.sdk.util.TestingUtils.BeanUtils;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -65,7 +64,7 @@ public class TestBeanAutoReconnect extends BeanTestCase {
     public void testBeanAutoReconnect() throws Exception {
 
         // Scan for and retrieve a Bean without connecting to it
-        Bean bean = BeanUtils.getBeanByName("TESTBEAN");
+        Bean bean = discoverBean("TESTBEAN");
 
         // Set it to auto reconnect
         bean.setAutoReconnect(true);
@@ -88,11 +87,14 @@ public class TestBeanAutoReconnect extends BeanTestCase {
         assertThat(bean.isConnected()).isFalse();
 
         // Scan for and retrieve our test bean, without connecting to it explicitly
-        BeanUtils.getBeanByName("TESTBEAN");
+        discoverBean("TESTBEAN");
 
         // It should be connected WITHOUT calling .connect() again!
         waitForReconnect();
         assertThat(bean.isConnected()).isTrue();
 
+        // Always disconnect at end of test so that other tests will pass
+        bean.disconnect();
+        ensureDisconnected(bean, disconnectLatch);
     }
 }
