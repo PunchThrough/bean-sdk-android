@@ -8,6 +8,8 @@ import com.punchthrough.bean.sdk.BeanDiscoveryListener;
 import com.punchthrough.bean.sdk.BeanListener;
 import com.punchthrough.bean.sdk.BeanManager;
 import com.punchthrough.bean.sdk.message.BeanError;
+import com.punchthrough.bean.sdk.message.Callback;
+import com.punchthrough.bean.sdk.message.DeviceInfo;
 import com.punchthrough.bean.sdk.message.ScratchBank;
 
 import java.util.ArrayList;
@@ -113,7 +115,7 @@ public class BeanTestCase extends AndroidTestCase {
         }
     }
 
-    protected static List<Bean> discoverBeans(int num) throws InterruptedException {
+    protected List<Bean> discoverBeans(int num) throws InterruptedException {
         final CountDownLatch beanLatch = new CountDownLatch(num);
         final List<Bean> beans = new ArrayList<>();
 
@@ -137,7 +139,7 @@ public class BeanTestCase extends AndroidTestCase {
         return beans;
     }
 
-    protected static Bean discoverBean(String name) throws Exception {
+    protected Bean discoverBean(String name) throws Exception {
         final CountDownLatch beanLatch = new CountDownLatch(1);
         final List<Bean> beans = new ArrayList<>();
 
@@ -167,6 +169,26 @@ public class BeanTestCase extends AndroidTestCase {
             throw new Exception("No bean named: " + name);
         }
         return beans.get(0);
+    }
+
+    protected DeviceInfo getDeviceInformation(Bean bean) throws Exception {
+        final CountDownLatch deviceInfoLatch = new CountDownLatch(1);
+        final List<DeviceInfo> deviceInfos = new ArrayList<>();
+
+        bean.readDeviceInfo(new Callback<DeviceInfo>() {
+            @Override
+            public void onResult(DeviceInfo deviceInfo) {
+                assertThat(deviceInfo).isNotNull();
+                deviceInfos.add(deviceInfo);
+                deviceInfoLatch.countDown();
+            }
+        });
+
+        deviceInfoLatch.await(20, TimeUnit.SECONDS);
+        if (deviceInfos.isEmpty()) {
+            throw new Exception("Couldn't get device info");
+        }
+        return deviceInfos.get(0);
     }
 
 }
