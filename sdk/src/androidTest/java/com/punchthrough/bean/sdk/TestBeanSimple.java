@@ -20,6 +20,22 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class TestBeanSimple extends BeanTestCase {
 
+    private boolean validHardwareVersion(String version) {
+        return (
+            version.equals("E") ||
+            version.startsWith("1") ||
+            version.startsWith("2")
+        );
+    }
+
+    private boolean validFirmwareVersion(String version) {
+        return version.length() > 0;
+    }
+
+    private boolean validSoftwareVersion(String version) {
+        return version.length() > 0;
+    }
+
     public void testBeanDeviceInfo() throws Exception {
         /** Read device information from a bean
          *
@@ -28,19 +44,18 @@ public class TestBeanSimple extends BeanTestCase {
 
         Bean bean = discoverBean("TESTBEAN");
         synchronousConnect(bean);
+        DeviceInfo info = getDeviceInformation(bean);
 
-        // Get Device Information
-        final CountDownLatch deviceInfoLatch = new CountDownLatch(1);
-        bean.readDeviceInfo(new Callback<DeviceInfo>() {
-            @Override
-            public void onResult(DeviceInfo deviceInfo) {
-                assertThat(deviceInfo).isNotNull();
-                deviceInfoLatch.countDown();
-            }
-        });
-        deviceInfoLatch.await();
+        if (!validHardwareVersion(info.hardwareVersion())) {
+            fail("Unexpected HW version: " + info.hardwareVersion());
+        }
+        if (!validFirmwareVersion(info.firmwareVersion())) {
+            fail("Unexpected FW version: " + info.firmwareVersion());
+        }
+        if (!validSoftwareVersion(info.softwareVersion())) {
+            fail("Unexpected SW version: " + info.softwareVersion());
+        }
 
-        // Always disconnect at end of test so that other tests will pass
         synchronousDisconnect(bean);
     }
 
