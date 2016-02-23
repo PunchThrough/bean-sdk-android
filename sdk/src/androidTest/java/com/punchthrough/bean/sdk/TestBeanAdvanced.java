@@ -1,13 +1,10 @@
 package com.punchthrough.bean.sdk;
 
-import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.Suppress;
 
 import com.punchthrough.bean.sdk.message.BeanError;
-import com.punchthrough.bean.sdk.message.Callback;
 import com.punchthrough.bean.sdk.message.ScratchBank;
-import com.punchthrough.bean.sdk.message.ScratchData;
-import com.punchthrough.bean.sdk.util.TestingUtils;
+import com.punchthrough.bean.sdk.util.BeanTestCase;
 
 import java.util.HashMap;
 import java.util.List;
@@ -23,18 +20,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * the @Suppress annotation.
  *
  */
-public class TestBeanAdvanced extends AndroidTestCase {
+public class TestBeanAdvanced extends BeanTestCase {
 
     private final byte START_FRAME = 0x77;
-
-    private TestingUtils.LooperRunner lr = new TestingUtils.LooperRunner(BeanManager.getInstance().mHandler.getLooper());
-    private Thread lrThread = new Thread(lr);
-
-    protected void setUp() {
-        lrThread.start();
-    }
-
-    protected void tearDown() throws InterruptedException {}
 
     private void triggerBeanScratchChange(Bean bean) {
         byte[] msg = {START_FRAME, 0x01};
@@ -63,7 +51,7 @@ public class TestBeanAdvanced extends AndroidTestCase {
          * Sketch needed can be found in sdk/src/androidTest/resources/bean_fw_advanced_callbacks.
          */
 
-        final Bean bean = TestingUtils.BeanUtils.getBeanByName("TESTBEAN");
+        final Bean bean = discoverBean("TESTBEAN");
 
         // TODO: The latch should have a value of 4 when all callbacks are operational
         final CountDownLatch testCompletionLatch = new CountDownLatch(2);
@@ -124,7 +112,7 @@ public class TestBeanAdvanced extends AndroidTestCase {
     public void testConnectMultipleBeansWithSameListener() throws InterruptedException {
         /* This test requires at least 3 beans nearby to pass */
 
-        final List<Bean> beans = TestingUtils.BeanUtils.getBeans(3);
+        final List<Bean> beans = discoverBeans(3);
         final Bean beanA = beans.get(0);
         final Bean beanB = beans.get(1);
         final Bean beanC = beans.get(2);

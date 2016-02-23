@@ -53,7 +53,7 @@ public class BeanManager {
 
     // Dependencies
     private BluetoothAdapter btAdapter;
-    protected Handler mHandler = new Handler();
+    private Handler mHandler = new Handler();
     private BeanDiscoveryListener mListener;
 
     // Internal State
@@ -112,12 +112,16 @@ public class BeanManager {
      *
      * @return The shared BeanManager instance.
      */
-    public static BeanManager getInstance() {
+    public static synchronized BeanManager getInstance() {
         if (self == null) {
             self = new BeanManager();
         }
 
         return self;
+    }
+
+    public Handler getHandler() {
+        return mHandler;
     }
 
     /**
