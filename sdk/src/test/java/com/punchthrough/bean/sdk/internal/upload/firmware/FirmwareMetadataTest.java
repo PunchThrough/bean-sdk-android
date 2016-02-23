@@ -1,6 +1,4 @@
-package com.punchthrough.bean.sdk.upload;
-
-import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareMetadata;
+package com.punchthrough.bean.sdk.internal.upload.firmware;
 
 import org.junit.Test;
 

@@ -23,101 +23,130 @@ import java.util.TimerTask;
 import java.util.UUID;
 
 public class OADProfile extends BaseProfile {
+    /**
+     * Custom OAD Profile for LightBlue Bean devices.
+     *
+     * This class encapsulates data and processes related to firmware updates to the CC2540.
+     *
+     */
+
     public static final String TAG = "OADProfile";
+
     /**
      * The maximum time, in ms, the client will wait for an update from the Bean before aborting the
      * firmware upload process and throwing an error
      */
     private static final int FIRMWARE_UPLOAD_TIMEOUT = 3000;
+
     /**
      * Once the last block is requested, wait this many ms for retransmission requests before we
      * assume the firmware upload is complete
      */
     private static final int FIRMWARE_COMPLETION_TIMEOUT = 500;
+
     /**
      * The TI algorithm is implemented in the Obj-C SDK and is based on TI's SensorTag sample app.
      * It speeds up firmware uploads by sending many WriteWithoutResponse packets at once and
      * backing up if an error occurs.
      */
     private static final boolean USE_TI_ALGORITHM = false;
+
     /**
      * TI algorithm variable
      * Max number of firmware blocks in flight at any given time
      */
     private static final int BLOCKS_IN_FLIGHT = 18;
+
     /**
      * TI algorithm variable
      * When number of blocks in flight gets this low, send more blocks. We wait for the number to
      * get low so we can send a bunch of blocks at once.
      */
     private static final int SEND_BLOCKS_LOWER_LIMIT = 3;
+
     /**
      * The OAD Service contains the OAD Identify and Block characteristics
      */
     private static final UUID SERVICE_OAD = UUID.fromString("F000FFC0-0451-4000-B000-000000000000");
+
     /**
      * The OAD Identify characteristic is used to negotiate the start of a firmware transfer
      */
     private static final UUID CHAR_OAD_IDENTIFY = UUID.fromString("F000FFC1-0451-4000-B000-000000000000");
+
     /**
      * The OAD Block characteristic is used to send firmware blocks and confirm transfer completion
      */
     private static final UUID CHAR_OAD_BLOCK = UUID.fromString("F000FFC2-0451-4000-B000-000000000000");
+
     /**
      * Android's BLE stack doesn't have a send buffer. If we want to send lots of packets very
      * quickly one after another, we have to implement our own buffer and attempt to send failed
      * packets over and overs ourselves.
      */
     private SendBuffer blockSendBuffer;
+
     /**
      * The OAD Identify characteristic for this device. Assigned when firmware upload is started.
      */
     private BluetoothGattCharacteristic oadIdentify;
+
     /**
      * The OAD Block characteristic for this device. Assigned when firmware upload is started.
      */
     private BluetoothGattCharacteristic oadBlock;
+
     /**
      * True if the OAD Identify characteristic is notifying, false otherwise
      */
     private boolean oadIdentifyNotifying = false;
+
     /**
      * True if the OAD Block characteristic is notifying, false otherwise
      */
     private boolean oadBlockNotifying = false;
+
     /**
      * State of the current firmware upload process.
      */
     private FirmwareUploadState firmwareUploadState = FirmwareUploadState.INACTIVE;
+
     /**
      * Aborts firmware upload and throws an error if we go too long without a response from the CC.
      */
     private Timer firmwareStateTimeout;
+
     /**
      * Started when the last block is requested. The Bean indicates firmware update is complete by
      * requesting the last block then doing nothing.
      */
     private Timer firmwareCompletionTimeout;
+
     /**
      * Firmware bundle with A and B images to send
      */
     FirmwareBundle firmwareBundle;
+
     /**
      * Firmware image (A or B) to send
      */
     FirmwareImage firmwareImage;
+
     /**
      * Used to keep track of firmware upload state.
      */
     private int nextBlock = 0;
+
     /**
      * used to keep track of firmware upload state.
      */
     private int nextBlockRequest = 0;
+
     /**
      * Called to inform the Bean class when firmware upload is complete.
      */
     private Runnable onComplete;
+
     /**
      * Called when an error causes the firmware upload to fail.
      */
@@ -224,6 +253,10 @@ public class OADProfile extends BaseProfile {
 
         verifyNotifyEnabled();
 
+    }
+
+    public FirmwareUploadState getState() {
+        return firmwareUploadState;
     }
 
     /**

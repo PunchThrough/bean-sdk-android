@@ -1,7 +1,5 @@
 package com.punchthrough.bean.sdk.upload;
 
-import android.test.AndroidTestCase;
-
 import com.punchthrough.bean.sdk.internal.exception.HexParsingException;
 import com.punchthrough.bean.sdk.internal.utility.Chunk;
 
