@@ -255,6 +255,10 @@ public class OADProfile extends BaseProfile {
 
     }
 
+    public FirmwareUploadState getState() {
+        return firmwareUploadState;
+    }
+
     /**
      * Reset all local variables and abort any block transmissions in progress.
      */

@@ -1,9 +1,8 @@
-package com.punchthrough.bean.sdk.upload.firmware;
+package com.punchthrough.bean.sdk.upload;
 
 import com.punchthrough.bean.sdk.internal.exception.ImageParsingException;
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareImageType;
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareMetadata;
-import com.punchthrough.bean.sdk.upload.FirmwareImage;
 
 import org.junit.Test;
 
@@ -15,8 +14,12 @@ public class FirmwareImageTest {
 
     // Valid images have all necessary headers
     byte[] validImageA = intArrayToByteArray(new int[] {
-            0x2B, 0x65, 0xFF, 0xFF, 0x64, 0x00, 0x00, 0x7C,
-            0x41, 0x41, 0x41, 0x41, 0xFF, 0xFF, 0xFF, 0xFF
+            0x2B, 0x65,                // CRC
+            0xFF, 0xFF,                // CRC Shadow
+            0x64, 0x00,                // Version
+            0x00, 0x7C,                // Length
+            0x41, 0x41, 0x41, 0x41,    // A
+            0xFF, 0xFF, 0xFF, 0xFF
     });
 
     // Image B has 0x42 "B"s instead of 0x41 "A"s

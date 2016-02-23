@@ -1,8 +1,7 @@
-package com.punchthrough.bean.sdk.upload.sketch;
+package com.punchthrough.bean.sdk.upload;
 
 import com.punchthrough.bean.sdk.internal.exception.HexParsingException;
 import com.punchthrough.bean.sdk.internal.utility.Chunk;
-import com.punchthrough.bean.sdk.upload.SketchHex;
 
 import org.junit.Before;
 import org.junit.Test;
