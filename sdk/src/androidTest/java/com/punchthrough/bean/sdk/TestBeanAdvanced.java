@@ -41,20 +41,20 @@ public class TestBeanAdvanced extends BeanTestCase {
          *  - onConnected
          *  - onSerialMessageReceived (TODO: Broken, test when fixed)
          *  - onScratchValueChanged
-         *  - onDisconnected (TODO: Broken, test when fixed)
+         *  - onDisconnected
          *
          * This test does not test failure callbacks:
          *  - onConnectionFailed
          *  - onError
          *
          * Note: This test requires a Bean named TESTBEAN with a particular sketch loaded. The
-         * Sketch needed can be found in sdk/src/androidTest/resources/bean_fw_advanced_callbacks.
+         * Sketch needed can be found in sdk/src/androidTest/assets/bean_fw_advanced_callbacks.
          */
 
         final Bean bean = discoverBean("TESTBEAN");
 
         // TODO: The latch should have a value of 4 when all callbacks are operational
-        final CountDownLatch testCompletionLatch = new CountDownLatch(2);
+        final CountDownLatch testCompletionLatch = new CountDownLatch(3);
 
         BeanListener beanListener = new BeanListener() {
             @Override
@@ -71,7 +71,6 @@ public class TestBeanAdvanced extends BeanTestCase {
 
             @Override
             public void onDisconnected() {
-                // TODO: Broken, never called!
                 System.out.println("Disconnected");
                 testCompletionLatch.countDown();
             }
