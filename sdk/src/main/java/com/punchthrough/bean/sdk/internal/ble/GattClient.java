@@ -26,22 +26,45 @@ import java.util.UUID;
  * GATT client is running on the central device.
  */
 public class GattClient {
+
     private static final String TAG = "GattClient";
+
+    // Profiles
     private final GattSerialTransportProfile mSerialProfile;
     private final DeviceProfile mDeviceProfile;
     private final BatteryProfile mBatteryProfile;
     private final OADProfile mOADProfile;
-    private BluetoothGatt mGatt;
     private List<BaseProfile> mProfiles = new ArrayList<>(10);
+
+    // Internal dependencies
+    private BluetoothGatt mGatt;
+
+    // Internal state
     private Queue<Runnable> mOperationsQueue = new ArrayDeque<>(32);
     private boolean mOperationInProgress = false;
-
-    public boolean isConnected() {
-        return mConnected;
-    }
-
     private boolean mConnected = false;
     private boolean mDiscoveringServices = false;
+
+    public GattClient() {
+        mSerialProfile = new GattSerialTransportProfile(this);
+        mDeviceProfile = new DeviceProfile(this);
+        mBatteryProfile = new BatteryProfile(this);
+        mOADProfile = new OADProfile(this);
+        mProfiles.add(mSerialProfile);
+        mProfiles.add(mDeviceProfile);
+        mProfiles.add(mBatteryProfile);
+        mProfiles.add(mOADProfile);
+    }
+
+    public GattClient(Handler handler) {
+        mSerialProfile = new GattSerialTransportProfile(this, handler);
+        mDeviceProfile = new DeviceProfile(this);
+        mBatteryProfile = new BatteryProfile(this);
+        mOADProfile = new OADProfile(this);
+        mProfiles.add(mSerialProfile);
+        mProfiles.add(mDeviceProfile);
+        mProfiles.add(mBatteryProfile);
+    }
 
     private final BluetoothGattCallback mBluetoothGattCallback = new BluetoothGattCallback() {
         @Override
@@ -120,27 +143,6 @@ public class GattClient {
         }
     };
 
-    public GattClient() {
-        mSerialProfile = new GattSerialTransportProfile(this);
-        mDeviceProfile = new DeviceProfile(this);
-        mBatteryProfile = new BatteryProfile(this);
-        mOADProfile = new OADProfile(this);
-        mProfiles.add(mSerialProfile);
-        mProfiles.add(mDeviceProfile);
-        mProfiles.add(mBatteryProfile);
-        mProfiles.add(mOADProfile);
-    }
-
-    public GattClient(Handler handler) {
-        mSerialProfile = new GattSerialTransportProfile(this, handler);
-        mDeviceProfile = new DeviceProfile(this);
-        mBatteryProfile = new BatteryProfile(this);
-        mOADProfile = new OADProfile(this);
-        mProfiles.add(mSerialProfile);
-        mProfiles.add(mDeviceProfile);
-        mProfiles.add(mBatteryProfile);
-    }
-
     private void fireDescriptorRead(BluetoothGattDescriptor descriptor) {
         for (BaseProfile profile : mProfiles) {
             profile.onDescriptorRead(this, descriptor);
@@ -215,6 +217,18 @@ public class GattClient {
         for (BaseProfile profile : mProfiles) {
             profile.onConnectionStateChange(newState);
         }
+    }
+
+    /****************************************************************************
+                                 PUBLIC API
+     ****************************************************************************/
+
+    public void setListener() {
+        
+    }
+
+    public boolean isConnected() {
+        return mConnected;
     }
 
     public List<BluetoothGattService> getServices() {
