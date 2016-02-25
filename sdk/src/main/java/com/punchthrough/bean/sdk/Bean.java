@@ -370,390 +370,6 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Check if the Bean is connected.
-     *
-     * @return true if the Bean is connected
-     */
-    public boolean isConnected() {
-        return connected;
-    }
-
-    /**
-     * Set the auto-reconnect behavior for this Bean. (True means auto reconnect).
-     *
-     * @param reconnect Boolean value setting auto reconnect behavior
-     */
-    public void setAutoReconnect(boolean reconnect) {
-        autoReconnect = reconnect;
-    }
-
-    public boolean shouldReconnect() {
-        return autoReconnect;
-    }
-
-    public Context getLastKnownContext() {
-        return lastKnownContext;
-    }
-
-    public BeanListener getBeanListener() {
-        return beanListener;
-    }
-
-    /**
-     * Attempt to connect to this Bean.
-     *
-     * @param context  the Android Context used for connection, usually the current activity
-     * @param listener the Bean listener
-     */
-    public void connect(Context context, BeanListener listener) {
-        if (connected) {
-            return;
-        }
-        lastKnownContext = context;
-        beanListener = listener;
-        gattClient.connect(context, device);
-    }
-
-    /**
-     * Disconnect the Bean
-     */
-    public void disconnect() {
-        gattClient.disconnect();
-        connected = false;
-    }
-
-    /**
-     * Return the {@link android.bluetooth.BluetoothDevice} backing this Bean object
-     *
-     * @return the device
-     */
-    public BluetoothDevice getDevice() {
-        return device;
-    }
-
-    /**
-     * Request the {@link com.punchthrough.bean.sdk.message.RadioConfig}.
-     *
-     * @param callback the callback for the result
-     */
-    public void readRadioConfig(Callback<RadioConfig> callback) {
-        addCallback(BeanMessageID.BT_GET_CONFIG, callback);
-        sendMessageWithoutPayload(BeanMessageID.BT_GET_CONFIG);
-    }
-
-    /**
-     * Set the LED color.
-     *
-     * @param color The {@link com.punchthrough.bean.sdk.message.LedColor} being sent to the LED
-     */
-    public void setLed(LedColor color) {
-        Buffer buffer = new Buffer();
-        buffer.writeByte(color.red());
-        buffer.writeByte(color.green());
-        buffer.writeByte(color.blue());
-        sendMessage(BeanMessageID.CC_LED_WRITE_ALL, buffer);
-    }
-
-    /**
-     * Read the LED color.
-     *
-     * @param callback the callback for the {@link com.punchthrough.bean.sdk.message.LedColor}
-     *                 result
-     */
-    public void readLed(Callback<LedColor> callback) {
-        addCallback(BeanMessageID.CC_LED_READ_ALL, callback);
-        sendMessageWithoutPayload(BeanMessageID.CC_LED_READ_ALL);
-    }
-
-    /**
-     * Set the advertising flag.
-     *
-     * @param enable true to enable, false to disable
-     */
-    public void setAdvertising(boolean enable) {
-        Buffer buffer = new Buffer();
-        buffer.writeByte(enable ? 1 : 0);
-        sendMessage(BeanMessageID.BT_ADV_ONOFF, buffer);
-    }
-
-    /**
-     * Request a temperature reading.
-     *
-     * @param callback the callback for the temperature result, in degrees Celsius
-     */
-    public void readTemperature(Callback<Integer> callback) {
-        addCallback(BeanMessageID.CC_TEMP_READ, callback);
-        sendMessageWithoutPayload(BeanMessageID.CC_TEMP_READ);
-    }
-
-    /**
-     * Request an acceleration sensor reading.
-     *
-     * @param callback the callback for the {@link com.punchthrough.bean.sdk.message.Acceleration}
-     *                 result
-     */
-    public void readAcceleration(Callback<Acceleration> callback) {
-        addCallback(BeanMessageID.CC_ACCEL_READ, callback);
-        sendMessageWithoutPayload(BeanMessageID.CC_ACCEL_READ);
-    }
-
-    /**
-     * Request the sketch metadata.
-     *
-     * @param callback the callback for the {@link com.punchthrough.bean.sdk.message.SketchMetadata}
-     *                 result
-     */
-    public void readSketchMetadata(Callback<SketchMetadata> callback) {
-        addCallback(BeanMessageID.BL_GET_META, callback);
-        sendMessageWithoutPayload(BeanMessageID.BL_GET_META);
-    }
-
-    /**
-     * Request a scratch bank data value.
-     *
-     * @param bank     the {@link com.punchthrough.bean.sdk.message.ScratchBank} for which data is
-     *                 being requested
-     * @param callback the callback for the result
-     */
-    public void readScratchData(ScratchBank bank, Callback<ScratchData> callback) {
-        addCallback(BeanMessageID.BT_GET_SCRATCH, callback);
-        Buffer buffer = new Buffer();
-        buffer.writeByte(intToByte(bank.getRawValue()));
-        sendMessage(BeanMessageID.BT_GET_SCRATCH, buffer);
-    }
-
-    /**
-     * Set the accelerometer range.
-     *
-     * @param range the {@link com.punchthrough.bean.sdk.message.AccelerometerRange} to be set
-     */
-    public void setAccelerometerRange(AccelerometerRange range) {
-        Buffer buffer = new Buffer();
-        buffer.writeByte(range.getRawValue());
-        sendMessage(BeanMessageID.CC_ACCEL_SET_RANGE, buffer);
-    }
-
-    /**
-     * Read the accelerometer range.
-     *
-     * @param callback the callback for the result
-     */
-    public void readAccelerometerRange(Callback<AccelerometerRange> callback) {
-        addCallback(BeanMessageID.CC_ACCEL_GET_RANGE, callback);
-        sendMessageWithoutPayload(BeanMessageID.CC_ACCEL_GET_RANGE);
-    }
-
-    /**
-     * Set a scratch bank data value with raw bytes.
-     *
-     * @param bank The {@link com.punchthrough.bean.sdk.message.ScratchBank} being set
-     * @param data The bytes to write into the scratch bank
-     */
-    public void setScratchData(ScratchBank bank, byte[] data) {
-        ScratchData sd = ScratchData.create(bank, data);
-        sendMessage(BeanMessageID.BT_SET_SCRATCH, sd);
-    }
-
-    /**
-     * Set a scratch bank data value with a string in the form of UTF-8 bytes.
-     *
-     * @param bank The {@link com.punchthrough.bean.sdk.message.ScratchBank} being set
-     * @param data The string data to write into the scratch bank as UTF-8
-     */
-    public void setScratchData(ScratchBank bank, String data) {
-        ScratchData sd = ScratchData.create(bank, data);
-        sendMessage(BeanMessageID.BT_SET_SCRATCH, sd);
-    }
-
-    /**
-     * <p>
-     * Set the radio config.
-     *
-     * <p/><p>
-     *
-     * This is equivalent to calling
-     * {@link #setRadioConfig(com.punchthrough.bean.sdk.message.RadioConfig, boolean)}
-     * with true for the save parameter.
-     * </p>
-     *
-     * @param config the {@link com.punchthrough.bean.sdk.message.RadioConfig} to set
-     */
-    public void setRadioConfig(RadioConfig config) {
-        setRadioConfig(config, true);
-    }
-
-    /**
-     * Set the radio config.
-     *
-     * @param config the {@link com.punchthrough.bean.sdk.message.RadioConfig} to set
-     * @param save   true to save the config in non-volatile storage, false otherwise.
-     */
-    public void setRadioConfig(RadioConfig config, boolean save) {
-        sendMessage(save ? BeanMessageID.BT_SET_CONFIG : BeanMessageID.BT_SET_CONFIG_NOSAVE, config);
-    }
-
-    /**
-     * Send raw bytes to the Bean as a serial message.
-     *
-     * @param value the message payload
-     */
-    public void sendSerialMessage(byte[] value) {
-        Buffer buffer = new Buffer();
-        buffer.write(value);
-        sendMessage(BeanMessageID.SERIAL_DATA, buffer);
-    }
-
-    /**
-     * Set the Bean's security code.
-     *
-     * @param pin    the 6 digit pin as a number, e.g. <code>123456</code>
-     * @param active true to enable authenticated mode, false to disable the current pin
-     */
-    public void setPin(int pin, boolean active) {
-        Buffer buffer = new Buffer();
-        buffer.writeIntLe(pin);
-        buffer.writeByte(active ? 1 : 0);
-        sendMessage(BeanMessageID.BT_SET_PIN, buffer);
-    }
-
-    /**
-     * Send a UTF-8 string to the Bean as a serial message.
-     *
-     * @param value the message to send as UTF-8 bytes
-     */
-    public void sendSerialMessage(String value) {
-        Buffer buffer = new Buffer();
-        try {
-            buffer.write(value.getBytes("UTF-8"));
-            sendMessage(BeanMessageID.SERIAL_DATA, buffer);
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * Read the device information (hardware / software version)
-     *
-     * @param callback the callback for the result
-     */
-    public void readDeviceInfo(final Callback<DeviceInfo> callback) {
-        gattClient.getDeviceProfile().getDeviceInfo(new DeviceInfoCallback() {
-            @Override
-            public void onDeviceInfo(DeviceInfo info) {
-                callback.onResult(info);
-            }
-        });
-    }
-
-    /**
-     * Enable or disable the Arduino.
-     *
-     * @param enable true to enable, false to disable
-     */
-    public void setArduinoEnabled(boolean enable) {
-        Buffer buffer = new Buffer();
-        buffer.writeByte(enable ? 1 : 0);
-        sendMessage(BeanMessageID.CC_POWER_ARDUINO, buffer);
-    }
-
-    /**
-     * Read the Arduino power state.
-     *
-     * @param callback the callback for the power state result: true if the Arduino is on
-     */
-    public void readArduinoPowerState(final Callback<Boolean> callback) {
-        addCallback(BeanMessageID.CC_GET_AR_POWER, callback);
-        sendMessageWithoutPayload(BeanMessageID.CC_GET_AR_POWER);
-    }
-
-    /**
-     * Read the battery level.
-     *
-     * @param callback the callback for the {@link com.punchthrough.bean.sdk.message.BatteryLevel}
-     *                 result
-     */
-    public void readBatteryLevel(final Callback<BatteryLevel> callback) {
-        gattClient.getBatteryProfile().getBatteryLevel(new BatteryLevelCallback() {
-            @Override
-            public void onBatteryLevel(int percentage) {
-                callback.onResult(new BatteryLevel(percentage));
-            }
-        });
-    }
-
-    /**
-     * End the Arduino's serial gate, allowing serial data from the Arduino to be read by the
-     * connected Android client.
-     *
-     * The serial gate exists to prevent chatty sketches from interfering with the behavior of
-     * clients that want to send commands to the ATmega. It is enabled on initial connection to the
-     * Bean.
-     */
-    public void endSerialGate() {
-        sendMessageWithoutPayload(BeanMessageID.BT_END_GATE);
-    }
-
-    /**
-     * Programs the Bean with an Arduino sketch in hex form. The Bean's sketch name and
-     * programmed-at timestamp will be set from the
-     * {@link com.punchthrough.bean.sdk.upload.SketchHex} object.
-     *
-     * @param hex           The sketch to be sent to the Bean
-     * @param onProgress    Called with progress while the sketch upload is occurring
-     * @param onComplete    Called when the sketch upload is complete
-     */
-    public void programWithSketch(SketchHex hex, Callback<UploadProgress> onProgress,
-                                  Runnable onComplete) {
-
-        // Resetting client state means we have a clean state to start. Variables are cleared and
-        // the state timeout timer will not fire during firmware uploads.
-        resetSketchUploadState();
-
-        // Set onProgress and onComplete handlers
-        this.onSketchUploadProgress = onProgress;
-        this.onSketchUploadComplete = onComplete;
-
-        // Prepare the sketch blocks to be sent
-        sketchBlocksToSend = Chunk.chunksFrom(hex, MAX_BLOCK_SIZE_BYTES);
-
-        // Construct and send the START payload with sketch metadata
-        SketchMetadata metadata = SketchMetadata.create(hex, new Date());
-        Buffer payload = metadata.toPayload();
-
-        // If there's no data in the hex sketch, send the empty metadata to clear the Bean's sketch
-        // and don't worry about sending sketch blocks
-        if (hex.bytes().length > 0) {
-            sketchUploadState = SketchUploadState.SENDING_START_COMMAND;
-            resetSketchStateTimeout();
-        }
-
-        sendMessage(BeanMessageID.BL_CMD_START, payload);
-
-    }
-
-    /**
-     * Programs the Bean with new firmware images.
-     *
-     * @param bundle        The firmware package holding A and B images to be sent to the Bean
-     * @param onProgress    Called with progress while the sketch upload is occurring
-     * @param onComplete    Called when the sketch upload is complete
-     */
-    public void programWithFirmware(FirmwareBundle bundle, Callback<UploadProgress> onProgress,
-                                    Runnable onComplete) {
-
-        Callback<BeanError> onError = new Callback<BeanError>() {
-            @Override
-            public void onResult(BeanError error) {
-                returnError(error);
-            }
-        };
-
-        // Since TI OAD FW uploads access BLE characteristics directly, we need to delegate this
-        // to GattClient
-        gattClient.getOADProfile().programWithFirmware(bundle, onProgress, onComplete, onError);
-    }
-
-    /**
      * Handles incoming messages from the Bean and dispatches them to the proper handlers.
      * @param data The raw byte data received from the Bean
      */
@@ -1118,6 +734,393 @@ public class Bean implements Parcelable {
      */
     private void sendMessageWithoutPayload(BeanMessageID type) {
         sendMessage(type, (Buffer) null);
+    }
+
+    /****************************************************************************
+                                    PUBLIC API
+     ****************************************************************************/
+
+    /**
+     * Check if the Bean is connected.
+     *
+     * @return true if the Bean is connected
+     */
+    public boolean isConnected() {
+        return connected;
+    }
+
+    /**
+     * Set the auto-reconnect behavior for this Bean. (True means auto reconnect).
+     *
+     * @param reconnect Boolean value setting auto reconnect behavior
+     */
+    public void setAutoReconnect(boolean reconnect) {
+        autoReconnect = reconnect;
+    }
+
+    public boolean shouldReconnect() {
+        return autoReconnect;
+    }
+
+    public Context getLastKnownContext() {
+        return lastKnownContext;
+    }
+
+    public BeanListener getBeanListener() {
+        return beanListener;
+    }
+
+    /**
+     * Attempt to connect to this Bean.
+     *
+     * @param context  the Android Context used for connection, usually the current activity
+     * @param listener the Bean listener
+     */
+    public void connect(Context context, BeanListener listener) {
+        if (connected) {
+            return;
+        }
+        lastKnownContext = context;
+        beanListener = listener;
+        gattClient.connect(context, device);
+    }
+
+    /**
+     * Disconnect the Bean
+     */
+    public void disconnect() {
+        gattClient.disconnect();
+        connected = false;
+    }
+
+    /**
+     * Return the {@link android.bluetooth.BluetoothDevice} backing this Bean object
+     *
+     * @return the device
+     */
+    public BluetoothDevice getDevice() {
+        return device;
+    }
+
+    /**
+     * Request the {@link com.punchthrough.bean.sdk.message.RadioConfig}.
+     *
+     * @param callback the callback for the result
+     */
+    public void readRadioConfig(Callback<RadioConfig> callback) {
+        addCallback(BeanMessageID.BT_GET_CONFIG, callback);
+        sendMessageWithoutPayload(BeanMessageID.BT_GET_CONFIG);
+    }
+
+    /**
+     * Set the LED color.
+     *
+     * @param color The {@link com.punchthrough.bean.sdk.message.LedColor} being sent to the LED
+     */
+    public void setLed(LedColor color) {
+        Buffer buffer = new Buffer();
+        buffer.writeByte(color.red());
+        buffer.writeByte(color.green());
+        buffer.writeByte(color.blue());
+        sendMessage(BeanMessageID.CC_LED_WRITE_ALL, buffer);
+    }
+
+    /**
+     * Read the LED color.
+     *
+     * @param callback the callback for the {@link com.punchthrough.bean.sdk.message.LedColor}
+     *                 result
+     */
+    public void readLed(Callback<LedColor> callback) {
+        addCallback(BeanMessageID.CC_LED_READ_ALL, callback);
+        sendMessageWithoutPayload(BeanMessageID.CC_LED_READ_ALL);
+    }
+
+    /**
+     * Set the advertising flag.
+     *
+     * @param enable true to enable, false to disable
+     */
+    public void setAdvertising(boolean enable) {
+        Buffer buffer = new Buffer();
+        buffer.writeByte(enable ? 1 : 0);
+        sendMessage(BeanMessageID.BT_ADV_ONOFF, buffer);
+    }
+
+    /**
+     * Request a temperature reading.
+     *
+     * @param callback the callback for the temperature result, in degrees Celsius
+     */
+    public void readTemperature(Callback<Integer> callback) {
+        addCallback(BeanMessageID.CC_TEMP_READ, callback);
+        sendMessageWithoutPayload(BeanMessageID.CC_TEMP_READ);
+    }
+
+    /**
+     * Request an acceleration sensor reading.
+     *
+     * @param callback the callback for the {@link com.punchthrough.bean.sdk.message.Acceleration}
+     *                 result
+     */
+    public void readAcceleration(Callback<Acceleration> callback) {
+        addCallback(BeanMessageID.CC_ACCEL_READ, callback);
+        sendMessageWithoutPayload(BeanMessageID.CC_ACCEL_READ);
+    }
+
+    /**
+     * Request the sketch metadata.
+     *
+     * @param callback the callback for the {@link com.punchthrough.bean.sdk.message.SketchMetadata}
+     *                 result
+     */
+    public void readSketchMetadata(Callback<SketchMetadata> callback) {
+        addCallback(BeanMessageID.BL_GET_META, callback);
+        sendMessageWithoutPayload(BeanMessageID.BL_GET_META);
+    }
+
+    /**
+     * Request a scratch bank data value.
+     *
+     * @param bank     the {@link com.punchthrough.bean.sdk.message.ScratchBank} for which data is
+     *                 being requested
+     * @param callback the callback for the result
+     */
+    public void readScratchData(ScratchBank bank, Callback<ScratchData> callback) {
+        addCallback(BeanMessageID.BT_GET_SCRATCH, callback);
+        Buffer buffer = new Buffer();
+        buffer.writeByte(intToByte(bank.getRawValue()));
+        sendMessage(BeanMessageID.BT_GET_SCRATCH, buffer);
+    }
+
+    /**
+     * Set the accelerometer range.
+     *
+     * @param range the {@link com.punchthrough.bean.sdk.message.AccelerometerRange} to be set
+     */
+    public void setAccelerometerRange(AccelerometerRange range) {
+        Buffer buffer = new Buffer();
+        buffer.writeByte(range.getRawValue());
+        sendMessage(BeanMessageID.CC_ACCEL_SET_RANGE, buffer);
+    }
+
+    /**
+     * Read the accelerometer range.
+     *
+     * @param callback the callback for the result
+     */
+    public void readAccelerometerRange(Callback<AccelerometerRange> callback) {
+        addCallback(BeanMessageID.CC_ACCEL_GET_RANGE, callback);
+        sendMessageWithoutPayload(BeanMessageID.CC_ACCEL_GET_RANGE);
+    }
+
+    /**
+     * Set a scratch bank data value with raw bytes.
+     *
+     * @param bank The {@link com.punchthrough.bean.sdk.message.ScratchBank} being set
+     * @param data The bytes to write into the scratch bank
+     */
+    public void setScratchData(ScratchBank bank, byte[] data) {
+        ScratchData sd = ScratchData.create(bank, data);
+        sendMessage(BeanMessageID.BT_SET_SCRATCH, sd);
+    }
+
+    /**
+     * Set a scratch bank data value with a string in the form of UTF-8 bytes.
+     *
+     * @param bank The {@link com.punchthrough.bean.sdk.message.ScratchBank} being set
+     * @param data The string data to write into the scratch bank as UTF-8
+     */
+    public void setScratchData(ScratchBank bank, String data) {
+        ScratchData sd = ScratchData.create(bank, data);
+        sendMessage(BeanMessageID.BT_SET_SCRATCH, sd);
+    }
+
+    /**
+     * <p>
+     * Set the radio config.
+     *
+     * <p/><p>
+     *
+     * This is equivalent to calling
+     * {@link #setRadioConfig(com.punchthrough.bean.sdk.message.RadioConfig, boolean)}
+     * with true for the save parameter.
+     * </p>
+     *
+     * @param config the {@link com.punchthrough.bean.sdk.message.RadioConfig} to set
+     */
+    public void setRadioConfig(RadioConfig config) {
+        setRadioConfig(config, true);
+    }
+
+    /**
+     * Set the radio config.
+     *
+     * @param config the {@link com.punchthrough.bean.sdk.message.RadioConfig} to set
+     * @param save   true to save the config in non-volatile storage, false otherwise.
+     */
+    public void setRadioConfig(RadioConfig config, boolean save) {
+        sendMessage(save ? BeanMessageID.BT_SET_CONFIG : BeanMessageID.BT_SET_CONFIG_NOSAVE, config);
+    }
+
+    /**
+     * Send raw bytes to the Bean as a serial message.
+     *
+     * @param value the message payload
+     */
+    public void sendSerialMessage(byte[] value) {
+        Buffer buffer = new Buffer();
+        buffer.write(value);
+        sendMessage(BeanMessageID.SERIAL_DATA, buffer);
+    }
+
+    /**
+     * Set the Bean's security code.
+     *
+     * @param pin    the 6 digit pin as a number, e.g. <code>123456</code>
+     * @param active true to enable authenticated mode, false to disable the current pin
+     */
+    public void setPin(int pin, boolean active) {
+        Buffer buffer = new Buffer();
+        buffer.writeIntLe(pin);
+        buffer.writeByte(active ? 1 : 0);
+        sendMessage(BeanMessageID.BT_SET_PIN, buffer);
+    }
+
+    /**
+     * Send a UTF-8 string to the Bean as a serial message.
+     *
+     * @param value the message to send as UTF-8 bytes
+     */
+    public void sendSerialMessage(String value) {
+        Buffer buffer = new Buffer();
+        try {
+            buffer.write(value.getBytes("UTF-8"));
+            sendMessage(BeanMessageID.SERIAL_DATA, buffer);
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Read the device information (hardware / software version)
+     *
+     * @param callback the callback for the result
+     */
+    public void readDeviceInfo(final Callback<DeviceInfo> callback) {
+        gattClient.getDeviceProfile().getDeviceInfo(new DeviceInfoCallback() {
+            @Override
+            public void onDeviceInfo(DeviceInfo info) {
+                callback.onResult(info);
+            }
+        });
+    }
+
+    /**
+     * Enable or disable the Arduino.
+     *
+     * @param enable true to enable, false to disable
+     */
+    public void setArduinoEnabled(boolean enable) {
+        Buffer buffer = new Buffer();
+        buffer.writeByte(enable ? 1 : 0);
+        sendMessage(BeanMessageID.CC_POWER_ARDUINO, buffer);
+    }
+
+    /**
+     * Read the Arduino power state.
+     *
+     * @param callback the callback for the power state result: true if the Arduino is on
+     */
+    public void readArduinoPowerState(final Callback<Boolean> callback) {
+        addCallback(BeanMessageID.CC_GET_AR_POWER, callback);
+        sendMessageWithoutPayload(BeanMessageID.CC_GET_AR_POWER);
+    }
+
+    /**
+     * Read the battery level.
+     *
+     * @param callback the callback for the {@link com.punchthrough.bean.sdk.message.BatteryLevel}
+     *                 result
+     */
+    public void readBatteryLevel(final Callback<BatteryLevel> callback) {
+        gattClient.getBatteryProfile().getBatteryLevel(new BatteryLevelCallback() {
+            @Override
+            public void onBatteryLevel(int percentage) {
+                callback.onResult(new BatteryLevel(percentage));
+            }
+        });
+    }
+
+    /**
+     * End the Arduino's serial gate, allowing serial data from the Arduino to be read by the
+     * connected Android client.
+     *
+     * The serial gate exists to prevent chatty sketches from interfering with the behavior of
+     * clients that want to send commands to the ATmega. It is enabled on initial connection to the
+     * Bean.
+     */
+    public void endSerialGate() {
+        sendMessageWithoutPayload(BeanMessageID.BT_END_GATE);
+    }
+
+    /**
+     * Programs the Bean with an Arduino sketch in hex form. The Bean's sketch name and
+     * programmed-at timestamp will be set from the
+     * {@link com.punchthrough.bean.sdk.upload.SketchHex} object.
+     *
+     * @param hex           The sketch to be sent to the Bean
+     * @param onProgress    Called with progress while the sketch upload is occurring
+     * @param onComplete    Called when the sketch upload is complete
+     */
+    public void programWithSketch(SketchHex hex, Callback<UploadProgress> onProgress, Runnable onComplete) {
+
+        // Resetting client state means we have a clean state to start. Variables are cleared and
+        // the state timeout timer will not fire during firmware uploads.
+        resetSketchUploadState();
+
+        // Set onProgress and onComplete handlers
+        this.onSketchUploadProgress = onProgress;
+        this.onSketchUploadComplete = onComplete;
+
+        // Prepare the sketch blocks to be sent
+        sketchBlocksToSend = Chunk.chunksFrom(hex, MAX_BLOCK_SIZE_BYTES);
+
+        // Construct and send the START payload with sketch metadata
+        SketchMetadata metadata = SketchMetadata.create(hex, new Date());
+        Buffer payload = metadata.toPayload();
+
+        // If there's no data in the hex sketch, send the empty metadata to clear the Bean's sketch
+        // and don't worry about sending sketch blocks
+        if (hex.bytes().length > 0) {
+            sketchUploadState = SketchUploadState.SENDING_START_COMMAND;
+            resetSketchStateTimeout();
+        }
+
+        sendMessage(BeanMessageID.BL_CMD_START, payload);
+
+    }
+
+    /**
+     * Programs the Bean with new firmware images.
+     *
+     * @param bundle        The firmware package holding A and B images to be sent to the Bean
+     * @param onProgress    Called with progress while the sketch upload is occurring
+     * @param onComplete    Called when the sketch upload is complete
+     */
+    public void programWithFirmware(FirmwareBundle bundle, Callback<UploadProgress> onProgress,
+                                    Runnable onComplete) {
+
+        Callback<BeanError> onError = new Callback<BeanError>() {
+            @Override
+            public void onResult(BeanError error) {
+                returnError(error);
+            }
+        };
+
+        // Since TI OAD FW uploads access BLE characteristics directly, we need to delegate this
+        // to GattClient
+        gattClient.getOADProfile().programWithFirmware(bundle, onProgress, onComplete, onError);
     }
 
     /**
