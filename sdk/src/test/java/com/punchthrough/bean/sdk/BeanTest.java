@@ -5,7 +5,7 @@ import android.os.Handler;
 import android.content.Context;
 
 import com.punchthrough.bean.sdk.internal.ble.GattClient;
-import com.punchthrough.bean.sdk.internal.serial.GattSerialTransportProfile.Listener;
+import com.punchthrough.bean.sdk.internal.serial.GattSerialTransportProfile.SerialListener;
 import com.punchthrough.bean.sdk.internal.serial.GattSerialTransportProfile;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -18,7 +18,7 @@ import org.mockito.stubbing.Answer;
 
 public class BeanTest {
 
-    Listener testListener;
+    GattClient.ConnectionListener testListener;
 
     // Mocks
     Context mockContext;
@@ -46,10 +46,10 @@ public class BeanTest {
         doAnswer(new Answer() {
             public Object answer(InvocationOnMock invocation) {
                 Object[] args = invocation.getArguments();
-                testListener = (Listener) args[0];
+                testListener = (GattClient.ConnectionListener) args[0];
                 return null;
             }
-        }).when(mockGattSerialTransportProfile).setListener(any(Listener.class));
+        }).when(mockGattClient).setListener(any(GattClient.ConnectionListener.class));
 
         // Instantiate class under test
         bean = new Bean(mockDevice, mockGattClient, mockHandler);

@@ -28,7 +28,7 @@ public class GattSerialTransportProfileTest {
     // Mocks
     GattClient mockGattClient;
     Handler mockHandler;
-    GattSerialTransportProfile.Listener mockListener;
+    GattSerialTransportProfile.SerialListener mockListener;
 
     // Class under test
     GattSerialTransportProfile gstp;
@@ -37,7 +37,7 @@ public class GattSerialTransportProfileTest {
     public void setup() {
         mockGattClient = mock(GattClient.class);
         mockHandler = mock(Handler.class);
-        mockListener = mock(GattSerialTransportProfile.Listener.class);
+        mockListener = mock(GattSerialTransportProfile.SerialListener.class);
         gstp = new GattSerialTransportProfile(mockGattClient, mockHandler);
     }
 

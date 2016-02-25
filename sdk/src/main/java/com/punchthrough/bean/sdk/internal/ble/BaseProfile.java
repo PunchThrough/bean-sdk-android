@@ -15,7 +15,7 @@ public class BaseProfile {
         this.mGattClient = client;
     }
 
-    public void onServicesDiscovered(GattClient client) {
+    public void onProfileReady() {
     }
 
     public void onCharacteristicRead(GattClient client, BluetoothGattCharacteristic characteristic) {
@@ -36,12 +36,4 @@ public class BaseProfile {
     public void onReadRemoteRssi(GattClient client, int rssi) {
     }
 
-    public void onConnected() {
-    }
-
-    public void onDisconnected() {
-    }
-
-    public void onConnectionStateChange(int newState) {
-    }
 }

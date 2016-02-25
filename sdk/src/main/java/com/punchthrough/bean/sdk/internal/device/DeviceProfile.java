@@ -32,15 +32,8 @@ public class DeviceProfile extends BaseProfile {
     }
 
     @Override
-    public void onConnectionStateChange(int newState) {
-        if (newState == BluetoothGatt.STATE_CONNECTED) {
-            mGattClient.discoverServices();
-        }
-    }
-
-    @Override
-    public void onServicesDiscovered(GattClient client) {
-        List<BluetoothGattService> services = client.getServices();
+    public void onProfileReady() {
+        List<BluetoothGattService> services = mGattClient.getServices();
         for (BluetoothGattService service : services) {
             if ((service.getUuid().getMostSignificantBits() >> 32) == DEVICE_SERVICE_UUID) {
                 mDeviceService = service;

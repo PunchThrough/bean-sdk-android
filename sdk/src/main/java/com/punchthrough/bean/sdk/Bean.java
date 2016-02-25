@@ -293,7 +293,8 @@ public class Bean implements Parcelable {
     }
 
     private void init(final Handler handler) {
-        GattSerialTransportProfile.Listener listener = new GattSerialTransportProfile.Listener() {
+
+        GattClient.ConnectionListener connectionListener = new GattClient.ConnectionListener() {
             @Override
             public void onConnected() {
                 connected = true;
@@ -327,6 +328,9 @@ public class Bean implements Parcelable {
                     }
                 });
             }
+        };
+
+        GattSerialTransportProfile.SerialListener serialListener = new GattSerialTransportProfile.SerialListener() {
 
             @Override
             public void onMessageReceived(final byte[] data) {
@@ -347,8 +351,22 @@ public class Bean implements Parcelable {
                     }
                 });
             }
+
+            @Override
+            public void onError(String message) {
+                Log.e(TAG, message);
+
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        beanListener.onError(BeanError.GATT_SERIAL_TRANSPORT_ERROR);
+                    }
+                });
+            }
         };
-        gattClient.getSerialProfile().setListener(listener);
+
+        gattClient.setListener(connectionListener);
+        gattClient.getSerialProfile().setListener(serialListener);
     }
 
     /**

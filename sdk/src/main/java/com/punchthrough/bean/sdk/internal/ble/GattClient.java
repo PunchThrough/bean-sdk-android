@@ -38,6 +38,7 @@ public class GattClient {
 
     // Internal dependencies
     private BluetoothGatt mGatt;
+    private ConnectionListener connectionListener;
 
     // Internal state
     private Queue<Runnable> mOperationsQueue = new ArrayDeque<>(32);
@@ -69,15 +70,23 @@ public class GattClient {
     private final BluetoothGattCallback mBluetoothGattCallback = new BluetoothGattCallback() {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+
             if (status != BluetoothGatt.GATT_SUCCESS) {
-                fireConnectionStateChange(BluetoothGatt.STATE_DISCONNECTED);
-                disconnect();
+                connectionListener.onConnectionFailed();
                 return;
             }
+
             if (newState == BluetoothGatt.STATE_CONNECTED) {
                 mConnected = true;
+                discoverServices();
             }
-            fireConnectionStateChange(newState);
+
+            if (newState == BluetoothGatt.STATE_DISCONNECTED) {
+                mOperationsQueue.clear();
+                mOperationInProgress = false;
+                mConnected = false;
+                connectionListener.onDisconnected();
+            }
         }
 
         @Override
@@ -85,29 +94,32 @@ public class GattClient {
             mDiscoveringServices = false;
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 disconnect();
-                return;
+            } else {
+                for (BaseProfile profile : mProfiles) {
+                    profile.onProfileReady();
+                }
+                connectionListener.onConnected();
             }
-            fireServicesDiscovered();
         }
 
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 disconnect();
-                return;
+            } else {
+                fireCharacteristicsRead(characteristic);
+                executeNextOperation();
             }
-            fireCharacteristicsRead(characteristic);
-            executeNextOperation();
         }
 
         @Override
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 disconnect();
-                return;
+            } else {
+                fireCharacteristicWrite(characteristic);
+                executeNextOperation();
             }
-            fireCharacteristicWrite(characteristic);
-            executeNextOperation();
         }
 
         @Override
@@ -199,32 +211,13 @@ public class GattClient {
         }
     }
 
-    private void fireServicesDiscovered() {
-        for (BaseProfile profile : mProfiles) {
-            profile.onServicesDiscovered(this);
-        }
-    }
-
-    private synchronized void fireConnectionStateChange(int newState) {
-        if (newState == BluetoothGatt.STATE_DISCONNECTED) {
-            mOperationsQueue.clear();
-            mOperationInProgress = false;
-            mConnected = false;
-        } else if (newState == BluetoothGatt.STATE_CONNECTED) {
-            mConnected = true;
-        }
-
-        for (BaseProfile profile : mProfiles) {
-            profile.onConnectionStateChange(newState);
-        }
-    }
 
     /****************************************************************************
                                  PUBLIC API
      ****************************************************************************/
 
-    public void setListener() {
-        
+    public void setListener(ConnectionListener listener) {
+        this.connectionListener = listener;
     }
 
     public boolean isConnected() {
@@ -336,5 +329,15 @@ public class GattClient {
 
     public OADProfile getOADProfile() {
         return mOADProfile;
+    }
+
+    // This listener is only for communicating with the Bean class
+    public static interface ConnectionListener {
+        public void onConnected();
+
+        public void onConnectionFailed();
+
+        public void onDisconnected();
+
     }
 }
