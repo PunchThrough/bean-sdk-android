@@ -1,5 +1,7 @@
 package com.punchthrough.bean.sdk;
 
+import com.punchthrough.bean.sdk.internal.battery.BatteryProfile;
+import com.punchthrough.bean.sdk.message.BatteryLevel;
 import com.punchthrough.bean.sdk.message.ScratchBank;
 import com.punchthrough.bean.sdk.message.ScratchData;
 import com.punchthrough.bean.sdk.util.BeanTestCase;
@@ -8,6 +10,7 @@ import com.punchthrough.bean.sdk.message.Callback;
 import com.punchthrough.bean.sdk.message.DeviceInfo;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -103,6 +106,22 @@ public class TestBeanSimple extends BeanTestCase {
 
         // Always disconnect at end of test so that other tests will pass
         synchronousDisconnect(bean);
+    }
+
+    public void testBatteryProfile() throws Exception {
+        Bean bean = discoverBean("TESTBEAN");
+        synchronousConnect(bean);
+
+        final CountDownLatch tlatch = new CountDownLatch(1);
+        bean.readBatteryLevel(new Callback<BatteryLevel>() {
+            @Override
+            public void onResult(BatteryLevel result) {
+                assertThat(result.getPercentage()).isGreaterThan(0);
+                tlatch.countDown();
+            }
+        });
+
+        tlatch.await(20, TimeUnit.SECONDS);
     }
 
 }
