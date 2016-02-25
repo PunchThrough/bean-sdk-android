@@ -26,22 +26,39 @@ import okio.Buffer;
  * Custom BLE profile that allows serial communications
  */
 public class GattSerialTransportProfile extends BaseProfile {
-    public static final int PACKET_TX_MAX_PAYLOAD_LENGTH = 19;
+
     private static final String TAG = "GattSerialXportProfile";
+
+    // Constants
+    public static final int PACKET_TX_MAX_PAYLOAD_LENGTH = 19;
+
+    // UUIDs
     private static final UUID BEAN_SERIAL_CHARACTERISTIC_UUID = UUID.fromString("a495ff11-c5b1-4b44-b512-1370f02d74de");
     private static final UUID BEAN_SERIAL_SERVICE_UUID = UUID.fromString("a495ff10-c5b1-4b44-b512-1370f02d74de");
     private static final UUID BEAN_SCRATCH_SERVICE_UUID = UUID.fromString("a495ff20-c5b1-4b44-b512-1370f02d74de");
-
+    private static final UUID BEAN_SCRATCH_1_CHAR_UUID = UUID.fromString("a495ff21-c5b1-4b44-b512-1370f02d74de");
+    private static final UUID BEAN_SCRATCH_2_CHAR_UUID = UUID.fromString("a495ff22-c5b1-4b44-b512-1370f02d74de");
+    private static final UUID BEAN_SCRATCH_3_CHAR_UUID = UUID.fromString("a495ff23-c5b1-4b44-b512-1370f02d74de");
+    private static final UUID BEAN_SCRATCH_4_CHAR_UUID = UUID.fromString("a495ff24-c5b1-4b44-b512-1370f02d74de");
+    private static final UUID BEAN_SCRATCH_5_CHAR_UUID = UUID.fromString("a495ff25-c5b1-4b44-b512-1370f02d74de");
     private static final List<UUID> BEAN_SCRATCH_UUIDS = Arrays.asList(
-            UUID.fromString("a495ff21-c5b1-4b44-b512-1370f02d74de"),
-            UUID.fromString("a495ff22-c5b1-4b44-b512-1370f02d74de"),
-            UUID.fromString("a495ff23-c5b1-4b44-b512-1370f02d74de"),
-            UUID.fromString("a495ff24-c5b1-4b44-b512-1370f02d74de"),
-            UUID.fromString("a495ff25-c5b1-4b44-b512-1370f02d74de")
+            BEAN_SCRATCH_1_CHAR_UUID,
+            BEAN_SCRATCH_2_CHAR_UUID,
+            BEAN_SCRATCH_3_CHAR_UUID,
+            BEAN_SCRATCH_4_CHAR_UUID,
+            BEAN_SCRATCH_5_CHAR_UUID
     );
+
+    // Internal dependencies
     private Listener mListener;
     private BluetoothGattCharacteristic mSerialCharacteristic;
+    private Handler mHandler;
+    private MessageAssembler mMessageAssembler = new MessageAssembler();
+
+    // Internal state
     private boolean mReadyToSend = false;
+    private List<GattSerialPacket> mPendingPackets = new ArrayList<>(32);
+    private int mOutgoingMessageCount = 0;
 
     private final Runnable mDequeueRunnable = new Runnable() {
         @Override
@@ -57,10 +74,6 @@ public class GattSerialTransportProfile extends BaseProfile {
             }
         }
     };
-    private List<GattSerialPacket> mPendingPackets = new ArrayList<>(32);
-    private Handler mHandler;
-    private int mOutgoingMessageCount = 0;
-    private MessageAssembler mMessageAssembler = new MessageAssembler();
 
     public GattSerialTransportProfile(GattClient client) {
         super(client);
