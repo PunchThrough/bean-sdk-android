@@ -1,5 +1,6 @@
 package com.punchthrough.bean.sdk.util;
 
+import android.content.Context;
 import android.os.Looper;
 import android.test.AndroidTestCase;
 
@@ -11,8 +12,11 @@ import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.Callback;
 import com.punchthrough.bean.sdk.message.DeviceInfo;
 import com.punchthrough.bean.sdk.message.ScratchBank;
+import com.punchthrough.bean.sdk.message.SketchMetadata;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -189,6 +193,33 @@ public class BeanTestCase extends AndroidTestCase {
             throw new Exception("Couldn't get device info");
         }
         return deviceInfos.get(0);
+    }
+
+    protected SketchMetadata getSketchMetadata(Bean bean) throws Exception {
+        final CountDownLatch metadataLatch = new CountDownLatch(1);
+        final List<SketchMetadata> metadatas = new ArrayList<>();
+
+        bean.readSketchMetadata(new Callback<SketchMetadata>() {
+            @Override
+            public void onResult(SketchMetadata metadata) {
+                assertThat(metadata).isNotNull();
+                metadatas.add(metadata);
+                metadataLatch.countDown();
+            }
+        });
+
+        metadataLatch.await(20, TimeUnit.SECONDS);
+        if (metadatas.isEmpty()) {
+            throw new Exception("Couldn't get Sketch Meta Data");
+        }
+        return metadatas.get(0);
+    }
+
+    protected static List<String> filesInAssetDir(Context context, String dirName) throws IOException {
+
+        String[] filePathArray = context.getAssets().list(dirName);
+        return Arrays.asList(filePathArray);
+
     }
 
 }

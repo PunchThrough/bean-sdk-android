@@ -3,9 +3,20 @@ package com.punchthrough.bean.sdk;
 import android.test.suitebuilder.annotation.Suppress;
 
 import com.punchthrough.bean.sdk.message.BeanError;
+import com.punchthrough.bean.sdk.message.Callback;
+import com.punchthrough.bean.sdk.message.DeviceInfo;
 import com.punchthrough.bean.sdk.message.ScratchBank;
+import com.punchthrough.bean.sdk.message.SketchMetadata;
+import com.punchthrough.bean.sdk.message.UploadProgress;
+import com.punchthrough.bean.sdk.upload.FirmwareImage;
+import com.punchthrough.bean.sdk.upload.SketchHex;
 import com.punchthrough.bean.sdk.util.BeanTestCase;
 
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
+
+import java.io.InputStream;
+import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -32,6 +43,57 @@ public class TestBeanAdvanced extends BeanTestCase {
     private void triggerBeanSerialMessage(Bean bean) {
         byte[] msg = {START_FRAME, 0x00};
         bean.sendSerialMessage(msg);
+    }
+
+    @Suppress
+    public void testBeanSketchUpload() throws Exception {
+        final Bean bean = discoverBean("TESTBEAN");
+        synchronousConnect(bean);
+        String hwVersion = getDeviceInformation(bean).hardwareVersion();
+
+        String hexPath = null;
+        for (String filename : filesInAssetDir(getContext(), "bean_fw_advanced_callbacks")) {
+            if (FilenameUtils.getExtension(filename).equals("hex")) {
+                String[] pieces = FilenameUtils.getBaseName(filename).split("_");
+                String hexHW = pieces[pieces.length - 1];
+                if (hexHW.equals(hwVersion)) {
+                    hexPath = FilenameUtils.concat("bean_fw_advanced_callbacks", filename);
+                    break;
+                }
+            }
+        }
+
+        assertThat(hexPath).isNotNull();
+        InputStream imageStream  = getContext().getAssets().open(hexPath);
+        StringWriter writer = new StringWriter();
+        IOUtils.copy(imageStream, writer);
+
+        String timestamp = Long.toString(System.currentTimeMillis() / 1000);
+        SketchHex sketchHex = SketchHex.create(timestamp, writer.toString());
+
+        final CountDownLatch sketchLatch = new CountDownLatch(1);
+        Callback<UploadProgress> onProgress = new Callback<UploadProgress>() {
+            @Override
+            public void onResult(UploadProgress result) {
+                System.out.println("On Result: " + result);
+            }
+        };
+
+        Runnable onComplete = new Runnable() {
+            @Override
+            public void run() {
+                System.out.println("all done!");
+                sketchLatch.countDown();
+            }
+        };
+
+        bean.programWithSketch(sketchHex, onProgress, onComplete);
+        sketchLatch.await(120, TimeUnit.SECONDS);
+
+        SketchMetadata metadata = getSketchMetadata(bean);
+        if (!metadata.hexName().equals(timestamp)) {
+            fail(String.format("Unexpected Sketch name: %s != %s", metadata.hexName(), timestamp));
+        }
     }
 
     @Suppress
