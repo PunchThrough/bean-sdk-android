@@ -216,6 +216,11 @@ public class GattSerialTransportProfile extends BaseProfile {
         mHandler.post(mDequeueRunnable);
     }
 
+    /**
+     * Sets a listener that will be alerted for serial and scratch events
+     *
+     * @param listener SerialListener object
+     */
     public void setListener(SerialListener listener) {
         this.mListener = listener;
     }

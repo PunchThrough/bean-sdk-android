@@ -216,6 +216,11 @@ public class GattClient {
                                  PUBLIC API
      ****************************************************************************/
 
+    /**
+     * Sets a listener that will be alerted on connection related events
+     *
+     * @param listener ConnectionListener object
+     */
     public void setListener(ConnectionListener listener) {
         this.connectionListener = listener;
     }
