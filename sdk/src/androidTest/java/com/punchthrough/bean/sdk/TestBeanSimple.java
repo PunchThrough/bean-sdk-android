@@ -28,10 +28,10 @@ public class TestBeanSimple extends BeanTestCase {
     public void setUp() {
         super.setUp();
         try {
-            bean = discoverBean("TESTBEAN");
+            bean = discoverBean(beanName);
             synchronousConnect(bean);
         } catch(Exception e) {
-            fail("Error connecting to TESTBEAN bean in setup.");
+            fail("Error connecting to "+beanName+" bean in setup.");
         }
     }
 
@@ -131,8 +131,6 @@ public class TestBeanSimple extends BeanTestCase {
                 tlatch.countDown();
             }
         });
-
         tlatch.await(20, TimeUnit.SECONDS);
     }
-
 }

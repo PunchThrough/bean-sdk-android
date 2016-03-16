@@ -25,6 +25,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class BeanTestCase extends AndroidTestCase {
 
+    public final String beanName = "TESTBEAN";
+
     private LooperRunner lr = new LooperRunner(BeanManager.getInstance().getHandler().getLooper());
 
     private final CountDownLatch connectLatch = new CountDownLatch(1);

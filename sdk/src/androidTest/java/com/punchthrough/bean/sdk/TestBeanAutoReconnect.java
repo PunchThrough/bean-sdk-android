@@ -64,7 +64,7 @@ public class TestBeanAutoReconnect extends BeanTestCase {
     public void testBeanAutoReconnect() throws Exception {
 
         // Scan for and retrieve a Bean without connecting to it
-        Bean bean = discoverBean("TESTBEAN");
+        Bean bean = discoverBean(beanName);
 
         // Set it to auto reconnect
         bean.setAutoReconnect(true);
@@ -87,7 +87,7 @@ public class TestBeanAutoReconnect extends BeanTestCase {
         assertThat(bean.isConnected()).isFalse();
 
         // Scan for and retrieve our test bean, without connecting to it explicitly
-        discoverBean("TESTBEAN");
+        discoverBean(beanName);
 
         // It should be connected WITHOUT calling .connect() again!
         waitForReconnect();

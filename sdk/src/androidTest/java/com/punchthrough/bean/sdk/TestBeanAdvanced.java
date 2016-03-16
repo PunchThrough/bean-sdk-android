@@ -113,7 +113,7 @@ public class TestBeanAdvanced extends BeanTestCase {
          * Sketch needed can be found in sdk/src/androidTest/assets/bean_fw_advanced_callbacks.
          */
 
-        final Bean bean = discoverBean("TESTBEAN");
+        final Bean bean = discoverBean(beanName);
 
         // TODO: The latch should have a value of 4 when all callbacks are operational
         final CountDownLatch testCompletionLatch = new CountDownLatch(3);
