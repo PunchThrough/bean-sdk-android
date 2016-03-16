@@ -109,7 +109,7 @@ public class TestBeanAdvanced extends BeanTestCase {
          *  - onConnectionFailed
          *  - onError
          *
-         * Note: This test requires a Bean named TESTBEAN with a particular sketch loaded. The
+         * Note: This test requires a Bean with a particular sketch loaded. The
          * Sketch needed can be found in sdk/src/androidTest/assets/bean_fw_advanced_callbacks.
          */
 

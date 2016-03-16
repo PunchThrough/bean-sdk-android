@@ -20,7 +20,7 @@ These tests are designed to run on an Android device or emulator. You can build,
 ./gradlew connectedAndroidTest --continue
 ```
 
-__Note:__ Requires bean nearby called `TESTBEAN`
+__Note:__ These tests require a nearby Bean
 
 And then take a peek at the results:
 

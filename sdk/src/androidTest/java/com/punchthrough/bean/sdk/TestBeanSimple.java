@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Integration tests for the Bean.
  *
  * Prerequisites:
- * - Bean within range named TESTBEAN
+ * - Bean within range
  * - Android device connected over USB
  */
 public class TestBeanSimple extends BeanTestCase {
@@ -64,7 +64,7 @@ public class TestBeanSimple extends BeanTestCase {
     public void testBeanDeviceInfo() throws Exception {
         /** Read device information from a bean
          *
-         * Warning: This test requires a nearby bean named "TESTBEAN"
+         * Warning: This test requires a nearby Bean
          */
 
         DeviceInfo info = getDeviceInformation(bean);
@@ -83,7 +83,7 @@ public class TestBeanSimple extends BeanTestCase {
     public void testBeanReadWriteScratchBank() throws Exception {
         /** Test Scratch characteristic functionality
          *
-         * Warning: This test requires a nearby bean named "TESTBEAN"
+         * Warning: This test requires a nearby Bean
          */
 
         // write to BANK_1 and BANK_5
