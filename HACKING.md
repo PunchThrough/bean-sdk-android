@@ -17,7 +17,7 @@ Unit tests can be run on your development PC and __do not__ require an Android d
 These tests are designed to run on an Android device or emulator. You can build, install and execute the Android integration tests with Gradle.
 
 ```sh
-./gradlew connectedAndroidTest --continue
+./gradlew connectedAndroidTest -i
 ```
 
 __Note:__ These tests require a nearby Bean
