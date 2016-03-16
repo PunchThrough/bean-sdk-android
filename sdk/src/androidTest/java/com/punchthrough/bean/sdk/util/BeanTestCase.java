@@ -152,7 +152,7 @@ public class BeanTestCase extends AndroidTestCase {
         BeanDiscoveryListener listener = new BeanDiscoveryListener() {
             @Override
             public void onBeanDiscovered(Bean bean, int rssi) {
-                if (bean.getDevice().getName().equals(targetName)) {
+                if (bean.getDevice().getName() != null && bean.getDevice().getName().equals(targetName)) {
                     System.out.println("[BeanUtils] Found Bean by name: " + targetName);
                     beans.add(bean);
                     beanLatch.countDown();
