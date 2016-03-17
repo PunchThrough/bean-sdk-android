@@ -31,7 +31,7 @@ public class TestBeanSimple extends BeanTestCase {
             bean = discoverBean(beanName);
             synchronousConnect(bean);
         } catch(Exception e) {
-            fail("Error connecting to "+beanName+" bean in setup.");
+            fail("Error connecting to " + beanName + " bean in setup.");
         }
     }
 
@@ -66,7 +66,6 @@ public class TestBeanSimple extends BeanTestCase {
          *
          * Warning: This test requires a nearby Bean
          */
-
         DeviceInfo info = getDeviceInformation(bean);
 
         if (!validHardwareVersion(info.hardwareVersion())) {

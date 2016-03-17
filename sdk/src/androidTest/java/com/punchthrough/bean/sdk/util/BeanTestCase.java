@@ -8,6 +8,7 @@ import com.punchthrough.bean.sdk.Bean;
 import com.punchthrough.bean.sdk.BeanDiscoveryListener;
 import com.punchthrough.bean.sdk.BeanListener;
 import com.punchthrough.bean.sdk.BeanManager;
+import com.punchthrough.bean.sdk.BuildConfig;
 import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.Callback;
 import com.punchthrough.bean.sdk.message.DeviceInfo;
@@ -25,7 +26,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class BeanTestCase extends AndroidTestCase {
 
-    public final String beanName = "TESTBEAN";
+    public final String beanName = BuildConfig.BEAN_NAME; // there is a beanName gradle property, so
+                                                          // set with -PbeanName=\"TESTBEAN\"
 
     private LooperRunner lr = new LooperRunner(BeanManager.getInstance().getHandler().getLooper());
 
