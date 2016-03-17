@@ -5,6 +5,7 @@ import android.test.suitebuilder.annotation.Suppress;
 import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.Callback;
 import com.punchthrough.bean.sdk.message.DeviceInfo;
+import com.punchthrough.bean.sdk.message.LedColor;
 import com.punchthrough.bean.sdk.message.ScratchBank;
 import com.punchthrough.bean.sdk.message.SketchMetadata;
 import com.punchthrough.bean.sdk.message.UploadProgress;
@@ -232,6 +233,24 @@ public class TestBeanAdvanced extends BeanTestCase {
         beanB.connect(getContext(), beanListener);
         connectionLatch.await(60, TimeUnit.SECONDS);
         // No need to assert anything, implicit success based on connection latch
+    }
+
+    @Suppress
+    public void testFastSerialMessages() throws Exception {
+        int times = 100;
+        final CountDownLatch testCompletionLatch = new CountDownLatch(times);
+        Bean bean = discoverBean(beanName);
+        synchronousConnect(bean);
+        for (int i = 0; i < times; i ++) {
+            bean.readLed(new Callback<LedColor>() {
+                @Override
+                public void onResult(LedColor result) {
+                    testCompletionLatch.countDown();
+                }
+            });
+        }
+        testCompletionLatch.await(120, TimeUnit.SECONDS);
+        synchronousDisconnect(bean);
     }
 
 }
