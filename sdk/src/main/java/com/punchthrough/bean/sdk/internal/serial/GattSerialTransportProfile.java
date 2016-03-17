@@ -60,8 +60,9 @@ public class GattSerialTransportProfile extends BaseProfile {
                     GattSerialPacket packet = mPendingPackets.remove(0);
                     mSerialCharacteristic.setValue(packet.getPacketData());
                     mGattClient.writeCharacteristic(mSerialCharacteristic);
+                } else {
+                    mHandler.postDelayed(this, 150);
                 }
-                mHandler.postDelayed(this, 150);
             }
         }
     };
@@ -85,10 +86,8 @@ public class GattSerialTransportProfile extends BaseProfile {
             Log.w(TAG, "Did not find bean serial on device");
             abort("Did not find bean serial on device");
         } else {
-            if (BuildConfig.DEBUG) {
-                Log.i(TAG, "Connected");
-            }
 
+            // Enable Notifications for Serial chars
             mGattClient.setCharacteristicNotification(mSerialCharacteristic, true);
             for (BluetoothGattDescriptor descriptor : mSerialCharacteristic.getDescriptors()) {
                 if ((descriptor.getUuid().getMostSignificantBits() >> 32) == 0x2902) {
@@ -98,6 +97,8 @@ public class GattSerialTransportProfile extends BaseProfile {
             }
 
             service = mGattClient.getService(Constants.BEAN_SCRATCH_SERVICE_UUID);
+
+            boolean hasScratchChars = true;
 
             for (BluetoothGattCharacteristic characteristic : service.getCharacteristics()) {
                 if (characteristic.getDescriptors().size() < 2) {
@@ -112,19 +113,29 @@ public class GattSerialTransportProfile extends BaseProfile {
                      * To fix this problem, update these Beans to the latest firmware before
                      * use.
                      */
-                    return;
+                    hasScratchChars = false;
                 }
             }
 
-            for (BluetoothGattCharacteristic characteristic : service.getCharacteristics()) {
-                mGattClient.setCharacteristicNotification(characteristic, true);
-                for (BluetoothGattDescriptor descriptor : characteristic.getDescriptors()) {
-                    if ((descriptor.getUuid().getMostSignificantBits() >> 32) == 0x2902) {
+            if (hasScratchChars) {
+                // Enable Notifications for Scratch chars
+                for (BluetoothGattCharacteristic characteristic : service.getCharacteristics()) {
+                    mGattClient.setCharacteristicNotification(characteristic, true);
+                    for (BluetoothGattDescriptor descriptor : characteristic.getDescriptors()) {
+                        if ((descriptor.getUuid().getMostSignificantBits() >> 32) == 0x2902) {
 
-                        descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                        mGattClient.writeDescriptor(descriptor);
+                            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                            mGattClient.writeDescriptor(descriptor);
+                        }
                     }
                 }
+            }
+
+            mMessageAssembler.reset();
+            mReadyToSend = true;
+            mOutgoingMessageCount = 0;
+            if (BuildConfig.DEBUG) {
+                Log.i(TAG, "Setup complete");
             }
         }
     }
@@ -171,26 +182,6 @@ public class GattSerialTransportProfile extends BaseProfile {
                     }
                 } else {
                     client.disconnect();
-                }
-            }
-        }
-    }
-
-    @Override
-    public void onDescriptorWrite(GattClient client, BluetoothGattDescriptor descriptor) {
-        if (Arrays.equals(descriptor.getValue(), BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)) {
-            if (descriptor.getCharacteristic() == mSerialCharacteristic) {
-                mMessageAssembler.reset();
-                mReadyToSend = true;
-                mOutgoingMessageCount = 0;
-
-                if (BuildConfig.DEBUG) {
-                    Log.i(TAG, "Setup complete");
-                }
-
-                if (mListener == null) {
-                    Log.e(TAG, "No listener, this must be a stale connection");
-                    abort("No listener, this must be a stale connection");
                 }
             }
         }
