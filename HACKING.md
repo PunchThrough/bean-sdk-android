@@ -14,13 +14,11 @@ Unit tests can be run on your development PC and __do not__ require an Android d
 
 ## Instrumentation Tests
 
-These tests are designed to run on an Android device or emulator. You can build, install and execute the Android integration tests with Gradle.
+These tests are designed to run on an Android device or emulator. You can build, install and execute the Android integration tests with Gradle.  You need a nearby Bean that the Android device can connect to.  The name is a Gradle property, so it can be set in a .properties file, command-line argument, or an environment variable.  For example:
 
 ```sh
-./gradlew connectedAndroidTest --continue
+./gradlew -PbeanName=\"TESTBEAN\" connectedAndroidTest -i
 ```
-
-__Note:__ Requires bean nearby called `TESTBEAN`
 
 And then take a peek at the results:
 

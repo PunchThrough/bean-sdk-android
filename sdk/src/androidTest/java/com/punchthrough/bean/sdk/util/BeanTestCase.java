@@ -8,6 +8,7 @@ import com.punchthrough.bean.sdk.Bean;
 import com.punchthrough.bean.sdk.BeanDiscoveryListener;
 import com.punchthrough.bean.sdk.BeanListener;
 import com.punchthrough.bean.sdk.BeanManager;
+import com.punchthrough.bean.sdk.BuildConfig;
 import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.Callback;
 import com.punchthrough.bean.sdk.message.DeviceInfo;
@@ -24,6 +25,9 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class BeanTestCase extends AndroidTestCase {
+
+    public final String beanName = BuildConfig.BEAN_NAME; // there is a beanName gradle property, so
+                                                          // set with -PbeanName=\"TESTBEAN\"
 
     private LooperRunner lr = new LooperRunner(BeanManager.getInstance().getHandler().getLooper());
 
@@ -152,7 +156,7 @@ public class BeanTestCase extends AndroidTestCase {
         BeanDiscoveryListener listener = new BeanDiscoveryListener() {
             @Override
             public void onBeanDiscovered(Bean bean, int rssi) {
-                if (bean.getDevice().getName().equals(targetName)) {
+                if (bean.getDevice().getName() != null && bean.getDevice().getName().equals(targetName)) {
                     System.out.println("[BeanUtils] Found Bean by name: " + targetName);
                     beans.add(bean);
                     beanLatch.countDown();

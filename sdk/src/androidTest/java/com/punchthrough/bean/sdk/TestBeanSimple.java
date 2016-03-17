@@ -18,10 +18,31 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Integration tests for the Bean.
  *
  * Prerequisites:
- * - Bean within range named TESTBEAN
+ * - Bean within range
  * - Android device connected over USB
  */
 public class TestBeanSimple extends BeanTestCase {
+
+    Bean bean;
+
+    public void setUp() {
+        super.setUp();
+        try {
+            bean = discoverBean(beanName);
+            synchronousConnect(bean);
+        } catch(Exception e) {
+            fail("Error connecting to " + beanName + " bean in setup.");
+        }
+    }
+
+    public void tearDown() {
+        try {
+            super.tearDown();
+            synchronousDisconnect(bean);
+        } catch(Exception e) {
+            fail("Error disconnecting.  This may affect later tests.");
+        }
+    }
 
     private boolean validHardwareVersion(String version) {
         return (
@@ -39,14 +60,12 @@ public class TestBeanSimple extends BeanTestCase {
         return version.length() > 0;
     }
 
+
     public void testBeanDeviceInfo() throws Exception {
         /** Read device information from a bean
          *
-         * Warning: This test requires a nearby bean named "TESTBEAN"
+         * Warning: This test requires a nearby Bean
          */
-
-        Bean bean = discoverBean("TESTBEAN");
-        synchronousConnect(bean);
         DeviceInfo info = getDeviceInformation(bean);
 
         if (!validHardwareVersion(info.hardwareVersion())) {
@@ -58,17 +77,13 @@ public class TestBeanSimple extends BeanTestCase {
         if (!validSoftwareVersion(info.softwareVersion())) {
             fail("Unexpected SW version: " + info.softwareVersion());
         }
-
-        synchronousDisconnect(bean);
     }
 
     public void testBeanReadWriteScratchBank() throws Exception {
         /** Test Scratch characteristic functionality
          *
-         * Warning: This test requires a nearby bean named "TESTBEAN"
+         * Warning: This test requires a nearby Bean
          */
-        Bean bean = discoverBean("TESTBEAN");
-        synchronousConnect(bean);
 
         // write to BANK_1 and BANK_5
         bean.setScratchData(ScratchBank.BANK_1, new byte[]{11, 12, 13});
@@ -103,14 +118,9 @@ public class TestBeanSimple extends BeanTestCase {
         });
 
         scratch5Latch.await();
-
-        // Always disconnect at end of test so that other tests will pass
-        synchronousDisconnect(bean);
     }
 
     public void testBatteryProfile() throws Exception {
-        Bean bean = discoverBean("TESTBEAN");
-        synchronousConnect(bean);
 
         final CountDownLatch tlatch = new CountDownLatch(1);
         bean.readBatteryLevel(new Callback<BatteryLevel>() {
@@ -120,8 +130,6 @@ public class TestBeanSimple extends BeanTestCase {
                 tlatch.countDown();
             }
         });
-
         tlatch.await(20, TimeUnit.SECONDS);
     }
-
 }
