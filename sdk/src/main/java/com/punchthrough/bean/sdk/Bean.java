@@ -276,7 +276,7 @@ public class Bean implements Parcelable {
 
     public Bean(BluetoothDevice device) {
         this.device = device;
-        gattClient = new GattClient();
+        this.gattClient = new GattClient();
         init(new Handler(Looper.getMainLooper()));
     }
 

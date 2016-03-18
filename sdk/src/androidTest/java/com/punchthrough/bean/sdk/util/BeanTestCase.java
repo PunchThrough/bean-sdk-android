@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class BeanTestCase extends AndroidTestCase {
 
+    public Bean testBean;
     public final String beanName = BuildConfig.BEAN_NAME; // there is a beanName gradle property, so
                                                           // set with -PbeanName=\"TESTBEAN\"
 
@@ -51,6 +52,26 @@ public class BeanTestCase extends AndroidTestCase {
 
     protected void setUp() {
         lr.start();
+    }
+
+    protected void tearDown() {}
+
+    protected void setUpTestBean() {
+        try {
+            testBean = discoverBean(beanName);
+            synchronousConnect(testBean);
+        } catch(Exception e) {
+            fail("Error connecting to " + beanName + " bean in setup.");
+        }
+    }
+
+    protected void tearDownTestBean() {
+        try {
+            super.tearDown();
+            synchronousDisconnect(testBean);
+        } catch(Exception e) {
+            fail("Error disconnecting.  This may affect later tests.");
+        }
     }
 
     private final BeanListener beanConnectionListener = new BeanListener() {

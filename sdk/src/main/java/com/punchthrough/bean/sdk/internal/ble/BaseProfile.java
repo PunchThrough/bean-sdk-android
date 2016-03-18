@@ -15,25 +15,22 @@ public class BaseProfile {
         this.mGattClient = client;
     }
 
-    public void onProfileReady() {
-    }
+    public void onProfileReady() {}
 
-    public void onCharacteristicRead(GattClient client, BluetoothGattCharacteristic characteristic) {
-    }
+    public void onBeanConnected() {}
 
-    public void onCharacteristicWrite(GattClient client, BluetoothGattCharacteristic characteristic) {
-    }
+    public void onBeanDisconnected() {}
 
-    public void onCharacteristicChanged(GattClient client, BluetoothGattCharacteristic characteristic) {
-    }
+    public void onCharacteristicRead(GattClient client, BluetoothGattCharacteristic characteristic) {}
 
-    public void onDescriptorRead(GattClient client, BluetoothGattDescriptor descriptor) {
-    }
+    public void onCharacteristicWrite(GattClient client, BluetoothGattCharacteristic characteristic) {}
 
-    public void onDescriptorWrite(GattClient client, BluetoothGattDescriptor descriptor) {
-    }
+    public void onCharacteristicChanged(GattClient client, BluetoothGattCharacteristic characteristic) {}
 
-    public void onReadRemoteRssi(GattClient client, int rssi) {
-    }
+    public void onDescriptorRead(GattClient client, BluetoothGattDescriptor descriptor) {}
+
+    public void onDescriptorWrite(GattClient client, BluetoothGattDescriptor descriptor) {}
+
+    public void onReadRemoteRssi(GattClient client, int rssi) {}
 
 }
