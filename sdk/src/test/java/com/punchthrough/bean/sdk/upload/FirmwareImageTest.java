@@ -55,7 +55,7 @@ public class FirmwareImageTest {
     public void testParsingValidImage() throws ImageParsingException {
         FirmwareImage image = new FirmwareImage(rawImageData_valid, "");
         assertThat(image.crc()).isEqualTo(25899);
-        assertThat(image.version()).isEqualTo(100);
+        assertThat(image.intVersion()).isEqualTo(100);
         assertThat(image.length()).isEqualTo(31744);
         assertThat(image.uniqueID()).isEqualTo(intArrayToByteArray(new int[] {0x41, 0x41, 0x41, 0x41}));
     }
@@ -132,5 +132,12 @@ public class FirmwareImageTest {
         } catch (Exception e) {
             assertThat(e).isNotNull();
         }
+    }
+
+    @Test
+    public void testFirmwareNameAndVersion() throws ImageParsingException {
+        FirmwareImage image = new FirmwareImage(rawImageData_valid, "123450000_a_testName.bin");
+        assertThat(image.version()).isEqualTo("12345");
+        assertThat(image.name()).isEqualTo("testName");
     }
 }
