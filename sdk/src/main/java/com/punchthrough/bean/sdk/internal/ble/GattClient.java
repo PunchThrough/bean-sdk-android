@@ -68,6 +68,7 @@ public class GattClient {
     }
 
     private final BluetoothGattCallback mBluetoothGattCallback = new BluetoothGattCallback() {
+
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
 
@@ -78,6 +79,9 @@ public class GattClient {
 
             if (newState == BluetoothGatt.STATE_CONNECTED) {
                 mConnected = true;
+
+                // Bean is connected, before alerting the ConnectionListener(s), we must
+                // discover available services (lookup GATT table).
                 discoverServices();
             }
 
@@ -86,18 +90,28 @@ public class GattClient {
                 mOperationInProgress = false;
                 mConnected = false;
                 connectionListener.onDisconnected();
+                for (BaseProfile profile : mProfiles) {
+                    profile.onBeanDisconnected();
+                }
             }
         }
 
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+
             mDiscoveringServices = false;
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 disconnect();
             } else {
+
+                // Tell each profile that they are ready and to do any other further configuration
+                // that may be necessary such as looking up available characteristics.
                 for (BaseProfile profile : mProfiles) {
                     profile.onProfileReady();
+                    profile.onBeanConnected();
                 }
+
+                // Alert ConnectionListener(s) and profiles that the Bean is ready (connected)
                 connectionListener.onConnected();
             }
         }
@@ -211,9 +225,8 @@ public class GattClient {
         }
     }
 
-
     /****************************************************************************
-                                 PUBLIC API
+                                  PUBLIC API
      ****************************************************************************/
 
     /**
