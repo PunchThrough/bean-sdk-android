@@ -30,7 +30,7 @@ public class TestBeanFirmwareUpdate extends BeanTestCase {
 
     public void testFirmwareUpdate() throws Exception {
 
-        final String FIRMWARE_IMAGES_LOCATION = "firmware_bundles/asymmetrical";
+        final String FIRMWARE_IMAGES_LOCATION = "firmware_bundles/asymmetrical/bean";
 
         List<FirmwareImage> fwImages = new ArrayList<>();
         for (String imageFileName : filesInAssetDir(getContext(), FIRMWARE_IMAGES_LOCATION)) {
