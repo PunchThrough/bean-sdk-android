@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 
 import com.punchthrough.bean.sdk.internal.ble.GattClient;
+import com.punchthrough.bean.sdk.internal.device.DeviceProfile;
 import com.punchthrough.bean.sdk.internal.exception.ImageParsingException;
 import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.Callback;
@@ -14,6 +15,8 @@ import com.punchthrough.bean.sdk.upload.FirmwareImage;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +25,8 @@ import java.util.UUID;
 import static com.punchthrough.bean.sdk.internal.utility.Convert.intArrayToByteArray;
 import static junit.framework.TestCase.fail;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -50,6 +55,10 @@ public class OADProfileTest {
             0xFF, 0xFF, 0xFF, 0xFF     // Reserved
     });
 
+    // Test state
+    DeviceProfile.DeviceInfoCallback testDeviceInfoCallback;
+    List<BeanError> testErrors = new ArrayList<>();
+
     // Mocks
     GattClient mockGattClient;
     BluetoothGattService mockOADService;
@@ -58,6 +67,7 @@ public class OADProfileTest {
     BluetoothGattDescriptor mockOADIdentifyDescriptor;
     BluetoothGattDescriptor mockOADBlockDescriptor;
     List<BluetoothGattService> services = new ArrayList<>();
+    DeviceProfile mockDeviceProfile;
 
     // Class under test
     OADProfile oadProfile;
@@ -72,6 +82,7 @@ public class OADProfileTest {
         mockOADBlock = mock(BluetoothGattCharacteristic.class);
         mockOADIdentifyDescriptor = mock(BluetoothGattDescriptor.class);
         mockOADBlockDescriptor = mock(BluetoothGattDescriptor.class);
+        mockDeviceProfile = mock(DeviceProfile.class);
 
         // Instantiate class under test
         oadProfile = new OADProfile(mockGattClient);
@@ -82,53 +93,64 @@ public class OADProfileTest {
         when(mockGattClient.getService(SERVICE_OAD)).thenReturn(mockOADService);
         when(mockGattClient.setCharacteristicNotification(mockOADIdentify, true)).thenReturn(true);
         when(mockGattClient.setCharacteristicNotification(mockOADBlock, true)).thenReturn(true);
+        when(mockGattClient.getDeviceProfile()).thenReturn(mockDeviceProfile);
         when(mockOADService.getCharacteristic(CHAR_OAD_IDENTIFY)).thenReturn(mockOADIdentify);
         when(mockOADService.getCharacteristic(CHAR_OAD_BLOCK)).thenReturn(mockOADBlock);
         when(mockOADIdentify.getDescriptor(CLIENT_CHAR_CONFIG)).thenReturn(mockOADIdentifyDescriptor);
         when(mockOADBlock.getDescriptor(CLIENT_CHAR_CONFIG)).thenReturn(mockOADBlockDescriptor);
+
+        // Grab the instance of DeviceInfoCallback so we can use it directly
+        doAnswer(new Answer() {
+            public Object answer(InvocationOnMock invocation) {
+                Object[] args = invocation.getArguments();
+                testDeviceInfoCallback = (DeviceProfile.DeviceInfoCallback) args[0];
+                return null;
+            }
+        }).when(mockDeviceProfile).getDeviceInfo(any(DeviceProfile.DeviceInfoCallback.class));
     }
+
+    private FirmwareBundle buildBundle() throws ImageParsingException {
+        FirmwareImage imageA = new FirmwareImage(rawImageA, "12345_imageA.bin");
+        FirmwareImage imageB = new FirmwareImage(rawImageB, "12345_imageB.bin");
+        List<FirmwareImage> images = new ArrayList<>();
+        images.add(imageA);
+        images.add(imageB);
+        return new FirmwareBundle(images);
+    }
+
+    private Callback<UploadProgress> onProgress = new Callback<UploadProgress>() {
+        @Override
+        public void onResult(UploadProgress result) {
+
+        }
+    };
+
+    private Runnable onComplete = new Runnable() {
+        @Override
+        public void run() {
+
+        }
+    };
+
+    private Callback<BeanError> onError = new Callback<BeanError>() {
+        @Override
+        public void onResult(BeanError result) {
+            testErrors.add(result);
+        }
+    };
 
     @Test
     public void testProgramWithFirmware() throws ImageParsingException {
 
-        final List<BeanError> errors = new ArrayList<>();
+        // Build a firmware bundle
+        FirmwareBundle bundle = buildBundle();
 
-        FirmwareImage imageA = new FirmwareImage(rawImageA, "");
-        FirmwareImage imageB = new FirmwareImage(rawImageB, "");
-        List<FirmwareImage> images = new ArrayList<>();
-        images.add(imageA);
-        images.add(imageB);
-        FirmwareBundle bundle = new FirmwareBundle(images);
-
-        Callback<UploadProgress> onProgress = new Callback<UploadProgress>() {
-            @Override
-            public void onResult(UploadProgress result) {
-
-            }
-        };
-
-        Runnable onComplete = new Runnable() {
-            @Override
-            public void run() {
-
-            }
-        };
-
-        Callback<BeanError> onError = new Callback<BeanError>() {
-            @Override
-            public void onResult(BeanError result) {
-                errors.add(result);
-            }
-        };
-
+        // Start test
         oadProfile.programWithFirmware(bundle, onProgress, onComplete, onError);
 
-        for (BeanError e : errors) {
+        // Assert no errors
+        for (BeanError e : testErrors) {
             fail(e.toString());
         }
-
-        assertThat(oadProfile.getState()).isEqualTo(FirmwareUploadState.AWAIT_CURRENT_HEADER);
-
     }
-
 }

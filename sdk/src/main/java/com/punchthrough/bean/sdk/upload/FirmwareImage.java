@@ -1,14 +1,14 @@
 package com.punchthrough.bean.sdk.upload;
 
 import com.punchthrough.bean.sdk.internal.exception.ImageParsingException;
-import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareMetadata;
 import com.punchthrough.bean.sdk.internal.utility.Chunk;
 import com.punchthrough.bean.sdk.internal.utility.Constants;
-import com.punchthrough.bean.sdk.internal.utility.Convert;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 
+import static com.punchthrough.bean.sdk.internal.utility.Convert.intToTwoBytes;
 import static com.punchthrough.bean.sdk.internal.utility.Convert.twoBytesToInt;
 
 /**
@@ -62,8 +62,8 @@ public class FirmwareImage implements Chunk.Chunkable {
         return filenameParts[this.filenameParts.length - 1].replace(".bin", "");
     }
 
-    public String version() {
-        return filenameParts[0].replace("0000", "");
+    public long version() {
+        return Long.parseLong(filenameParts[0]);
     }
 
     @Override
@@ -119,8 +119,13 @@ public class FirmwareImage implements Chunk.Chunkable {
         return uint8_4FromData(12);
     }
 
-    public FirmwareMetadata metadata() {
-        return new FirmwareMetadata(intVersion(), length(), uniqueID());
+    public byte[] metadata() {
+        ByteBuffer buffer = ByteBuffer.allocate(12);
+        buffer.put(intToTwoBytes(intVersion(), Constants.CC2540_BYTE_ORDER));
+        buffer.put(intToTwoBytes(length(), Constants.CC2540_BYTE_ORDER));
+        buffer.put(uniqueID());
+        buffer.put(reserved());
+        return buffer.array();
     }
 
     /**
@@ -140,7 +145,7 @@ public class FirmwareImage implements Chunk.Chunkable {
     public byte[] block(int index) {
         byte[] theBlock = new byte[FW_BLOCK_SIZE + 2];
 
-        byte[] rawIndex = Convert.intToTwoBytes(index, Constants.CC2540_BYTE_ORDER);
+        byte[] rawIndex = intToTwoBytes(index, Constants.CC2540_BYTE_ORDER);
         System.arraycopy(rawIndex, 0, theBlock, 0, 2);
 
         int blockStart = index * FW_BLOCK_SIZE;

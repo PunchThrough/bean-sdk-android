@@ -35,7 +35,7 @@ public class FirmwareBundleTest {
     public void testFirmwareBundleVersion() throws ImageParsingException {
         images.add(imageA);
         bundle = new FirmwareBundle(images);
-        assertThat(bundle.version()).isEqualTo("12345");
+        assertThat(bundle.version()).isEqualTo(123450000);
     }
 
     @Test

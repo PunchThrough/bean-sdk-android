@@ -1,5 +1,6 @@
 package com.punchthrough.bean.sdk.upload;
 
+import java.math.BigInteger;
 import java.util.List;
 
 
@@ -17,7 +18,7 @@ public class FirmwareBundle {
         this.imageCounter = 0;
     }
 
-    public String version() {
+    public long version() {
         return images.get(0).version();
     }
 

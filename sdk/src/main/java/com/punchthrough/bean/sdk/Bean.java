@@ -138,6 +138,7 @@ public class Bean implements Parcelable {
             Log.e(TAG, "Bean returned error: " + error);
         }
     };
+
     /**
      * The {@link com.punchthrough.bean.sdk.BeanListener} that provides data back to the class that
      * sets up the Bean object. Passed into

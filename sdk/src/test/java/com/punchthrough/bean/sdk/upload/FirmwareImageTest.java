@@ -1,7 +1,6 @@
 package com.punchthrough.bean.sdk.upload;
 
 import com.punchthrough.bean.sdk.internal.exception.ImageParsingException;
-import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareMetadata;
 
 import org.junit.Test;
 
@@ -71,12 +70,14 @@ public class FirmwareImageTest {
     }
 
     @Test
-    public void testGetMetadata() throws ImageParsingException {
+    public void testMetadata() throws ImageParsingException {
         FirmwareImage image = new FirmwareImage(rawImageData_valid, "");
-        FirmwareMetadata metadata = image.metadata();
-        assertThat(metadata.version()).isEqualTo(100);
-        assertThat(metadata.length()).isEqualTo(31744);
-        assertThat(metadata.uniqueID()).isEqualTo(new byte[] {0x41, 0x41, 0x41, 0x41});
+        assertThat(image.metadata()).isEqualTo(intArrayToByteArray(new int[] {
+                0x64, 0x00,                // Version
+                0x00, 0x7C,                // Length
+                0x41, 0x41, 0x41, 0x41,    // AAAA
+                0xFF, 0xFF, 0xFF, 0xFF     // Reserved
+        }));
 
     }
 
@@ -137,7 +138,7 @@ public class FirmwareImageTest {
     @Test
     public void testFirmwareNameAndVersion() throws ImageParsingException {
         FirmwareImage image = new FirmwareImage(rawImageData_valid, "123450000_a_testName.bin");
-        assertThat(image.version()).isEqualTo("12345");
+        assertThat(image.version()).isEqualTo(123450000);
         assertThat(image.name()).isEqualTo("testName");
     }
 }
