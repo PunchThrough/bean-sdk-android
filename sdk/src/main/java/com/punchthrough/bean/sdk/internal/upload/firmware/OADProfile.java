@@ -352,41 +352,41 @@ public class OADProfile extends BaseProfile {
      */
     private void prepareResponseHeader(byte[] existingHeader) {
 
-        FirmwareMetadata oldMeta;
-        try {
-            oldMeta = FirmwareMetadata.fromPayload(existingHeader);
-
-        } catch (MetadataParsingException e) {
-            throwBeanError(BeanError.UNPARSABLE_FW_VERSION);
-            return;
-
-        }
-
-        FirmwareMetadata newMeta;
-
-        // If the Bean has image A, send image B and vice versa.
-
-        if (oldMeta.type() == FirmwareImageType.A) {
-            newMeta = firmwareBundle.imageB().metadata();
-            firmwareImage = firmwareBundle.imageB();
-
-        } else if (oldMeta.type() == FirmwareImageType.B) {
-            newMeta = firmwareBundle.imageA().metadata();
-            firmwareImage = firmwareBundle.imageA();
-
-        } else {
-            throwBeanError(BeanError.UNPARSABLE_FW_VERSION);
-            return;
-
-        }
-
-        Log.d(TAG, "Firmware to be replaced: " + oldMeta);
-        Log.d(TAG, "Firmware to be sent: " + newMeta);
-
-        firmwareUploadState = FirmwareUploadState.AWAIT_XFER_ACCEPT;
-
-        // Write the new image metadata
-        writeToCharacteristic(oadIdentify, newMeta.toPayload());
+//        FirmwareMetadata oldMeta;
+//        try {
+//            oldMeta = FirmwareMetadata.fromPayload(existingHeader);
+//
+//        } catch (MetadataParsingException e) {
+//            throwBeanError(BeanError.UNPARSABLE_FW_VERSION);
+//            return;
+//
+//        }
+//
+//        FirmwareMetadata newMeta;
+//
+//        // If the Bean has image A, send image B and vice versa.
+//
+//        if (oldMeta.type() == FirmwareImageType.A) {
+//            newMeta = firmwareBundle.imageB().metadata();
+//            firmwareImage = firmwareBundle.imageB();
+//
+//        } else if (oldMeta.type() == FirmwareImageType.B) {
+//            newMeta = firmwareBundle.imageA().metadata();
+//            firmwareImage = firmwareBundle.imageA();
+//
+//        } else {
+//            throwBeanError(BeanError.UNPARSABLE_FW_VERSION);
+//            return;
+//
+//        }
+//
+//        Log.d(TAG, "Firmware to be replaced: " + oldMeta);
+//        Log.d(TAG, "Firmware to be sent: " + newMeta);
+//
+//        firmwareUploadState = FirmwareUploadState.AWAIT_XFER_ACCEPT;
+//
+//        // Write the new image metadata
+//        writeToCharacteristic(oadIdentify, newMeta.toPayload());
 
     }
 

@@ -93,9 +93,12 @@ public class OADProfileTest {
 
         final List<BeanError> errors = new ArrayList<>();
 
-        FirmwareImage imageA = FirmwareImage.create(rawImageA);
-        FirmwareImage imageB = FirmwareImage.create(rawImageB);
-        FirmwareBundle bundle = FirmwareBundle.create(imageA, imageB);
+        FirmwareImage imageA = new FirmwareImage(rawImageA, "");
+        FirmwareImage imageB = new FirmwareImage(rawImageB, "");
+        List<FirmwareImage> images = new ArrayList<>();
+        images.add(imageA);
+        images.add(imageB);
+        FirmwareBundle bundle = new FirmwareBundle(images);
 
         Callback<UploadProgress> onProgress = new Callback<UploadProgress>() {
             @Override

@@ -1,9 +1,6 @@
 package com.punchthrough.bean.sdk.upload;
 
-import android.os.Parcelable;
-
 import com.punchthrough.bean.sdk.internal.exception.ImageParsingException;
-import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareImageType;
 import com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareMetadata;
 import com.punchthrough.bean.sdk.internal.utility.Chunk;
 import com.punchthrough.bean.sdk.internal.utility.Constants;
@@ -11,26 +8,63 @@ import com.punchthrough.bean.sdk.internal.utility.Convert;
 
 import java.util.Arrays;
 
-import auto.parcel.AutoParcel;
 
 import static com.punchthrough.bean.sdk.internal.utility.Convert.twoBytesToInt;
 
 /**
- * Holds data for a single A or B firmware image.
+ * Holds data for a single firmware image
  */
-@AutoParcel
-public abstract class FirmwareImage implements Parcelable, Chunk.Chunkable {
+public class FirmwareImage implements Chunk.Chunkable {
 
-    /**
-     * The block size of firmware packets being sent
-     */
     private static final int FW_BLOCK_SIZE = 16;
 
+    private byte[] rawData;
+    private String filename;
+    private String[] filenameParts;
+
+
+    public FirmwareImage(byte[] rawData, String filename) throws ImageParsingException {
+        if (rawData.length < 16) {
+            throw new ImageParsingException("Images need to be at least 16 bytes long");
+        }
+        this.rawData = rawData;
+        this.filename = filename;
+        this.filenameParts = filename.split("_");
+    }
+
     /**
-     * The raw firmware image data.
-     * @return The raw image data
+     * Parse a little-endian UInt16 from the data at the given offset.
+     *
+     * @param offset    The offset at which to parse data
+     * @return          The Java int representation of the parsed bytes
      */
-    public abstract byte[] data();
+    private int uint16FromData(int offset) {
+        return twoBytesToInt(
+                Arrays.copyOfRange(data(), offset, offset + 2),
+                Constants.CC2540_BYTE_ORDER
+        );
+    }
+
+    /**
+     * Get a UInt8[4] from the data at the given offset.
+     * @param offset    The offset at which to retrieve bytes
+     * @return          The four-byte array starting at offset
+     */
+    private byte[] uint8_4FromData(int offset) {
+        return Arrays.copyOfRange(data(), offset, offset + 4);
+    }
+
+    public byte[] data() {
+        return rawData;
+    }
+
+    public String name() {
+        return filenameParts[this.filenameParts.length - 1].replace(".bin", "");
+    }
+
+    public String version() {
+        return filenameParts[0].replace("0000", "");
+    }
 
     @Override
     public byte[] getChunkableData() {
@@ -57,7 +91,7 @@ public abstract class FirmwareImage implements Parcelable, Chunk.Chunkable {
      * The version of the image. This is used to determine if an image is newer than another image.
      * @return The version of the image
      */
-    public int version() {
+    public int intVersion() {
         return uint16FromData(4);
     }
 
@@ -85,39 +119,8 @@ public abstract class FirmwareImage implements Parcelable, Chunk.Chunkable {
         return uint8_4FromData(12);
     }
 
-    /**
-     * <p>
-     * The {@link com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareImageType}
-     * of this image.
-     * </p>
-     *
-     * <p>
-     * Determined by {@link FirmwareImage#uniqueID()},
-     * which is "AAAA" or "BBBB" for A and B images
-     * respectively. Images A and B are identical but occupy different areas of CC storage.
-     * </p>
-     *
-     * @return  {@link com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareImageType#A},
-     *          {@link com.punchthrough.bean.sdk.internal.upload.firmware.FirmwareImageType#B}, or
-     *          null if {@link FirmwareImage#uniqueID()} is not "AAAA" or "BBBB"
-     */
-    public FirmwareImageType type() {
-        String parsedID = new String(uniqueID());
-
-        if (parsedID.equals(Constants.IMAGE_A_ID)) {
-            return FirmwareImageType.A;
-
-        } else if (parsedID.equals(Constants.IMAGE_B_ID)) {
-            return FirmwareImageType.B;
-
-        } else {
-            return null;
-
-        }
-    }
-
     public FirmwareMetadata metadata() {
-        return FirmwareMetadata.create(version(), length(), uniqueID());
+        return new FirmwareMetadata(intVersion(), length(), uniqueID());
     }
 
     /**
@@ -147,44 +150,4 @@ public abstract class FirmwareImage implements Parcelable, Chunk.Chunkable {
 
         return theBlock;
     }
-
-    /**
-     * Parses a block of data into a new FirmwareImage.
-     *
-     * @param data  The bytes of image data
-     * @return      The FirmwareImage object for those bytes of data
-     * @throws com.punchthrough.bean.sdk.internal.exception.ImageParsingException if the image is too short to be valid
-     */
-    public static FirmwareImage create(byte[] data) throws ImageParsingException {
-        FirmwareImage image = new AutoParcel_FirmwareImage(data);
-        try {
-            // Ensure there are enough bytes in the data[] by calling the last field getter
-            image.reserved();
-        } catch (Exception e) {
-            throw new ImageParsingException(e.getLocalizedMessage());
-        }
-        return image;
-    }
-
-    /**
-     * Parse a little-endian UInt16 from the data at the given offset.
-     *
-     * @param offset    The offset at which to parse data
-     * @return          The Java int representation of the parsed bytes
-     */
-    private int uint16FromData(int offset) {
-        return twoBytesToInt(
-                Arrays.copyOfRange(data(), offset, offset + 2),
-                Constants.CC2540_BYTE_ORDER);
-    }
-
-    /**
-     * Get a UInt8[4] from the data at the given offset.
-     * @param offset    The offset at which to retrieve bytes
-     * @return          The four-byte array starting at offset
-     */
-    private byte[] uint8_4FromData(int offset) {
-        return Arrays.copyOfRange(data(), offset, offset + 4);
-    }
-
 }
