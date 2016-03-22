@@ -97,10 +97,9 @@ public class OADProfile extends BaseProfile {
         resetState();
     }
 
-
     private void onNotificationIdentify(BluetoothGattCharacteristic characteristic) {
         FirmwareImage nextImage = firmwareBundle.getNextImage();
-        Log.i(TAG, "Offering image: " + nextImage.uniqueID().toString());
+        Log.i(TAG, "Offering image: " + nextImage.name());
         writeToCharacteristic(oadIdentify, nextImage.metadata());
     }
 
@@ -111,7 +110,6 @@ public class OADProfile extends BaseProfile {
 
         if (blk == currentImage.blockCount() - 1) {
             Log.d(TAG, "Last block requested");
-
         }
     }
 
@@ -204,7 +202,6 @@ public class OADProfile extends BaseProfile {
 
         // To request the current header, write [0x00] to OAD Identify
         writeToCharacteristic(oadIdentify, new byte[]{0x00});
-
     }
 
     /**
@@ -302,6 +299,5 @@ public class OADProfile extends BaseProfile {
                 }
             }
         });
-
     }
 }

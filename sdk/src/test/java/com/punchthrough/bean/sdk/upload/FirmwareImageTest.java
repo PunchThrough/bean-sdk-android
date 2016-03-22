@@ -139,6 +139,6 @@ public class FirmwareImageTest {
     public void testFirmwareNameAndVersion() throws ImageParsingException {
         FirmwareImage image = new FirmwareImage(rawImageData_valid, "123450000_a_testName.bin");
         assertThat(image.version()).isEqualTo(123450000);
-        assertThat(image.name()).isEqualTo("testName");
+        assertThat(image.name()).isEqualTo("123450000_a_testName");
     }
 }

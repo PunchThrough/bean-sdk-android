@@ -20,7 +20,6 @@ public class FirmwareImage implements Chunk.Chunkable {
 
     private byte[] rawData;
     private String filename;
-    private String[] filenameParts;
 
 
     public FirmwareImage(byte[] rawData, String filename) throws ImageParsingException {
@@ -29,7 +28,6 @@ public class FirmwareImage implements Chunk.Chunkable {
         }
         this.rawData = rawData;
         this.filename = filename;
-        this.filenameParts = filename.split("_");
     }
 
     /**
@@ -59,11 +57,11 @@ public class FirmwareImage implements Chunk.Chunkable {
     }
 
     public String name() {
-        return filenameParts[this.filenameParts.length - 1].replace(".bin", "");
+        return  filename.replace(".bin", "");
     }
 
     public long version() {
-        return Long.parseLong(filenameParts[0]);
+        return Long.parseLong(filename.split("_")[0]);
     }
 
     @Override
