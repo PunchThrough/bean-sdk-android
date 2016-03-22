@@ -206,6 +206,17 @@ public class GattSerialTransportProfile extends BaseProfile {
         }
     }
 
+    @Override
+    public void onReadRemoteRssi(GattClient client, int rssi) {
+        final Listener listener = mListener;
+        if (listener != null) {
+            listener.onReadRemoteRssi(rssi);
+        } else {
+            Log.e(TAG, "No listener, this must be a stale connection --> disconnect");
+            abort();
+        }
+    }
+
     private void abort() {
         boolean wasConnected = mSerialCharacteristic != null;
         mSerialCharacteristic = null;
@@ -252,5 +263,7 @@ public class GattSerialTransportProfile extends BaseProfile {
         public void onMessageReceived(byte[] data);
 
         public void onScratchValueChanged(ScratchBank bank, byte[] value);
+
+        public void onReadRemoteRssi(int rssi);
     }
 }

@@ -137,6 +137,10 @@ public class Bean implements Parcelable {
         public void onError(BeanError error) {
             Log.e(TAG, "Bean returned error: " + error);
         }
+
+        @Override
+        public void onReadRemoteRssi(int rssi) {
+        }
     };
     /**
      * The {@link com.punchthrough.bean.sdk.BeanListener} that provides data back to the class that
@@ -337,6 +341,16 @@ public class Bean implements Parcelable {
                     }
                 });
             }
+
+            @Override
+            public void onReadRemoteRssi(final int rssi) {
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        beanListener.onReadRemoteRssi(rssi);
+                    }
+                });
+            }
         };
         gattClient.getSerialProfile().setListener(listener);
     }
@@ -371,6 +385,13 @@ public class Bean implements Parcelable {
         beanListener = internalBeanListener;
         gattClient.disconnect();
         connected = false;
+    }
+
+    /**
+     *  Read the RSSI for a connected remote device. Value will be returned in {@link BeanListener#onReadRemoteRssi(int)}.
+     */
+    public void readRemoteRssi() {
+        gattClient.readRemoteRssi();
     }
 
     /**
