@@ -1,9 +1,7 @@
 package com.punchthrough.bean.sdk;
 
 import com.punchthrough.bean.sdk.internal.exception.ImageParsingException;
-import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.Callback;
-import com.punchthrough.bean.sdk.message.ScratchBank;
 import com.punchthrough.bean.sdk.message.UploadProgress;
 import com.punchthrough.bean.sdk.upload.FirmwareBundle;
 import com.punchthrough.bean.sdk.upload.FirmwareImage;
@@ -28,8 +26,8 @@ public class TestBeanFirmwareUpdate extends BeanTestCase {
         super.setUp();
         try {
             bean = discoverClosestBean();
+            BeanManager.getInstance().cancelDiscovery();
             synchronousConnect(bean);
-//            blinkBeanThrice(bean);
             bean.setAutoReconnect(true);
         } catch (Exception e) {
             e.printStackTrace();
@@ -79,6 +77,7 @@ public class TestBeanFirmwareUpdate extends BeanTestCase {
                 System.out.println("[BEANTEST] - Complete!");
             }
         };
+
 
         bean.programWithFirmware(getAsymmBundle(), onProgress, onComplete);
         CountDownLatch fwLatch = new CountDownLatch(1);

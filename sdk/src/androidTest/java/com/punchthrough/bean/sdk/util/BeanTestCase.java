@@ -112,7 +112,7 @@ public class BeanTestCase extends AndroidTestCase {
          * the .onConnected() callback in a BeanListener.
          */
 
-        connectLatch.await(120, TimeUnit.SECONDS);
+        connectLatch.await(20, TimeUnit.SECONDS);
         assertThat(bean.isConnected()).isTrue();
         System.out.println("Connected to bean: " + bean.getDevice().getName());
     }

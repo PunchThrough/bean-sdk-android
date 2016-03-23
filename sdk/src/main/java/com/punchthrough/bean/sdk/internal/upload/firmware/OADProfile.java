@@ -43,7 +43,7 @@ public class OADProfile extends BaseProfile {
     /**
      * State of the current firmware upload process.
      */
-    private FirmwareUploadState firmwareUploadState;
+    private FirmwareUploadState firmwareUploadState = FirmwareUploadState.INACTIVE;
 
     /**
      * The most recently offered firmware image
@@ -70,8 +70,13 @@ public class OADProfile extends BaseProfile {
         resetState();
     }
 
+    private void setState(FirmwareUploadState state) {
+        Log.i(TAG, String.format("OAD State Change: %s -> %s", firmwareUploadState.name(), state.name()));
+        firmwareUploadState = state;
+    }
+
     private void resetState() {
-        firmwareUploadState = FirmwareUploadState.INACTIVE;
+        setState(FirmwareUploadState.INACTIVE);
         onComplete = null;
         onError = null;
         currentImage = null;
@@ -94,7 +99,7 @@ public class OADProfile extends BaseProfile {
         if (blk == 0) {
             Log.i(TAG, "Image accepted: " + currentImage.name());
             Log.i(TAG, String.format("Starting Block Transfer of %d blocks", currentImage.blockCount()));
-            firmwareUploadState = FirmwareUploadState.BLOCK_XFER;
+            setState(FirmwareUploadState.BLOCK_XFER);
         }
 
         if (blk % 100 == 0) {
@@ -193,7 +198,7 @@ public class OADProfile extends BaseProfile {
     private void triggerCurrentHeader() {
 
         Log.d(TAG, "Requesting current header");
-        firmwareUploadState = FirmwareUploadState.OFFERING_IMAGES;
+        setState(FirmwareUploadState.OFFERING_IMAGES);
 
         // To request the current header, write [0x00] to OAD Identify
         writeToCharacteristic(oadIdentify, new byte[]{0x00});
@@ -279,7 +284,7 @@ public class OADProfile extends BaseProfile {
         this.firmwareBundle = bundle;
 
         Log.d(TAG, "Checking Firmware version...");
-        firmwareUploadState = FirmwareUploadState.CHECKING_FW_VERSION;
+        setState(FirmwareUploadState.CHECKING_FW_VERSION);
         mGattClient.getDeviceProfile().getDeviceInfo(new DeviceProfile.DeviceInfoCallback() {
             @Override
             public void onDeviceInfo(DeviceInfo info) {
