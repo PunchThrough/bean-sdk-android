@@ -12,9 +12,13 @@ import android.util.Log;
 
 import com.punchthrough.bean.sdk.internal.battery.BatteryProfile;
 import com.punchthrough.bean.sdk.internal.device.DeviceProfile;
+import com.punchthrough.bean.sdk.internal.exception.UnimplementedProfileException;
+import com.punchthrough.bean.sdk.internal.scratch.ScratchProfile;
 import com.punchthrough.bean.sdk.internal.serial.GattSerialTransportProfile;
 import com.punchthrough.bean.sdk.internal.upload.firmware.OADProfile;
+import com.punchthrough.bean.sdk.internal.utility.Constants;
 
+import java.lang.reflect.Method;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +38,7 @@ public class GattClient {
     private final DeviceProfile mDeviceProfile;
     private final BatteryProfile mBatteryProfile;
     private final OADProfile mOADProfile;
+    private final ScratchProfile mScratchProfile;
     private List<BaseProfile> mProfiles = new ArrayList<>(10);
 
     // Internal dependencies
@@ -51,10 +56,12 @@ public class GattClient {
         mDeviceProfile = new DeviceProfile(this);
         mBatteryProfile = new BatteryProfile(this);
         mOADProfile = new OADProfile(this);
+        mScratchProfile = new ScratchProfile(this);
         mProfiles.add(mSerialProfile);
         mProfiles.add(mDeviceProfile);
         mProfiles.add(mBatteryProfile);
         mProfiles.add(mOADProfile);
+        mProfiles.add(mScratchProfile);
     }
 
     public GattClient(Handler handler) {
@@ -62,9 +69,40 @@ public class GattClient {
         mDeviceProfile = new DeviceProfile(this);
         mBatteryProfile = new BatteryProfile(this);
         mOADProfile = new OADProfile(this);
+        mScratchProfile = new ScratchProfile(this);
         mProfiles.add(mSerialProfile);
         mProfiles.add(mDeviceProfile);
         mProfiles.add(mBatteryProfile);
+        mProfiles.add(mScratchProfile);
+    }
+
+    private BaseProfile profileForUUID(UUID uuid) throws UnimplementedProfileException {
+        if (uuid.equals(Constants.UUID_OAD_SERVICE)) {
+            return mOADProfile;
+        } else if (uuid.equals(Constants.UUID_SERIAL_SERVICE)) {
+            return mSerialProfile;
+        } else if (uuid.equals(Constants.UUID_BATTERY_SERVICE)) {
+            return mBatteryProfile;
+        } else if (uuid.equals(Constants.UUID_SCRATCH_SERVICE)) {
+            return mScratchProfile;
+        } else if (uuid.equals(Constants.UUID_DEVICE_INFO_SERVICE)) {
+            return mDeviceProfile;
+        } else {
+            throw new UnimplementedProfileException("No profile with UUID: " + uuid.toString());
+        }
+    }
+
+    private void refreshDeviceCache(BluetoothGatt gatt){
+        try {
+            BluetoothGatt localBluetoothGatt = gatt;
+            Method localMethod = localBluetoothGatt.getClass().getMethod("refresh", new Class[0]);
+            if (localMethod != null) {
+                localMethod.invoke(localBluetoothGatt, new Object[0]);
+            }
+        }
+        catch (Exception localException) {
+            Log.e(TAG, "An exception occurred while refreshing device");
+        }
     }
 
     private final BluetoothGattCallback mBluetoothGattCallback = new BluetoothGattCallback() {
@@ -82,6 +120,8 @@ public class GattClient {
 
                 // Bean is connected, before alerting the ConnectionListener(s), we must
                 // discover available services (lookup GATT table).
+                Log.i(TAG, "Discovering Services!");
+                refreshDeviceCache(mGatt);
                 discoverServices();
             }
 
@@ -106,9 +146,15 @@ public class GattClient {
 
                 // Tell each profile that they are ready and to do any other further configuration
                 // that may be necessary such as looking up available characteristics.
-                for (BaseProfile profile : mProfiles) {
-                    profile.onProfileReady();
-                    profile.onBeanConnected();
+                for (BluetoothGattService service : mGatt.getServices()) {
+                    try {
+                        BaseProfile profile = profileForUUID(service.getUuid());
+                        profile.onProfileReady();
+                        profile.onBeanConnected();
+                        Log.i(TAG, "Profile ready: " + profile.getName());
+                    } catch (UnimplementedProfileException e) {
+                        Log.e(TAG, "No profile with UUID: " + service.getUuid().toString());
+                    }
                 }
 
                 // Alert ConnectionListener(s) and profiles that the Bean is ready (connected)

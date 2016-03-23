@@ -5,6 +5,7 @@ import android.os.Handler;
 
 import com.punchthrough.bean.sdk.internal.ble.GattClient;
 import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
+import com.punchthrough.bean.sdk.internal.utility.Constants;
 import com.punchthrough.bean.sdk.internal.utility.EnumParse;
 import com.punchthrough.bean.sdk.message.ScratchBank;
 
@@ -22,8 +23,6 @@ import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GattSerialTransportProfileTest {
-
-    private static final UUID SCRATCH_1_UUID = UUID.fromString("a495ff21-c5b1-4b44-b512-1370f02d74de");
 
     // Mocks
     GattClient mockGattClient;
@@ -49,7 +48,7 @@ public class GattSerialTransportProfileTest {
         ScratchBank bank = EnumParse.enumWithRawValue(ScratchBank.class, index);
         gstp.setListener(mockListener);
         BluetoothGattCharacteristic mockChar = mock(BluetoothGattCharacteristic.class);
-        when(mockChar.getUuid()).thenReturn(SCRATCH_1_UUID);
+        when(mockChar.getUuid()).thenReturn(Constants.UUID_SCRATCH_CHAR_1);
         when(mockChar.getValue()).thenReturn(value);
 
         // Test and verify

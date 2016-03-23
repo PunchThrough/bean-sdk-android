@@ -31,21 +31,6 @@ public class OADProfile extends BaseProfile {
     public static final String TAG = "OADProfile";
 
     /**
-     * The OAD Service contains the OAD Identify and Block characteristics
-     */
-    private static final UUID SERVICE_OAD = UUID.fromString("F000FFC0-0451-4000-B000-000000000000");
-
-    /**
-     * The OAD Identify characteristic is used to negotiate the start of a firmware transfer
-     */
-    private static final UUID CHAR_OAD_IDENTIFY = UUID.fromString("F000FFC1-0451-4000-B000-000000000000");
-
-    /**
-     * The OAD Block characteristic is used to send firmware blocks and confirm transfer completion
-     */
-    private static final UUID CHAR_OAD_BLOCK = UUID.fromString("F000FFC2-0451-4000-B000-000000000000");
-
-    /**
      * The OAD Identify characteristic for this device. Assigned when firmware upload is started.
      */
     private BluetoothGattCharacteristic oadIdentify;
@@ -98,18 +83,28 @@ public class OADProfile extends BaseProfile {
     }
 
     private void onNotificationIdentify(BluetoothGattCharacteristic characteristic) {
-        FirmwareImage nextImage = firmwareBundle.getNextImage();
-        Log.i(TAG, "Offering image: " + nextImage.name());
-        writeToCharacteristic(oadIdentify, nextImage.metadata());
+        currentImage = firmwareBundle.getNextImage();
+        Log.i(TAG, "Offering image: " + currentImage.name());
+        writeToCharacteristic(oadIdentify, currentImage.metadata());
     }
 
     private void onNotificationBlock(BluetoothGattCharacteristic characteristic) {
         int blk = Convert.twoBytesToInt(characteristic.getValue(), Constants.CC2540_BYTE_ORDER);
-        Log.d(TAG, "Sending requested FW block " + blk);
+
+        if (blk == 0) {
+            Log.i(TAG, "Image accepted: " + currentImage.name());
+            Log.i(TAG, String.format("Starting Block Transfer of %d blocks", currentImage.blockCount()));
+            firmwareUploadState = FirmwareUploadState.BLOCK_XFER;
+        }
+
+        if (blk % 100 == 0) {
+            Log.i(TAG, "Block request: " + blk);
+        }
+
         writeToCharacteristic(oadBlock, currentImage.block(blk));
 
         if (blk == currentImage.blockCount() - 1) {
-            Log.d(TAG, "Last block requested");
+            Log.i(TAG, "Last block requested");
         }
     }
 
@@ -129,19 +124,19 @@ public class OADProfile extends BaseProfile {
      * Setup BLOCK and IDENTIFY characteristics
      */
     private void setupOAD() {
-        BluetoothGattService oadService = mGattClient.getService(SERVICE_OAD);
+        BluetoothGattService oadService = mGattClient.getService(Constants.UUID_OAD_SERVICE);
         if (oadService == null) {
             throwBeanError(BeanError.MISSING_OAD_SERVICE);
             return;
         }
 
-        oadIdentify = oadService.getCharacteristic(CHAR_OAD_IDENTIFY);
+        oadIdentify = oadService.getCharacteristic(Constants.UUID_OAD_CHAR_IDENTIFY);
         if (oadIdentify == null) {
             throwBeanError(BeanError.MISSING_OAD_IDENTIFY);
             return;
         }
 
-        oadBlock = oadService.getCharacteristic(CHAR_OAD_BLOCK);
+        oadBlock = oadService.getCharacteristic(Constants.UUID_OAD_CHAR_BLOCK);
         if (oadBlock == null) {
             throwBeanError(BeanError.MISSING_OAD_BLOCK);
             return;
@@ -205,13 +200,6 @@ public class OADProfile extends BaseProfile {
     }
 
     /**
-     * @return true if an upload is in progress
-     */
-    private boolean uploadInProgress() {
-        return firmwareUploadState != FirmwareUploadState.INACTIVE;
-    }
-
-    /**
      * @param charc The characteristic being inspected
      * @return      true if it's the OAD Block characteristic
      */
@@ -232,6 +220,10 @@ public class OADProfile extends BaseProfile {
                                    PUBLIC METHODS
      ****************************************************************************/
 
+    public boolean uploadInProgress() {
+        return firmwareUploadState != FirmwareUploadState.INACTIVE;
+    }
+
     @Override
     public void onProfileReady() {
         setupOAD();
@@ -240,21 +232,21 @@ public class OADProfile extends BaseProfile {
 
     @Override
     public void onBeanConnected() {
-
+        Log.i(TAG, "OAD Profile Detected Bean Connection!!!");
     }
 
     @Override
     public void onBeanDisconnected() {
-
+        Log.i(TAG, "OAD Profile Detected Bean Disconnection!!!");
     }
 
     @Override
     public void onCharacteristicChanged(GattClient client, BluetoothGattCharacteristic characteristic) {
         if (uploadInProgress()) {
 
-            if (characteristic.getUuid().equals(CHAR_OAD_IDENTIFY)) {
+            if (characteristic.getUuid().equals(Constants.UUID_OAD_CHAR_IDENTIFY)) {
                 onNotificationIdentify(characteristic);
-            } else if (characteristic.getUuid().equals(CHAR_OAD_BLOCK)) {
+            } else if (characteristic.getUuid().equals(Constants.UUID_OAD_CHAR_BLOCK)) {
                 onNotificationBlock(characteristic);
             }
         }
@@ -299,5 +291,9 @@ public class OADProfile extends BaseProfile {
                 }
             }
         });
+    }
+
+    public String getName() {
+        return "OAD Profile";
     }
 }

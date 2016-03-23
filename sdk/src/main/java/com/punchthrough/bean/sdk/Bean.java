@@ -1124,6 +1124,10 @@ public class Bean implements Parcelable {
         gattClient.getOADProfile().programWithFirmware(bundle, onProgress, onComplete, onError);
     }
 
+    public boolean firmwareUpdateInProgress() {
+        return gattClient.getOADProfile().uploadInProgress();
+    }
+
     /**
      * Used by Android {@link android.os.Parcel}.
      */
