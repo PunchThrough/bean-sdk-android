@@ -49,7 +49,6 @@ public class GattClient {
     private Queue<Runnable> mOperationsQueue = new ArrayDeque<>(32);
     private boolean mOperationInProgress = false;
     private boolean mConnected = false;
-    private boolean mDiscoveringServices = false;
 
     public GattClient() {
         mSerialProfile = new GattSerialTransportProfile(this);
@@ -120,9 +119,10 @@ public class GattClient {
 
                 // Bean is connected, before alerting the ConnectionListener(s), we must
                 // discover available services (lookup GATT table).
-                Log.i(TAG, "Discovering Services!");
+                Log.i(TAG, "Refreshing GATT Cache");
                 refreshDeviceCache(mGatt);
-                discoverServices();
+                Log.i(TAG, "Discovering Services!");
+                mGatt.discoverServices();
             }
 
             if (newState == BluetoothGatt.STATE_DISCONNECTED) {
@@ -139,13 +139,15 @@ public class GattClient {
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
 
-            mDiscoveringServices = false;
             if (status != BluetoothGatt.GATT_SUCCESS) {
+                Log.e(TAG, "Failed to discover services!");
                 disconnect();
             } else {
+                Log.i(TAG, "Service discovery complete!");
 
                 // Tell each profile that they are ready and to do any other further configuration
                 // that may be necessary such as looking up available characteristics.
+                Log.i(TAG, "Starting to setup each available profile!");
                 for (BluetoothGattService service : mGatt.getServices()) {
                     try {
                         BaseProfile profile = profileForUUID(service.getUuid());
@@ -294,14 +296,6 @@ public class GattClient {
 
     public BluetoothGattService getService(UUID uuid) {
         return mGatt.getService(uuid);
-    }
-
-    public boolean discoverServices() {
-        if (mDiscoveringServices) {
-            return true;
-        }
-        mDiscoveringServices = true;
-        return mGatt.discoverServices();
     }
 
     public synchronized boolean readCharacteristic(final BluetoothGattCharacteristic characteristic) {

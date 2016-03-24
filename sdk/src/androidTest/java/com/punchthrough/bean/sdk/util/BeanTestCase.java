@@ -112,7 +112,7 @@ public class BeanTestCase extends AndroidTestCase {
          * the .onConnected() callback in a BeanListener.
          */
 
-        connectLatch.await(20, TimeUnit.SECONDS);
+        connectLatch.await(100, TimeUnit.SECONDS);
         assertThat(bean.isConnected()).isTrue();
         System.out.println("Connected to bean: " + bean.getDevice().getName());
     }
@@ -123,7 +123,7 @@ public class BeanTestCase extends AndroidTestCase {
          * the .onDisconnected() callback in a BeanListener.
          */
 
-        disconnectLatch.await(20, TimeUnit.SECONDS);
+        disconnectLatch.await(60, TimeUnit.SECONDS);
         assertThat(bean.isConnected()).isFalse();
     }
 
@@ -213,17 +213,17 @@ public class BeanTestCase extends AndroidTestCase {
 
             @Override
             public void onBeanDiscovered(Bean bean, int rssi) {
-                System.out.println("[BeanUtils] Found Bean with RSSI: " + rssi);
+                String msg = String.format("Found Bean: %s (%s)", bean.getDevice().getName(), rssi);
+                System.out.println(msg);
                 if (rssi > highestRssi) {
                     highestRssi = rssi;
                     beans.add(bean);
                 }
 
-                if (rssi >= -50) {
-                    // The RSSI is pretty good if it's above -60, lets just use this one
+                if (rssi >= 50) {
+                    // Close enough
                     beanLatch.countDown();
                 }
-
             }
 
             @Override
@@ -239,7 +239,9 @@ public class BeanTestCase extends AndroidTestCase {
         if (beans.isEmpty()) {
             throw new Exception("No beans found!!!");
         }
-        return beans.get(0);
+        Bean bean = beans.get(beans.size() - 1);
+        System.out.println("Closest Bean: " + bean.getDevice().getName());
+        return bean;
     }
 
     protected DeviceInfo getDeviceInformation(Bean bean) throws Exception {

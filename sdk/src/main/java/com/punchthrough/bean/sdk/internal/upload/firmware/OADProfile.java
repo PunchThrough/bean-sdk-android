@@ -276,22 +276,25 @@ public class OADProfile extends BaseProfile {
             onError.onResult(BeanError.NOT_CONNECTED);
         }
 
-        Log.d(TAG, "Starting firmware update procedure!");
+        Log.i(TAG, "Starting firmware update procedure!");
 
         // Save state for this firmware procedure
         this.onComplete = onComplete;
         this.onError = onError;
         this.firmwareBundle = bundle;
 
-        Log.d(TAG, "Checking Firmware version...");
+        Log.i(TAG, "Checking Firmware version...");
         setState(FirmwareUploadState.CHECKING_FW_VERSION);
         mGattClient.getDeviceProfile().getDeviceInfo(new DeviceProfile.DeviceInfoCallback() {
             @Override
             public void onDeviceInfo(DeviceInfo info) {
                 long beanVersion = Long.parseLong(info.firmwareVersion().split(" ")[0]);
+                Log.i(TAG, "Bundle version: " + bundle.version());
+                Log.i(TAG, "Bean version: " + beanVersion);
                 if (bundle.version() > beanVersion) {
                     triggerCurrentHeader();
                 } else {
+                    Log.i(TAG, "No update required!");
                     onComplete.run();
                 }
             }

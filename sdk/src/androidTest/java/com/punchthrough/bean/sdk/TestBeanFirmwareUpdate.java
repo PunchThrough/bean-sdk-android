@@ -26,7 +26,6 @@ public class TestBeanFirmwareUpdate extends BeanTestCase {
         super.setUp();
         try {
             bean = discoverClosestBean();
-            BeanManager.getInstance().cancelDiscovery();
             synchronousConnect(bean);
             bean.setAutoReconnect(true);
         } catch (Exception e) {
