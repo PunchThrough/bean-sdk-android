@@ -60,7 +60,7 @@ public class BeanTestCase extends AndroidTestCase {
 
     protected void setUpTestBean() {
         try {
-            testBean = discoverBean(beanName);
+            testBean = discoverBean();
             synchronousConnect(testBean);
         } catch(Exception e) {
             fail("Error connecting to " + beanName + " bean in setup.");
@@ -85,7 +85,7 @@ public class BeanTestCase extends AndroidTestCase {
 
         @Override
         public void onConnectionFailed() {
-            fail("Connection failed");
+            System.out.println("[BeanTest] On Connection Failed!!!!");
         }
 
         @Override
@@ -102,6 +102,7 @@ public class BeanTestCase extends AndroidTestCase {
 
         @Override
         public void onError(BeanError error) {
+            System.out.println("On Error: " + error.toString());
             fail(error.toString());
         }
     };
@@ -173,37 +174,16 @@ public class BeanTestCase extends AndroidTestCase {
         return beans;
     }
 
-    protected Bean discoverBean(final String name) throws Exception {
-        final CountDownLatch beanLatch = new CountDownLatch(1);
-        final List<Bean> beans = new ArrayList<>();
+    protected Bean discoverBean() throws Exception {
+        /**
+         * Discover a Bean that will be used for instrumentation testing
+         *
+         * The Bean selected will be selected based on the following criteria:
+         *   - The Bean name matches the one set in gradle.properties
+         *   - The closest Bean based on highest RSSI
+         *
+         */
 
-        BeanDiscoveryListener listener = new BeanDiscoveryListener() {
-            @Override
-            public void onBeanDiscovered(Bean bean, int rssi) {
-                if (bean.getDevice().getName() != null && bean.getDevice().getName().equals(name)) {
-                    System.out.println("[BeanUtils] Found Bean by name: " + name);
-                    beans.add(bean);
-                    beanLatch.countDown();
-                }
-            }
-
-            @Override
-            public void onDiscoveryComplete() {
-                System.out.println("[BeanUtils] Discovery Complete!");
-                beanLatch.countDown();
-            }
-        };
-
-        boolean startedOK = BeanManager.getInstance().startDiscovery(listener);
-        assertThat(startedOK).isTrue();
-        beanLatch.await(60, TimeUnit.SECONDS);
-        if (beans.isEmpty()) {
-            throw new Exception("No bean named: " + name);
-        }
-        return beans.get(0);
-    }
-
-    protected Bean discoverClosestBean() throws Exception {
         final CountDownLatch beanLatch = new CountDownLatch(1);
         final List<Bean> beans = new ArrayList<>();
 
@@ -213,16 +193,23 @@ public class BeanTestCase extends AndroidTestCase {
 
             @Override
             public void onBeanDiscovered(Bean bean, int rssi) {
-                String msg = String.format("Found Bean: %s (%s)", bean.getDevice().getName(), rssi);
+                String msg = String.format("Found Bean: %s (RSSI: %s) (%s)",
+                        bean.getDevice().getName(),
+                        rssi,
+                        bean.getDevice().getAddress());
                 System.out.println(msg);
-                if (rssi > highestRssi) {
+
+                if (bean.getDevice().getName().equals(beanName)) {
+                    beans.add(bean);
+                    beanLatch.countDown();
+                } else if (rssi > highestRssi) {
                     highestRssi = rssi;
                     beans.add(bean);
-                }
 
-                if (rssi >= 50) {
-                    // Close enough
-                    beanLatch.countDown();
+                    if (rssi >= -50) {
+                        // This Bean is very close, lets quit early to speed up the test
+                        beanLatch.countDown();
+                    }
                 }
             }
 
@@ -241,6 +228,7 @@ public class BeanTestCase extends AndroidTestCase {
         }
         Bean bean = beans.get(beans.size() - 1);
         System.out.println("Closest Bean: " + bean.getDevice().getName());
+        BeanManager.getInstance().cancelDiscovery();
         return bean;
     }
 
