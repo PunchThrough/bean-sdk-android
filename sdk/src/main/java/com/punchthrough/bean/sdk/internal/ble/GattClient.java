@@ -119,8 +119,6 @@ public class GattClient {
 
                 // Bean is connected, before alerting the ConnectionListener(s), we must
                 // discover available services (lookup GATT table).
-                Log.i(TAG, "Refreshing GATT Cache");
-                refreshDeviceCache(mGatt);
                 Log.i(TAG, "Discovering Services!");
                 mGatt.discoverServices();
             }
@@ -246,7 +244,11 @@ public class GattClient {
             mGatt.close();
         }
         mConnected = false;
+
+        Log.i(TAG, "Gatt connectioon started");
         mGatt = device.connectGatt(context, false, mBluetoothGattCallback);
+        Log.i(TAG, "Refreshing GATT Cache");
+        refreshDeviceCache(mGatt);
     }
 
     private void fireDescriptorWrite(BluetoothGattDescriptor descriptor) {
