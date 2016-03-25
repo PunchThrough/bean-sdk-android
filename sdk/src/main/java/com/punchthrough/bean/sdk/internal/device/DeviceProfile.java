@@ -21,7 +21,8 @@ public class DeviceProfile extends BaseProfile {
     private String mHardwareVersion;
     private String mFirmwareVersion;
     private BluetoothGattService mDeviceService;
-    private DeviceInfoCallback mCallback;
+    private DeviceInfoCallback deviceInfoCallback;
+    private FirmwareVersionCallback firmwareVersionCallback;
 
     public DeviceProfile(GattClient client) {
         super(client);
@@ -48,17 +49,20 @@ public class DeviceProfile extends BaseProfile {
             mSoftwareVersion = characteristic.getStringValue(0);
         }
 
-        if (mFirmwareVersion != null && mSoftwareVersion != null && mHardwareVersion != null) {
+        if (mFirmwareVersion != null && mSoftwareVersion != null && mHardwareVersion != null && deviceInfoCallback != null) {
             DeviceInfo info = DeviceInfo.create(mHardwareVersion, mSoftwareVersion, mFirmwareVersion);
-            if (mCallback != null) {
-                mCallback.onDeviceInfo(info);
-                mCallback = null;
-            }
+            deviceInfoCallback.onDeviceInfo(info);
+            deviceInfoCallback = null;
+        }
+
+        if (mFirmwareVersion != null && firmwareVersionCallback != null) {
+            firmwareVersionCallback.onComplete(mFirmwareVersion);
+            firmwareVersionCallback = null;
         }
     }
 
     public void getDeviceInfo(DeviceInfoCallback callback) {
-        mCallback = callback;
+        deviceInfoCallback = callback;
         for (BluetoothGattCharacteristic characteristic : mDeviceService.getCharacteristics()) {
             if (characteristic.getUuid().equals(Constants.UUID_DEVICE_INFO_CHAR_FIRMWARE_VERSION) ||
                     characteristic.getUuid().equals(Constants.UUID_DEVICE_INFO_CHAR_HARDWARE_VERSION) ||
@@ -68,8 +72,19 @@ public class DeviceProfile extends BaseProfile {
         }
     }
 
+    public void getFirmwareVersion(FirmwareVersionCallback callback) {
+        firmwareVersionCallback = callback;
+        mGattClient.readCharacteristic(
+                mDeviceService.getCharacteristic(
+                        Constants.UUID_DEVICE_INFO_CHAR_FIRMWARE_VERSION));
+    }
+
     public String getName() {
         return "Device Info Profile";
+    }
+
+    public static interface FirmwareVersionCallback {
+        public void onComplete(String version);
     }
 
     public static interface DeviceInfoCallback {

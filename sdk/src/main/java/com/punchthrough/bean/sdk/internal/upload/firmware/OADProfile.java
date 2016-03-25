@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.util.Log;
 
+import com.punchthrough.bean.sdk.BeanManager;
 import com.punchthrough.bean.sdk.internal.ble.BaseProfile;
 import com.punchthrough.bean.sdk.internal.ble.GattClient;
 import com.punchthrough.bean.sdk.internal.device.DeviceProfile;
@@ -109,7 +110,9 @@ public class OADProfile extends BaseProfile {
         writeToCharacteristic(oadBlock, currentImage.block(blk));
 
         if (blk == currentImage.blockCount() - 1) {
-            Log.i(TAG, "Last block requested");
+            Log.i(TAG, "Last block sent!");
+            Log.i(TAG, "Waiting for device to reconnect...");
+            BeanManager.getInstance().startDiscovery();
         }
     }
 
@@ -285,17 +288,25 @@ public class OADProfile extends BaseProfile {
 
         Log.i(TAG, "Checking Firmware version...");
         setState(FirmwareUploadState.CHECKING_FW_VERSION);
-        mGattClient.getDeviceProfile().getDeviceInfo(new DeviceProfile.DeviceInfoCallback() {
+
+        mGattClient.getDeviceProfile().getFirmwareVersion(new DeviceProfile.FirmwareVersionCallback() {
             @Override
-            public void onDeviceInfo(DeviceInfo info) {
-                long beanVersion = Long.parseLong(info.firmwareVersion().split(" ")[0]);
-                Log.i(TAG, "Bundle version: " + bundle.version());
-                Log.i(TAG, "Bean version: " + beanVersion);
-                if (bundle.version() > beanVersion) {
+            public void onComplete(String version) {
+
+                if (version.startsWith("OAD")) {
+                    Log.i(TAG, "Bundle version: " + bundle.version());
+                    Log.i(TAG, "Bean version: " + version);
                     triggerCurrentHeader();
                 } else {
-                    Log.i(TAG, "No update required!");
-                    onComplete.run();
+                    long beanVersion = Long.parseLong(version.split(" ")[0]);
+                    Log.i(TAG, "Bundle version: " + bundle.version());
+                    Log.i(TAG, "Bean version: " + beanVersion);
+                    if (bundle.version() > beanVersion) {
+                        triggerCurrentHeader();
+                    } else {
+                        Log.i(TAG, "No update required!");
+                        onComplete.run();
+                    }
                 }
             }
         });
