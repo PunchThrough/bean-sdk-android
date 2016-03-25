@@ -151,6 +151,24 @@ public class BeanManager {
         return false;
     }
 
+    public boolean startDiscovery() {
+        if (mListener == null) {
+            throw new NullPointerException("Listener cannot be null");
+        }
+
+        if (mScanning) {
+            cancelDiscovery();
+        }
+
+        mScanning = true;
+
+        if (btAdapter.startLeScan(mCallback)) {
+            mHandler.postDelayed(mCompleteDiscoveryCallback, SCAN_TIMEOUT);
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Cancel a scan currently in progress. If no scan is in progress, this method does nothing.
      */
