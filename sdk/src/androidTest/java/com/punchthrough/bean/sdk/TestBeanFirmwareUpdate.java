@@ -77,7 +77,6 @@ public class TestBeanFirmwareUpdate extends BeanTestCase {
             }
         };
 
-
         bean.programWithFirmware(getAsymmBundle(), onProgress, onComplete);
         CountDownLatch fwLatch = new CountDownLatch(1);
         fwLatch.await(8000, TimeUnit.SECONDS);

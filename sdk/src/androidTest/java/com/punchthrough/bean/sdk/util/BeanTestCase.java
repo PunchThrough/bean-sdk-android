@@ -115,7 +115,7 @@ public class BeanTestCase extends AndroidTestCase {
 
         connectLatch.await(100, TimeUnit.SECONDS);
         assertThat(bean.isConnected()).isTrue();
-        System.out.println("Connected to bean: " + bean.getDevice().getName());
+        System.out.println("Connected to Bean: " + bean.describe());
     }
 
     protected void ensureDisconnected(Bean bean, CountDownLatch disconnectLatch) throws InterruptedException {
@@ -227,7 +227,7 @@ public class BeanTestCase extends AndroidTestCase {
             throw new Exception("No beans found!!!");
         }
         Bean bean = beans.get(beans.size() - 1);
-        System.out.println("Closest Bean: " + bean.getDevice().getName());
+        System.out.println("Closest Bean: " + bean.describe());
         BeanManager.getInstance().cancelDiscovery();
         return bean;
     }

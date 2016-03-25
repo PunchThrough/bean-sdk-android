@@ -741,6 +741,10 @@ public class Bean implements Parcelable {
                                     PUBLIC API
      ****************************************************************************/
 
+    public String describe() {
+        return String.format("%s (%s)", getDevice().getName(), getDevice().getAddress());
+    }
+
     /**
      * Check if the Bean is connected.
      *

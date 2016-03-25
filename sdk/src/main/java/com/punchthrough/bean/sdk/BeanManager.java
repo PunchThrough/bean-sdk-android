@@ -89,9 +89,7 @@ public class BeanManager {
                 }
 
                 if (bean.shouldReconnect()) {
-                    // bean.shouldReconnect() is false by default, so newly-discovered Beans won't
-                    // be auto-reconnected to
-                    Log.i(TAG, "Auto reconnecting to Bean: " + bean.getDevice().getName());
+                    Log.i(TAG, "Auto-reconnecting to Bean: " + bean.describe());
                     bean.connect(bean.getLastKnownContext(), bean.getBeanListener());
                 }
 
