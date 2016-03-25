@@ -3,6 +3,7 @@ package com.punchthrough.bean.sdk.internal.upload.firmware;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
+import android.os.Handler;
 import android.util.Log;
 
 import com.punchthrough.bean.sdk.BeanManager;
@@ -13,7 +14,6 @@ import com.punchthrough.bean.sdk.internal.utility.Constants;
 import com.punchthrough.bean.sdk.internal.utility.Convert;
 import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.Callback;
-import com.punchthrough.bean.sdk.message.DeviceInfo;
 import com.punchthrough.bean.sdk.message.UploadProgress;
 import com.punchthrough.bean.sdk.upload.FirmwareBundle;
 import com.punchthrough.bean.sdk.upload.FirmwareImage;
@@ -31,40 +31,17 @@ public class OADProfile extends BaseProfile {
 
     public static final String TAG = "OADProfile";
 
-    /**
-     * The OAD Identify characteristic for this device. Assigned when firmware upload is started.
-     */
+    // OAD Characteristic handles
     private BluetoothGattCharacteristic oadIdentify;
-
-    /**
-     * The OAD Block characteristic for this device. Assigned when firmware upload is started.
-     */
     private BluetoothGattCharacteristic oadBlock;
-    
-    /**
-     * State of the current firmware upload process.
-     */
+
+    // OAD Internal State
     private FirmwareUploadState firmwareUploadState = FirmwareUploadState.INACTIVE;
-
-    /**
-     * The most recently offered firmware image
-     */
     private FirmwareImage currentImage;
-
-    /**
-     * Firmware bundle with A and B images to send
-     */
-    FirmwareBundle firmwareBundle;
-
-    /**
-     * Called to inform the Bean class when firmware upload is complete.
-     */
+    private FirmwareBundle firmwareBundle;
     private Runnable onComplete;
-
-    /**
-     * Called when an error causes the firmware upload to fail.
-     */
     private Callback<BeanError> onError;
+    private Callback<UploadProgress> onProgress;
 
     public OADProfile(GattClient client) {
         super(client);
@@ -111,8 +88,13 @@ public class OADProfile extends BaseProfile {
 
         if (blk == currentImage.blockCount() - 1) {
             Log.i(TAG, "Last block sent!");
+
+            // In theory, the device may or may not have already lost connection at this point
+            // so it seems kind of silly call .disconnect() here. However, it appears
+            // that you cannot call .connect() on a GattClient object twice without explicitly
+            // disconnecting first!
+            mGattClient.disconnect();
             Log.i(TAG, "Waiting for device to reconnect...");
-            BeanManager.getInstance().startDiscovery();
         }
     }
 
@@ -224,9 +206,52 @@ public class OADProfile extends BaseProfile {
         return result;
     }
 
+    private boolean needsUpdate(Long bundleVersion, String beanVersion) {
+        if (beanVersion.startsWith("OAD")) {
+            Log.i(TAG, "Bundle version: " + bundleVersion);
+            Log.i(TAG, "Bean version: " + beanVersion);
+            return true;
+        } else {
+            long parsedVersion = Long.parseLong(beanVersion.split(" ")[0]);
+            Log.i(TAG, "Bundle version: " + bundleVersion);
+            Log.i(TAG, "Bean version: " + parsedVersion);
+            if (bundleVersion > parsedVersion) {
+                return true;
+            } else {
+                Log.i(TAG, "No update required!");
+            }
+        }
+        return false;
+    }
+
+    private void checkFirmwareVersion() {
+        Log.i(TAG, "Checking Firmware version...");
+        setState(FirmwareUploadState.CHECKING_FW_VERSION);
+        mGattClient.getDeviceProfile().getFirmwareVersion(new DeviceProfile.FirmwareVersionCallback() {
+            @Override
+            public void onComplete(String version) {
+                if (needsUpdate(firmwareBundle.version(), version)) {
+                    triggerCurrentHeader();
+                } else {
+                    finishOAD();
+                }
+            }
+        });
+    }
+
+    private void finishOAD() {
+        Log.i(TAG, "OAD Finished");
+        setState(FirmwareUploadState.INACTIVE);
+        onComplete.run();
+    }
+
     /****************************************************************************
                                    PUBLIC METHODS
      ****************************************************************************/
+
+    public String getName() {
+        return "OAD Profile";
+    }
 
     public boolean uploadInProgress() {
         return firmwareUploadState != FirmwareUploadState.INACTIVE;
@@ -241,11 +266,18 @@ public class OADProfile extends BaseProfile {
     @Override
     public void onBeanConnected() {
         Log.i(TAG, "OAD Profile Detected Bean Connection!!!");
+        if (uploadInProgress()) {
+            checkFirmwareVersion();
+        }
     }
 
     @Override
     public void onBeanDisconnected() {
         Log.i(TAG, "OAD Profile Detected Bean Disconnection!!!");
+
+        if(uploadInProgress()) {
+            BeanManager.getInstance().startDiscovery();
+        }
     }
 
     @Override
@@ -258,10 +290,6 @@ public class OADProfile extends BaseProfile {
                 onNotificationBlock(characteristic);
             }
         }
-    }
-
-    public FirmwareUploadState getState() {
-        return firmwareUploadState;
     }
 
     /**
@@ -284,35 +312,9 @@ public class OADProfile extends BaseProfile {
         // Save state for this firmware procedure
         this.onComplete = onComplete;
         this.onError = onError;
+        this.onProgress = onProgress;
         this.firmwareBundle = bundle;
 
-        Log.i(TAG, "Checking Firmware version...");
-        setState(FirmwareUploadState.CHECKING_FW_VERSION);
-
-        mGattClient.getDeviceProfile().getFirmwareVersion(new DeviceProfile.FirmwareVersionCallback() {
-            @Override
-            public void onComplete(String version) {
-
-                if (version.startsWith("OAD")) {
-                    Log.i(TAG, "Bundle version: " + bundle.version());
-                    Log.i(TAG, "Bean version: " + version);
-                    triggerCurrentHeader();
-                } else {
-                    long beanVersion = Long.parseLong(version.split(" ")[0]);
-                    Log.i(TAG, "Bundle version: " + bundle.version());
-                    Log.i(TAG, "Bean version: " + beanVersion);
-                    if (bundle.version() > beanVersion) {
-                        triggerCurrentHeader();
-                    } else {
-                        Log.i(TAG, "No update required!");
-                        onComplete.run();
-                    }
-                }
-            }
-        });
-    }
-
-    public String getName() {
-        return "OAD Profile";
+        checkFirmwareVersion();
     }
 }
