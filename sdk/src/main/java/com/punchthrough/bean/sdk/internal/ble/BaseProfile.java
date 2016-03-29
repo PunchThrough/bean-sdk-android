@@ -27,6 +27,8 @@ public class BaseProfile {
 
     public void onBeanDisconnected() {}
 
+    public void onBeanConnectionFailed() {}
+
     public void onCharacteristicRead(GattClient client, BluetoothGattCharacteristic characteristic) {}
 
     public void onCharacteristicWrite(GattClient client, BluetoothGattCharacteristic characteristic) {}

@@ -88,12 +88,6 @@ public class OADProfile extends BaseProfile {
 
         if (blk == currentImage.blockCount() - 1) {
             Log.i(TAG, "Last block sent!");
-
-            // In theory, the device may or may not have already lost connection at this point
-            // so it seems kind of silly call .disconnect() here. However, it appears
-            // that you cannot call .connect() on a GattClient object twice without explicitly
-            // disconnecting first!
-            mGattClient.disconnect();
             Log.i(TAG, "Waiting for device to reconnect...");
         }
     }
@@ -186,6 +180,7 @@ public class OADProfile extends BaseProfile {
         setState(FirmwareUploadState.OFFERING_IMAGES);
 
         // To request the current header, write [0x00] to OAD Identify
+        firmwareBundle.reset();
         writeToCharacteristic(oadIdentify, new byte[]{0x00});
     }
 
@@ -268,13 +263,18 @@ public class OADProfile extends BaseProfile {
         Log.i(TAG, "OAD Profile Detected Bean Connection!!!");
         if (uploadInProgress()) {
             checkFirmwareVersion();
+            BeanManager.getInstance().cancelDiscovery();
         }
     }
 
     @Override
     public void onBeanDisconnected() {
         Log.i(TAG, "OAD Profile Detected Bean Disconnection!!!");
+    }
 
+    @Override
+    public void onBeanConnectionFailed() {
+        Log.i(TAG, "OAD Profile Detected Bean Connection FAILURE!!!");
         if(uploadInProgress()) {
             BeanManager.getInstance().startDiscovery();
         }

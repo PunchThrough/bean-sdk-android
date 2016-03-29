@@ -34,4 +34,8 @@ public class FirmwareBundle {
         return i;
     }
 
+    public void reset() {
+        imageCounter = 0;
+    }
+
 }

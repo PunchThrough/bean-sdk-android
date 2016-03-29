@@ -110,7 +110,15 @@ public class GattClient {
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
 
             if (status != BluetoothGatt.GATT_SUCCESS) {
-                connectionListener.onConnectionFailed();
+                if (getOADProfile().uploadInProgress()) {
+                    // Since an OAD update is currently in progress, only alert the OAD Profile
+                    // of the Bean disconnecting, not the ConnectionListener(s)
+                    getOADProfile().onBeanConnectionFailed();
+                } else {
+                    connectionListener.onConnectionFailed();
+                }
+
+                mConnected = false;
                 return;
             }
 
@@ -245,7 +253,7 @@ public class GattClient {
         }
         mConnected = false;
 
-        Log.i(TAG, "Gatt connectioon started");
+        Log.i(TAG, "Gatt connection started");
         mGatt = device.connectGatt(context, false, mBluetoothGattCallback);
         Log.i(TAG, "Refreshing GATT Cache");
         refreshDeviceCache(mGatt);
