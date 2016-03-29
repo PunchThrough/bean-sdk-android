@@ -63,6 +63,8 @@ public class TestBeanFirmwareUpdate extends BeanTestCase {
 
     public void testFirmwareUpdate() throws Exception {
 
+        final CountDownLatch fwLatch = new CountDownLatch(1);
+
         final Callback<UploadProgress> onProgress = new Callback<UploadProgress>() {
             @Override
             public void onResult(UploadProgress result) {
@@ -74,13 +76,11 @@ public class TestBeanFirmwareUpdate extends BeanTestCase {
             @Override
             public void run() {
                 System.out.println("[BEANTEST] - Complete!");
+                fwLatch.countDown();
             }
         };
 
         bean.programWithFirmware(getAsymmBundle(), onProgress, onComplete);
-        CountDownLatch fwLatch = new CountDownLatch(1);
         fwLatch.await(8000, TimeUnit.SECONDS);
-
     }
-
 }
