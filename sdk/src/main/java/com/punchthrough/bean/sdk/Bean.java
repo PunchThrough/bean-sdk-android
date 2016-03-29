@@ -157,11 +157,6 @@ public class Bean implements Parcelable {
     private final BluetoothDevice device;
 
     /**
-     * Whether the Bean is connected or not.
-     */
-    private boolean connected;
-
-    /**
      * Auto reconnect state flag
      */
     private boolean autoReconnect = false;
@@ -298,7 +293,6 @@ public class Bean implements Parcelable {
         GattClient.ConnectionListener connectionListener = new GattClient.ConnectionListener() {
             @Override
             public void onConnected() {
-                connected = true;
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -309,7 +303,6 @@ public class Bean implements Parcelable {
 
             @Override
             public void onConnectionFailed() {
-                connected = false;
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -321,7 +314,6 @@ public class Bean implements Parcelable {
             @Override
             public void onDisconnected() {
                 beanCallbacks.clear();
-                connected = false;
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -745,13 +737,8 @@ public class Bean implements Parcelable {
         return String.format("%s (%s)", getDevice().getName(), getDevice().getAddress());
     }
 
-    /**
-     * Check if the Bean is connected.
-     *
-     * @return true if the Bean is connected
-     */
     public boolean isConnected() {
-        return connected;
+        return gattClient.isConnected();
     }
 
     /**
@@ -782,9 +769,6 @@ public class Bean implements Parcelable {
      * @param listener the Bean listener
      */
     public void connect(Context context, BeanListener listener) {
-        if (connected) {
-            return;
-        }
         lastKnownContext = context;
         beanListener = listener;
         gattClient.connect(context, device);
@@ -795,7 +779,6 @@ public class Bean implements Parcelable {
      */
     public void disconnect() {
         gattClient.disconnect();
-        connected = false;
     }
 
     /**
