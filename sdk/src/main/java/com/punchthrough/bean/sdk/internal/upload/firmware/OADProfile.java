@@ -9,6 +9,7 @@ import com.punchthrough.bean.sdk.BeanManager;
 import com.punchthrough.bean.sdk.internal.ble.BaseProfile;
 import com.punchthrough.bean.sdk.internal.ble.GattClient;
 import com.punchthrough.bean.sdk.internal.device.DeviceProfile;
+import com.punchthrough.bean.sdk.internal.exception.OADException;
 import com.punchthrough.bean.sdk.internal.utility.Constants;
 import com.punchthrough.bean.sdk.internal.utility.Convert;
 import com.punchthrough.bean.sdk.message.BeanError;
@@ -60,13 +61,22 @@ public class OADProfile extends BaseProfile {
     }
 
     private void offerNextImage() {
-        currentImage = firmwareBundle.getNextImage();
-        Log.i(TAG, "Offering image: " + currentImage.name());
-        writeToCharacteristic(oadIdentify, currentImage.metadata());
+        try {
+            currentImage = firmwareBundle.getNextImage();
+        } catch (OADException e) {
+            Log.e(TAG, e.getMessage());
+            finishOAD();
+        }
+
+        if (currentImage != null) {
+            Log.i(TAG, "Offering image: " + currentImage.name());
+            writeToCharacteristic(oadIdentify, currentImage.metadata());
+        }
     }
 
     private void startOfferingImages() {
         setState(FirmwareUploadState.OFFERING_IMAGES);
+        currentImage = null;
         firmwareBundle.reset();
         offerNextImage();
     }
@@ -292,8 +302,10 @@ public class OADProfile extends BaseProfile {
      * @param onComplete    Called when the upload is complete
      * @param onError       Called if an error occurs during the upload
      */
-    public void programWithFirmware(final FirmwareBundle bundle, final Callback<UploadProgress> onProgress,
-                                    final Runnable onComplete, Callback<BeanError> onError) {
+    public void programWithFirmware(final FirmwareBundle bundle,
+                                    final Callback<UploadProgress> onProgress,
+                                    final Runnable onComplete,
+                                    Callback<BeanError> onError) {
 
         if (!mGattClient.isConnected()) {
             onError.onResult(BeanError.NOT_CONNECTED);

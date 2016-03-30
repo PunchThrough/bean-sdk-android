@@ -1,6 +1,7 @@
 package com.punchthrough.bean.sdk.upload;
 
-import java.math.BigInteger;
+import com.punchthrough.bean.sdk.internal.exception.OADException;
+
 import java.util.List;
 
 
@@ -22,11 +23,11 @@ public class FirmwareBundle {
         return images.get(0).version();
     }
 
-    public FirmwareImage getNextImage() {
+    public FirmwareImage getNextImage() throws OADException {
         FirmwareImage i = images.get(imageCounter);
 
         if (imageCounter >= images.size() - 1) {
-            imageCounter = 0;
+            throw new OADException("Firmware bundle is exhausted, all images rejected");
         } else {
             imageCounter++;
         }
