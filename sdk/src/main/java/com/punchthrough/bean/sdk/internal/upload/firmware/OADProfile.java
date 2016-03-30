@@ -3,7 +3,6 @@ package com.punchthrough.bean.sdk.internal.upload.firmware;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
-import android.os.Handler;
 import android.util.Log;
 
 import com.punchthrough.bean.sdk.BeanManager;
@@ -58,11 +57,6 @@ public class OADProfile extends BaseProfile {
         onComplete = null;
         onError = null;
         currentImage = null;
-    }
-
-    private void complete() {
-        onComplete.run();
-        resetState();
     }
 
     private void onNotificationIdentify(BluetoothGattCharacteristic characteristic) {

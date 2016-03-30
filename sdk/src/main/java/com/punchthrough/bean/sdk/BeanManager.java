@@ -149,6 +149,12 @@ public class BeanManager {
         return false;
     }
 
+    /**
+     * Start discovering nearby Beans using an existing BeanListener.
+     *
+     * Currently this function is only used by OADProfile to start scanning after
+     * the Bean disconnects during the OAD process.
+     */
     public boolean startDiscovery() {
         if (mListener == null) {
             throw new NullPointerException("Listener cannot be null");
