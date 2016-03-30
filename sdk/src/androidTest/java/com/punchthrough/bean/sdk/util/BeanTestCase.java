@@ -199,7 +199,7 @@ public class BeanTestCase extends AndroidTestCase {
                         bean.getDevice().getAddress());
                 System.out.println(msg);
 
-                if (bean.getDevice().getName().equals(beanName)) {
+                if (beanName.equals(bean.getDevice().getName())) {
                     beans.add(bean);
                     beanLatch.countDown();
                 } else if (rssi > highestRssi) {
