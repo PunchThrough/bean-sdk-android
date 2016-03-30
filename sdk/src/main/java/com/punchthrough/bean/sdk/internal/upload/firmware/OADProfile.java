@@ -209,13 +209,17 @@ public class OADProfile extends BaseProfile {
             Log.i(TAG, "Bean version: " + beanVersion);
             return true;
         } else {
-            long parsedVersion = Long.parseLong(beanVersion.split(" ")[0]);
-            Log.i(TAG, "Bundle version: " + bundleVersion);
-            Log.i(TAG, "Bean version: " + parsedVersion);
-            if (bundleVersion > parsedVersion) {
-                return true;
-            } else {
-                Log.i(TAG, "No update required!");
+            try {
+                long parsedVersion = Long.parseLong(beanVersion.split(" ")[0]);
+                Log.i(TAG, "Bundle version: " + bundleVersion);
+                Log.i(TAG, "Bean version: " + parsedVersion);
+                if (bundleVersion > parsedVersion) {
+                    return true;
+                } else {
+                    Log.i(TAG, "No update required!");
+                }
+            } catch (NumberFormatException e) {
+                Log.e(TAG, "Couldn't parse Bean Version: " + beanVersion);
             }
         }
         return false;
