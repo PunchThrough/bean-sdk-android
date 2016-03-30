@@ -59,10 +59,20 @@ public class OADProfile extends BaseProfile {
         currentImage = null;
     }
 
-    private void onNotificationIdentify(BluetoothGattCharacteristic characteristic) {
+    private void offerNextImage() {
         currentImage = firmwareBundle.getNextImage();
         Log.i(TAG, "Offering image: " + currentImage.name());
         writeToCharacteristic(oadIdentify, currentImage.metadata());
+    }
+
+    private void startOfferingImages() {
+        setState(FirmwareUploadState.OFFERING_IMAGES);
+        firmwareBundle.reset();
+        offerNextImage();
+    }
+
+    private void onNotificationIdentify(BluetoothGattCharacteristic characteristic) {
+        offerNextImage();
     }
 
     private void onNotificationBlock(BluetoothGattCharacteristic characteristic) {
@@ -167,19 +177,6 @@ public class OADProfile extends BaseProfile {
     }
 
     /**
-     * Request the Bean's current OAD firmware header.
-     */
-    private void triggerCurrentHeader() {
-
-        Log.d(TAG, "Requesting current header");
-        setState(FirmwareUploadState.OFFERING_IMAGES);
-
-        // To request the current header, write [0x00] to OAD Identify
-        firmwareBundle.reset();
-        writeToCharacteristic(oadIdentify, new byte[]{0x00});
-    }
-
-    /**
      * @param charc The characteristic being inspected
      * @return      true if it's the OAD Block characteristic
      */
@@ -221,7 +218,7 @@ public class OADProfile extends BaseProfile {
             @Override
             public void onComplete(String version) {
                 if (needsUpdate(firmwareBundle.version(), version)) {
-                    triggerCurrentHeader();
+                    startOfferingImages();
                 } else {
                     finishOAD();
                 }
