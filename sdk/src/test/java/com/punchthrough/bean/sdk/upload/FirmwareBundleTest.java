@@ -1,6 +1,7 @@
 package com.punchthrough.bean.sdk.upload;
 
 import com.punchthrough.bean.sdk.internal.exception.ImageParsingException;
+import com.punchthrough.bean.sdk.internal.exception.OADException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -9,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.punchthrough.bean.sdk.internal.utility.Convert.intArrayToByteArray;
+import static junit.framework.Assert.fail;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class FirmwareBundleTest {
@@ -39,20 +41,23 @@ public class FirmwareBundleTest {
     }
 
     @Test
-    public void testFirmwareBundleGetNextImageOneImage() throws ImageParsingException {
+    public void testFirmwareBundleGetNextImageOneImage() throws ImageParsingException, OADException {
         // Create a bundle with only 1 image
         images.add(imageA);
         bundle = new FirmwareBundle(images);
 
-        // Same image returned every time
         assertThat(bundle.getNextImage()).isEqualTo(imageA);
-        assertThat(bundle.getNextImage()).isEqualTo(imageA);
-        assertThat(bundle.getNextImage()).isEqualTo(imageA);
-        assertThat(bundle.getNextImage()).isEqualTo(imageA);
+        try {
+            bundle.getNextImage();
+            fail("Expected OAD Exception");
+        } catch (OADException e) {
+            // good
+        }
+
     }
 
     @Test
-    public void testFirmwareBundleGetNextImageManyImages() throws ImageParsingException {
+    public void testFirmwareBundleGetNextImageManyImages() throws ImageParsingException, OADException {
         // Create a bundle with more than 1 image
         images.add(imageA);
         images.add(imageB);
@@ -61,8 +66,12 @@ public class FirmwareBundleTest {
         // Images shoute rotate each call
         assertThat(bundle.getNextImage()).isEqualTo(imageA);
         assertThat(bundle.getNextImage()).isEqualTo(imageB);
-        assertThat(bundle.getNextImage()).isEqualTo(imageA);
-        assertThat(bundle.getNextImage()).isEqualTo(imageB);
+        try {
+            bundle.getNextImage();
+            fail("Expected OAD Exception");
+        } catch (OADException e) {
+            // good
+        }
     }
 
 }

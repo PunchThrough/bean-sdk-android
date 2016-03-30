@@ -24,14 +24,12 @@ public class FirmwareBundle {
     }
 
     public FirmwareImage getNextImage() throws OADException {
-        FirmwareImage i = images.get(imageCounter);
-
-        if (imageCounter >= images.size() - 1) {
+        if (imageCounter >= images.size() ) {
             throw new OADException("Firmware bundle is exhausted, all images rejected");
-        } else {
-            imageCounter++;
         }
 
+        FirmwareImage i = images.get(imageCounter);
+        imageCounter++;
         return i;
     }
 
