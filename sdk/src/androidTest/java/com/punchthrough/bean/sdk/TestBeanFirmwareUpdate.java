@@ -68,7 +68,6 @@ public class TestBeanFirmwareUpdate extends BeanTestCase {
         final Callback<UploadProgress> onProgress = new Callback<UploadProgress>() {
             @Override
             public void onResult(UploadProgress result) {
-                System.out.println("[BEANTEST] On Result: " + result);
             }
         };
 

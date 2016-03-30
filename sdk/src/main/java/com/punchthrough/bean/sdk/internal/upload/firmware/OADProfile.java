@@ -85,6 +85,7 @@ public class OADProfile extends BaseProfile {
         }
 
         writeToCharacteristic(oadBlock, currentImage.block(blk));
+        onProgress.onResult(UploadProgress.create(blk, currentImage.blockCount()));
 
         if (blk == currentImage.blockCount() - 1) {
             Log.i(TAG, "Last block sent!");
