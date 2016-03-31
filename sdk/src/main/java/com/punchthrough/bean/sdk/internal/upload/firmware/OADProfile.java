@@ -266,7 +266,7 @@ public class OADProfile extends BaseProfile {
 
     @Override
     public void onBeanConnected() {
-        Log.i(TAG, "OAD Profile Detected Bean Connection!!!");
+        Log.i(TAG, "OAD Profile Detected Bean Connection");
         if (uploadInProgress()) {
             checkFirmwareVersion();
             BeanManager.getInstance().cancelDiscovery();
@@ -275,12 +275,12 @@ public class OADProfile extends BaseProfile {
 
     @Override
     public void onBeanDisconnected() {
-        Log.i(TAG, "OAD Profile Detected Bean Disconnection!!!");
+        Log.i(TAG, "OAD Profile Detected Bean Disconnection");
     }
 
     @Override
     public void onBeanConnectionFailed() {
-        Log.i(TAG, "OAD Profile Detected Bean Connection FAILURE!!!");
+        Log.i(TAG, "OAD Profile Detected Connection Failure, Likely a device reboot");
         if(uploadInProgress()) {
             BeanManager.getInstance().startDiscovery();
         }
@@ -315,7 +315,7 @@ public class OADProfile extends BaseProfile {
             onError.onResult(BeanError.NOT_CONNECTED);
         }
 
-        Log.i(TAG, "Starting firmware update procedure!");
+        Log.i(TAG, "Starting firmware update procedure");
 
         // Save state for this firmware procedure
         this.onComplete = onComplete;

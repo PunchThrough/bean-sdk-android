@@ -85,12 +85,12 @@ public class BeanTestCase extends AndroidTestCase {
 
         @Override
         public void onConnectionFailed() {
-            System.out.println("[BeanTest] On Connection Failed!!!!");
+            System.out.println("[BeanTest] On Connection Failed");
         }
 
         @Override
         public void onDisconnected() {
-            System.out.println("[BeanTest] Disconnect Event!");
+            System.out.println("[BeanTest] Disconnect Event");
             disconnectLatch.countDown();
         }
 
@@ -215,7 +215,7 @@ public class BeanTestCase extends AndroidTestCase {
 
             @Override
             public void onDiscoveryComplete() {
-                System.out.println("[BeanUtils] Discovery Complete!");
+                System.out.println("[BeanUtils] Discovery Complete");
                 beanLatch.countDown();
             }
         };
@@ -224,7 +224,7 @@ public class BeanTestCase extends AndroidTestCase {
         assertThat(startedOK).isTrue();
         beanLatch.await(20, TimeUnit.SECONDS);
         if (beans.isEmpty()) {
-            throw new Exception("No beans found!!!");
+            throw new Exception("No beans found");
         }
         Bean bean = beans.get(beans.size() - 1);
         System.out.println("Closest Bean: " + bean.describe());
