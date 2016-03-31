@@ -36,7 +36,7 @@ public class OADProfile extends BaseProfile {
     private BluetoothGattCharacteristic oadBlock;
 
     // OAD Internal State
-    private FirmwareUploadState firmwareUploadState = FirmwareUploadState.INACTIVE;
+    private OADState oadState = OADState.INACTIVE;
     private FirmwareImage currentImage;
     private FirmwareBundle firmwareBundle;
     private Runnable onComplete;
@@ -48,13 +48,13 @@ public class OADProfile extends BaseProfile {
         resetState();
     }
 
-    private void setState(FirmwareUploadState state) {
-        Log.i(TAG, String.format("OAD State Change: %s -> %s", firmwareUploadState.name(), state.name()));
-        firmwareUploadState = state;
+    private void setState(OADState state) {
+        Log.i(TAG, String.format("OAD State Change: %s -> %s", oadState.name(), state.name()));
+        oadState = state;
     }
 
     private void resetState() {
-        setState(FirmwareUploadState.INACTIVE);
+        setState(OADState.INACTIVE);
         onComplete = null;
         onError = null;
         currentImage = null;
@@ -75,7 +75,7 @@ public class OADProfile extends BaseProfile {
     }
 
     private void startOfferingImages() {
-        setState(FirmwareUploadState.OFFERING_IMAGES);
+        setState(OADState.OFFERING_IMAGES);
         currentImage = null;
         firmwareBundle.reset();
         offerNextImage();
@@ -91,7 +91,7 @@ public class OADProfile extends BaseProfile {
         if (blk == 0) {
             Log.i(TAG, "Image accepted: " + currentImage.name());
             Log.i(TAG, String.format("Starting Block Transfer of %d blocks", currentImage.blockCount()));
-            setState(FirmwareUploadState.BLOCK_XFER);
+            setState(OADState.BLOCK_XFER);
         }
 
         if (blk % 100 == 0) {
@@ -104,6 +104,7 @@ public class OADProfile extends BaseProfile {
         if (blk == currentImage.blockCount() - 1) {
             Log.i(TAG, "Last block sent!");
             Log.i(TAG, "Waiting for device to reconnect...");
+            setState(OADState.RECONNECTING);
         }
     }
 
@@ -227,7 +228,7 @@ public class OADProfile extends BaseProfile {
 
     private void checkFirmwareVersion() {
         Log.i(TAG, "Checking Firmware version...");
-        setState(FirmwareUploadState.CHECKING_FW_VERSION);
+        setState(OADState.CHECKING_FW_VERSION);
         mGattClient.getDeviceProfile().getFirmwareVersion(new DeviceProfile.FirmwareVersionCallback() {
             @Override
             public void onComplete(String version) {
@@ -242,7 +243,7 @@ public class OADProfile extends BaseProfile {
 
     private void finishOAD() {
         Log.i(TAG, "OAD Finished");
-        setState(FirmwareUploadState.INACTIVE);
+        setState(OADState.INACTIVE);
         onComplete.run();
     }
 
@@ -255,7 +256,11 @@ public class OADProfile extends BaseProfile {
     }
 
     public boolean uploadInProgress() {
-        return firmwareUploadState != FirmwareUploadState.INACTIVE;
+        return oadState != OADState.INACTIVE;
+    }
+
+    public OADState getState() {
+        return oadState;
     }
 
     @Override

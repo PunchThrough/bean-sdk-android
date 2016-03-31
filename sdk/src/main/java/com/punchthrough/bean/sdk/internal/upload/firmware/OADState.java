@@ -1,6 +1,6 @@
 package com.punchthrough.bean.sdk.internal.upload.firmware;
 
-public enum FirmwareUploadState {
+public enum OADState {
     /**
      * No firmware upload is in progress
      */

@@ -56,7 +56,7 @@ public class OADProfileTest {
     });
 
     // Test state
-    DeviceProfile.DeviceInfoCallback testDeviceInfoCallback;
+    DeviceProfile.FirmwareVersionCallback fwVersionCallback;
     List<BeanError> testErrors = new ArrayList<>();
 
     // Mocks
@@ -103,10 +103,13 @@ public class OADProfileTest {
         doAnswer(new Answer() {
             public Object answer(InvocationOnMock invocation) {
                 Object[] args = invocation.getArguments();
-                testDeviceInfoCallback = (DeviceProfile.DeviceInfoCallback) args[0];
+                fwVersionCallback = (DeviceProfile.FirmwareVersionCallback) args[0];
                 return null;
             }
-        }).when(mockDeviceProfile).getDeviceInfo(any(DeviceProfile.DeviceInfoCallback.class));
+        }).when(mockDeviceProfile).getFirmwareVersion(any(DeviceProfile.FirmwareVersionCallback.class));
+
+        oadProfile.onProfileReady();
+        oadProfile.onBeanConnected();
     }
 
     private FirmwareBundle buildBundle() throws ImageParsingException {
@@ -139,18 +142,33 @@ public class OADProfileTest {
         }
     };
 
-    @Test
-    public void testProgramWithFirmware() throws ImageParsingException {
-
-        // Build a firmware bundle
-        FirmwareBundle bundle = buildBundle();
-
-        // Start test
-        oadProfile.programWithFirmware(bundle, onProgress, onComplete, onError);
-
-        // Assert no errors
+    private void assertNoErrors() {
         for (BeanError e : testErrors) {
             fail(e.toString());
         }
+    }
+
+    private void assertState(OADState state) {
+        if (state != oadProfile.getState()) {
+            fail(String.format("Unexpected state: %s", oadProfile.getState()));
+        }
+    }
+
+    @Test
+    public void testNoUpdateNeeded() throws ImageParsingException {
+        oadProfile.programWithFirmware(buildBundle(), onProgress, onComplete, onError);
+        assertState(OADState.CHECKING_FW_VERSION);
+        fwVersionCallback.onComplete("12345");  // Same as bundle version
+        assertState(OADState.INACTIVE);
+        assertNoErrors();
+    }
+
+    @Test
+    public void testUpdateNeeded() throws ImageParsingException {
+        oadProfile.programWithFirmware(buildBundle(), onProgress, onComplete, onError);
+        assertState(OADState.CHECKING_FW_VERSION);
+        fwVersionCallback.onComplete("1234"); // Less than bundle version
+        assertState(OADState.OFFERING_IMAGES);
+        assertNoErrors();
     }
 }
