@@ -4,12 +4,10 @@ import android.test.suitebuilder.annotation.Suppress;
 
 import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.Callback;
-import com.punchthrough.bean.sdk.message.DeviceInfo;
 import com.punchthrough.bean.sdk.message.LedColor;
 import com.punchthrough.bean.sdk.message.ScratchBank;
 import com.punchthrough.bean.sdk.message.SketchMetadata;
 import com.punchthrough.bean.sdk.message.UploadProgress;
-import com.punchthrough.bean.sdk.upload.FirmwareImage;
 import com.punchthrough.bean.sdk.upload.SketchHex;
 import com.punchthrough.bean.sdk.util.BeanTestCase;
 
@@ -48,7 +46,7 @@ public class TestBeanAdvanced extends BeanTestCase {
 
     @Suppress
     public void testBeanSketchUpload() throws Exception {
-        final Bean bean = discoverBean("TESTBEAN");
+        final Bean bean = discoverBean();
         synchronousConnect(bean);
         String hwVersion = getDeviceInformation(bean).hardwareVersion();
 
@@ -114,7 +112,7 @@ public class TestBeanAdvanced extends BeanTestCase {
          * Sketch needed can be found in sdk/src/androidTest/assets/bean_fw_advanced_callbacks.
          */
 
-        final Bean bean = discoverBean(beanName);
+        final Bean bean = discoverBean();
 
         // TODO: The latch should have a value of 4 when all callbacks are operational
         final CountDownLatch testCompletionLatch = new CountDownLatch(3);
@@ -239,7 +237,7 @@ public class TestBeanAdvanced extends BeanTestCase {
     public void testFastSerialMessages() throws Exception {
         int times = 100;
         final CountDownLatch testCompletionLatch = new CountDownLatch(times);
-        Bean bean = discoverBean(beanName);
+        Bean bean = discoverBean();
         synchronousConnect(bean);
         for (int i = 0; i < times; i ++) {
             bean.readLed(new Callback<LedColor>() {

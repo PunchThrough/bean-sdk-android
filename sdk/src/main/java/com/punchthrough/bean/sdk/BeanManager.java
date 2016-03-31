@@ -89,9 +89,7 @@ public class BeanManager {
                 }
 
                 if (bean.shouldReconnect()) {
-                    // bean.shouldReconnect() is false by default, so newly-discovered Beans won't
-                    // be auto-reconnected to
-                    Log.i(TAG, "Auto reconnecting to Bean: " + bean.getDevice().getName());
+                    Log.i(TAG, "Auto-reconnecting to Bean: " + bean.describe());
                     bean.connect(bean.getLastKnownContext(), bean.getBeanListener());
                 }
 
@@ -148,6 +146,30 @@ public class BeanManager {
             return true;
         }
 
+        return false;
+    }
+
+    /**
+     * Start discovering nearby Beans using an existing BeanListener.
+     *
+     * Currently this function is only used by OADProfile to start scanning after
+     * the Bean disconnects during the OAD process.
+     */
+    public boolean startDiscovery() {
+        if (mListener == null) {
+            throw new NullPointerException("Listener cannot be null");
+        }
+
+        if (mScanning) {
+            cancelDiscovery();
+        }
+
+        mScanning = true;
+
+        if (btAdapter.startLeScan(mCallback)) {
+            mHandler.postDelayed(mCompleteDiscoveryCallback, SCAN_TIMEOUT);
+            return true;
+        }
         return false;
     }
 

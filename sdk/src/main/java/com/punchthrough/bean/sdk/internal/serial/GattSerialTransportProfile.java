@@ -1,6 +1,5 @@
 package com.punchthrough.bean.sdk.internal.serial;
 
-import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
@@ -33,11 +32,11 @@ public class GattSerialTransportProfile extends BaseProfile {
     // Constants
     public static final int PACKET_TX_MAX_PAYLOAD_LENGTH = 19;
     private static final List<UUID> BEAN_SCRATCH_UUIDS = Arrays.asList(
-            Constants.BEAN_SCRATCH_1_CHAR_UUID,
-            Constants.BEAN_SCRATCH_2_CHAR_UUID,
-            Constants.BEAN_SCRATCH_3_CHAR_UUID,
-            Constants.BEAN_SCRATCH_4_CHAR_UUID,
-            Constants.BEAN_SCRATCH_5_CHAR_UUID
+            Constants.UUID_SCRATCH_CHAR_1,
+            Constants.UUID_SCRATCH_CHAR_2,
+            Constants.UUID_SCRATCH_CHAR_3,
+            Constants.UUID_SCRATCH_CHAR_4,
+            Constants.UUID_SCRATCH_CHAR_5
     );
 
     // Internal dependencies
@@ -80,8 +79,8 @@ public class GattSerialTransportProfile extends BaseProfile {
     @Override
     public void onProfileReady() {
 
-        BluetoothGattService service = mGattClient.getService(Constants.BEAN_SERIAL_SERVICE_UUID);
-        mSerialCharacteristic = service.getCharacteristic(Constants.BEAN_SERIAL_CHARACTERISTIC_UUID);
+        BluetoothGattService service = mGattClient.getService(Constants.UUID_SERIAL_CHAR);
+        mSerialCharacteristic = service.getCharacteristic(Constants.UUID_SERIAL_SERVICE);
         if (mSerialCharacteristic == null) {
             Log.w(TAG, "Did not find bean serial on device");
             abort("Did not find bean serial on device");
@@ -96,7 +95,7 @@ public class GattSerialTransportProfile extends BaseProfile {
                 }
             }
 
-            service = mGattClient.getService(Constants.BEAN_SCRATCH_SERVICE_UUID);
+            service = mGattClient.getService(Constants.UUID_SCRATCH_SERVICE);
 
             boolean hasScratchChars = true;
 
@@ -214,6 +213,10 @@ public class GattSerialTransportProfile extends BaseProfile {
      */
     public void setListener(SerialListener listener) {
         this.mListener = listener;
+    }
+
+    public String getName() {
+        return "Serial Profile";
     }
 
     // This listener is only for communicating with the Bean class

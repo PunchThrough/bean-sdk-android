@@ -2,6 +2,7 @@ package com.punchthrough.bean.sdk.util;
 
 import android.content.Context;
 import android.os.Looper;
+import android.os.Parcel;
 import android.test.AndroidTestCase;
 
 import com.punchthrough.bean.sdk.Bean;
@@ -12,6 +13,7 @@ import com.punchthrough.bean.sdk.BuildConfig;
 import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.Callback;
 import com.punchthrough.bean.sdk.message.DeviceInfo;
+import com.punchthrough.bean.sdk.message.LedColor;
 import com.punchthrough.bean.sdk.message.ScratchBank;
 import com.punchthrough.bean.sdk.message.SketchMetadata;
 
@@ -26,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class BeanTestCase extends AndroidTestCase {
 
+    public Bean testBean;
     public final String beanName = BuildConfig.BEAN_NAME; // there is a beanName gradle property, so
                                                           // set with -PbeanName=\"TESTBEAN\"
 
@@ -53,19 +56,41 @@ public class BeanTestCase extends AndroidTestCase {
         lr.start();
     }
 
+    protected void tearDown() {}
+
+    protected void setUpTestBean() {
+        try {
+            testBean = discoverBean();
+            synchronousConnect(testBean);
+        } catch(Exception e) {
+            fail("Error connecting to " + beanName + " bean in setup.");
+        }
+    }
+
+    protected void tearDownTestBean() {
+        try {
+            super.tearDown();
+            synchronousDisconnect(testBean);
+        } catch(Exception e) {
+            fail("Error disconnecting.  This may affect later tests.");
+        }
+    }
+
     private final BeanListener beanConnectionListener = new BeanListener() {
         @Override
         public void onConnected() {
+            System.out.println("[BeanTest] Connect Event!");
             connectLatch.countDown();
         }
 
         @Override
         public void onConnectionFailed() {
-            fail("Connection failed");
+            System.out.println("[BeanTest] On Connection Failed");
         }
 
         @Override
         public void onDisconnected() {
+            System.out.println("[BeanTest] Disconnect Event");
             disconnectLatch.countDown();
         }
 
@@ -77,6 +102,7 @@ public class BeanTestCase extends AndroidTestCase {
 
         @Override
         public void onError(BeanError error) {
+            System.out.println("On Error: " + error.toString());
             fail(error.toString());
         }
     };
@@ -87,8 +113,9 @@ public class BeanTestCase extends AndroidTestCase {
          * the .onConnected() callback in a BeanListener.
          */
 
-        connectLatch.await(20, TimeUnit.SECONDS);
+        connectLatch.await(100, TimeUnit.SECONDS);
         assertThat(bean.isConnected()).isTrue();
+        System.out.println("Connected to Bean: " + bean.describe());
     }
 
     protected void ensureDisconnected(Bean bean, CountDownLatch disconnectLatch) throws InterruptedException {
@@ -97,7 +124,7 @@ public class BeanTestCase extends AndroidTestCase {
          * the .onDisconnected() callback in a BeanListener.
          */
 
-        disconnectLatch.await(20, TimeUnit.SECONDS);
+        disconnectLatch.await(60, TimeUnit.SECONDS);
         assertThat(bean.isConnected()).isFalse();
     }
 
@@ -147,36 +174,62 @@ public class BeanTestCase extends AndroidTestCase {
         return beans;
     }
 
-    protected Bean discoverBean(String name) throws Exception {
+    protected Bean discoverBean() throws Exception {
+        /**
+         * Discover a Bean that will be used for instrumentation testing
+         *
+         * The Bean selected will be selected based on the following criteria:
+         *   - The Bean name matches the one set in gradle.properties
+         *   - The closest Bean based on highest RSSI
+         *
+         */
+
         final CountDownLatch beanLatch = new CountDownLatch(1);
         final List<Bean> beans = new ArrayList<>();
 
-        final String targetName = name;
-
         BeanDiscoveryListener listener = new BeanDiscoveryListener() {
+
+            int highestRssi = -120;
+
             @Override
             public void onBeanDiscovered(Bean bean, int rssi) {
-                if (bean.getDevice().getName() != null && bean.getDevice().getName().equals(targetName)) {
-                    System.out.println("[BeanUtils] Found Bean by name: " + targetName);
+                String msg = String.format("Found Bean: %s (RSSI: %s) (%s)",
+                        bean.getDevice().getName(),
+                        rssi,
+                        bean.getDevice().getAddress());
+                System.out.println(msg);
+
+                if (beanName.equals(bean.getDevice().getName())) {
                     beans.add(bean);
                     beanLatch.countDown();
+                } else if (rssi > highestRssi) {
+                    highestRssi = rssi;
+                    beans.add(bean);
+
+                    if (rssi >= -50) {
+                        // This Bean is very close, lets quit early to speed up the test
+                        beanLatch.countDown();
+                    }
                 }
             }
 
             @Override
             public void onDiscoveryComplete() {
-                System.out.println("[BeanUtils] Discovery Complete!");
+                System.out.println("[BeanUtils] Discovery Complete");
                 beanLatch.countDown();
             }
         };
 
         boolean startedOK = BeanManager.getInstance().startDiscovery(listener);
         assertThat(startedOK).isTrue();
-        beanLatch.await(60, TimeUnit.SECONDS);
+        beanLatch.await(20, TimeUnit.SECONDS);
         if (beans.isEmpty()) {
-            throw new Exception("No bean named: " + name);
+            throw new Exception("No beans found");
         }
-        return beans.get(0);
+        Bean bean = beans.get(beans.size() - 1);
+        System.out.println("Closest Bean: " + bean.describe());
+        BeanManager.getInstance().cancelDiscovery();
+        return bean;
     }
 
     protected DeviceInfo getDeviceInformation(Bean bean) throws Exception {
@@ -219,11 +272,39 @@ public class BeanTestCase extends AndroidTestCase {
         return metadatas.get(0);
     }
 
-    protected static List<String> filesInAssetDir(Context context, String dirName) throws IOException {
+    protected static List<String> filesInAssetDir(Context context, String dirName) {
 
-        String[] filePathArray = context.getAssets().list(dirName);
+        String[] filePathArray = new String[0];
+        try {
+            filePathArray = context.getAssets().list(dirName);
+        } catch (IOException e) {
+            fail(e.getMessage());
+        }
         return Arrays.asList(filePathArray);
 
     }
 
+    protected void blinkBeanThrice(Bean bean) {
+        LedColor blue = LedColor.create(0, 0, 255);
+        LedColor off = LedColor.create(0, 0, 0);
+        int sleep = 500;
+
+        try {
+            bean.setLed(blue);
+            Thread.sleep(sleep);
+            bean.setLed(off);
+            Thread.sleep(sleep);
+
+            bean.setLed(blue);
+            Thread.sleep(sleep);
+            bean.setLed(off);
+            Thread.sleep(sleep);
+
+            bean.setLed(blue);
+            Thread.sleep(sleep);
+            bean.setLed(off);
+        } catch (InterruptedException e) {
+            fail(e.getMessage());
+        }
+    }
 }

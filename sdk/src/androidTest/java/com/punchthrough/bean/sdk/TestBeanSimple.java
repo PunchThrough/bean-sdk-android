@@ -1,6 +1,5 @@
 package com.punchthrough.bean.sdk;
 
-import com.punchthrough.bean.sdk.internal.battery.BatteryProfile;
 import com.punchthrough.bean.sdk.message.BatteryLevel;
 import com.punchthrough.bean.sdk.message.ScratchBank;
 import com.punchthrough.bean.sdk.message.ScratchData;
@@ -23,25 +22,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class TestBeanSimple extends BeanTestCase {
 
-    Bean bean;
-
     public void setUp() {
         super.setUp();
-        try {
-            bean = discoverBean(beanName);
-            synchronousConnect(bean);
-        } catch(Exception e) {
-            fail("Error connecting to " + beanName + " bean in setup.");
-        }
+        setUpTestBean();
     }
 
     public void tearDown() {
-        try {
-            super.tearDown();
-            synchronousDisconnect(bean);
-        } catch(Exception e) {
-            fail("Error disconnecting.  This may affect later tests.");
-        }
+        super.tearDown();
+        tearDownTestBean();
     }
 
     private boolean validHardwareVersion(String version) {
@@ -66,7 +54,7 @@ public class TestBeanSimple extends BeanTestCase {
          *
          * Warning: This test requires a nearby Bean
          */
-        DeviceInfo info = getDeviceInformation(bean);
+        DeviceInfo info = getDeviceInformation(testBean);
 
         if (!validHardwareVersion(info.hardwareVersion())) {
             fail("Unexpected HW version: " + info.hardwareVersion());
@@ -86,12 +74,12 @@ public class TestBeanSimple extends BeanTestCase {
          */
 
         // write to BANK_1 and BANK_5
-        bean.setScratchData(ScratchBank.BANK_1, new byte[]{11, 12, 13});
-        bean.setScratchData(ScratchBank.BANK_5, new byte[]{51, 52, 53});
+        testBean.setScratchData(ScratchBank.BANK_1, new byte[]{11, 12, 13});
+        testBean.setScratchData(ScratchBank.BANK_5, new byte[]{51, 52, 53});
 
         // read BANK_1
         final CountDownLatch scratch1Latch = new CountDownLatch(1);
-        bean.readScratchData(ScratchBank.BANK_1, new Callback<ScratchData>() {
+        testBean.readScratchData(ScratchBank.BANK_1, new Callback<ScratchData>() {
             @Override
             public void onResult(ScratchData result) {
                 assertThat(result.number()).isEqualTo(1);
@@ -106,7 +94,7 @@ public class TestBeanSimple extends BeanTestCase {
 
         // read BANK_5
         final CountDownLatch scratch5Latch = new CountDownLatch(1);
-        bean.readScratchData(ScratchBank.BANK_5, new Callback<ScratchData>() {
+        testBean.readScratchData(ScratchBank.BANK_5, new Callback<ScratchData>() {
             @Override
             public void onResult(ScratchData result) {
                 assertThat(result.number()).isEqualTo(5);
@@ -123,7 +111,7 @@ public class TestBeanSimple extends BeanTestCase {
     public void testBatteryProfile() throws Exception {
 
         final CountDownLatch tlatch = new CountDownLatch(1);
-        bean.readBatteryLevel(new Callback<BatteryLevel>() {
+        testBean.readBatteryLevel(new Callback<BatteryLevel>() {
             @Override
             public void onResult(BatteryLevel result) {
                 assertThat(result.getPercentage()).isGreaterThan(0);

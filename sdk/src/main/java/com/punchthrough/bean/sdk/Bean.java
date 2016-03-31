@@ -138,6 +138,7 @@ public class Bean implements Parcelable {
             Log.e(TAG, "Bean returned error: " + error);
         }
     };
+
     /**
      * The {@link com.punchthrough.bean.sdk.BeanListener} that provides data back to the class that
      * sets up the Bean object. Passed into
@@ -154,11 +155,6 @@ public class Bean implements Parcelable {
      * The BluetoothDevice representing this physical Bean.
      */
     private final BluetoothDevice device;
-
-    /**
-     * Whether the Bean is connected or not.
-     */
-    private boolean connected;
 
     /**
      * Auto reconnect state flag
@@ -276,7 +272,7 @@ public class Bean implements Parcelable {
 
     public Bean(BluetoothDevice device) {
         this.device = device;
-        gattClient = new GattClient();
+        this.gattClient = new GattClient();
         init(new Handler(Looper.getMainLooper()));
     }
 
@@ -297,7 +293,6 @@ public class Bean implements Parcelable {
         GattClient.ConnectionListener connectionListener = new GattClient.ConnectionListener() {
             @Override
             public void onConnected() {
-                connected = true;
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -308,7 +303,6 @@ public class Bean implements Parcelable {
 
             @Override
             public void onConnectionFailed() {
-                connected = false;
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -320,7 +314,6 @@ public class Bean implements Parcelable {
             @Override
             public void onDisconnected() {
                 beanCallbacks.clear();
-                connected = false;
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -740,13 +733,12 @@ public class Bean implements Parcelable {
                                     PUBLIC API
      ****************************************************************************/
 
-    /**
-     * Check if the Bean is connected.
-     *
-     * @return true if the Bean is connected
-     */
+    public String describe() {
+        return String.format("%s (%s)", getDevice().getName(), getDevice().getAddress());
+    }
+
     public boolean isConnected() {
-        return connected;
+        return gattClient.isConnected();
     }
 
     /**
@@ -777,9 +769,6 @@ public class Bean implements Parcelable {
      * @param listener the Bean listener
      */
     public void connect(Context context, BeanListener listener) {
-        if (connected) {
-            return;
-        }
         lastKnownContext = context;
         beanListener = listener;
         gattClient.connect(context, device);
@@ -790,7 +779,6 @@ public class Bean implements Parcelable {
      */
     public void disconnect() {
         gattClient.disconnect();
-        connected = false;
     }
 
     /**
@@ -1121,6 +1109,10 @@ public class Bean implements Parcelable {
         // Since TI OAD FW uploads access BLE characteristics directly, we need to delegate this
         // to GattClient
         gattClient.getOADProfile().programWithFirmware(bundle, onProgress, onComplete, onError);
+    }
+
+    public boolean firmwareUpdateInProgress() {
+        return gattClient.getOADProfile().uploadInProgress();
     }
 
     /**

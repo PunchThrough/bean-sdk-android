@@ -128,3 +128,4 @@ Example:
 # Helpful Gradle Tasks
 
 * `./gradlew tasks` - lists all available gradle tasks w/ short description
+* `./gradlew -q help --task <task>` - detailed information about a specific task

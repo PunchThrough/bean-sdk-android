@@ -8,6 +8,10 @@ import java.util.UUID;
  */
 public class Constants {
 
+    private static UUID smallUUID(int hexBytes) {
+        return UUID.fromString(String.format("%08x-0000-1000-8000-00805f9b34fb", hexBytes));
+    }
+
     /**
      * Maximum allowed length for the name of a sketch being programmed to the Bean.
      */
@@ -19,26 +23,40 @@ public class Constants {
     public static final ByteOrder CC2540_BYTE_ORDER = ByteOrder.LITTLE_ENDIAN;
 
     /**
-     * The firmware Unique IDs that indicate Image Type A or B
+     * Device Profile UUIDs
      */
-    public static final String IMAGE_A_ID = "AAAA";
-    public static final String IMAGE_B_ID = "BBBB";
-
+    public static final UUID UUID_DEVICE_INFO_SERVICE = smallUUID(0x180A);
+    public static final UUID UUID_DEVICE_INFO_CHAR_HARDWARE_VERSION = smallUUID(0x2A27);
+    public static final UUID UUID_DEVICE_INFO_CHAR_FIRMWARE_VERSION = smallUUID(0x2A26);
+    public static final UUID UUID_DEVICE_INFO_CHAR_SOFTWARE_VERSION = smallUUID(0x2A28);
 
     /**
-     * UUIDs
+     * Battery UUIDs
      */
-//    public static final UUID UUID_BATTERY_SERVICE = UUID.fromString("180f");
-//    public static final UUID UUID_BATTERY_CHARACTERISTIC = UUID.fromString("2a19");
+    public static final UUID UUID_BATTERY_SERVICE = smallUUID(0x180F);
+    public static final UUID UUID_BATTERY_CHARACTERISTIC = smallUUID(0x2A19);
 
-    public static final UUID BEAN_SERIAL_CHARACTERISTIC_UUID = UUID.fromString("a495ff11-c5b1-4b44-b512-1370f02d74de");
-    public static final UUID BEAN_SERIAL_SERVICE_UUID = UUID.fromString("a495ff10-c5b1-4b44-b512-1370f02d74de");
+    /**
+     * Serial UUIDs
+     */
+    public static final UUID UUID_SERIAL_SERVICE = UUID.fromString("a495ff11-c5b1-4b44-b512-1370f02d74de");
+    public static final UUID UUID_SERIAL_CHAR = UUID.fromString("a495ff10-c5b1-4b44-b512-1370f02d74de");
 
-    public static final UUID BEAN_SCRATCH_SERVICE_UUID = UUID.fromString("a495ff20-c5b1-4b44-b512-1370f02d74de");
-    public static final UUID BEAN_SCRATCH_1_CHAR_UUID = UUID.fromString("a495ff21-c5b1-4b44-b512-1370f02d74de");
-    public static final UUID BEAN_SCRATCH_2_CHAR_UUID = UUID.fromString("a495ff22-c5b1-4b44-b512-1370f02d74de");
-    public static final UUID BEAN_SCRATCH_3_CHAR_UUID = UUID.fromString("a495ff23-c5b1-4b44-b512-1370f02d74de");
-    public static final UUID BEAN_SCRATCH_4_CHAR_UUID = UUID.fromString("a495ff24-c5b1-4b44-b512-1370f02d74de");
-    public static final UUID BEAN_SCRATCH_5_CHAR_UUID = UUID.fromString("a495ff25-c5b1-4b44-b512-1370f02d74de");
+    /**
+     * Scratch UUIDs
+     */
+    public static final UUID UUID_SCRATCH_SERVICE = UUID.fromString("a495ff20-c5b1-4b44-b512-1370f02d74de");
+    public static final UUID UUID_SCRATCH_CHAR_1 = UUID.fromString("a495ff21-c5b1-4b44-b512-1370f02d74de");
+    public static final UUID UUID_SCRATCH_CHAR_2 = UUID.fromString("a495ff22-c5b1-4b44-b512-1370f02d74de");
+    public static final UUID UUID_SCRATCH_CHAR_3 = UUID.fromString("a495ff23-c5b1-4b44-b512-1370f02d74de");
+    public static final UUID UUID_SCRATCH_CHAR_4 = UUID.fromString("a495ff24-c5b1-4b44-b512-1370f02d74de");
+    public static final UUID UUID_SCRATCH_CHAR_5 = UUID.fromString("a495ff25-c5b1-4b44-b512-1370f02d74de");
+
+    /**
+     * OAD UUIDs
+     */
+    public static final UUID UUID_OAD_SERVICE = UUID.fromString("F000FFC0-0451-4000-B000-000000000000");
+    public static final UUID UUID_OAD_CHAR_IDENTIFY = UUID.fromString("F000FFC1-0451-4000-B000-000000000000");
+    public static final UUID UUID_OAD_CHAR_BLOCK = UUID.fromString("F000FFC2-0451-4000-B000-000000000000");
 
 }

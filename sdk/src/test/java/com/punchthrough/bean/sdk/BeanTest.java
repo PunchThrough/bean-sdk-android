@@ -16,9 +16,13 @@ import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class BeanTest {
 
     GattClient.ConnectionListener testListener;
+    List<Runnable> handlerRunnables = new ArrayList<>();
 
     // Mocks
     Context mockContext;
@@ -51,22 +55,27 @@ public class BeanTest {
             }
         }).when(mockGattClient).setListener(any(GattClient.ConnectionListener.class));
 
+        doAnswer(new Answer() {
+            public Object answer(InvocationOnMock invocation) {
+                Object[] args = invocation.getArguments();
+                handlerRunnables.add((Runnable) args[0]);
+                return null;
+            }
+        }).when(mockHandler).post(any(Runnable.class));
+
         // Instantiate class under test
         bean = new Bean(mockDevice, mockGattClient, mockHandler);
     }
 
     @Test
     public void testBeanConnection() {
-        // It should start disconnected
-        assertThat(bean.isConnected()).isFalse();
-
-        // Issue connection
-        bean.connect(mockContext, mock(BeanListener.class));
+        BeanListener mockListener = mock(BeanListener.class);
+        bean.connect(mockContext, mockListener);
         testListener.onConnected();
-
-        // Connected!
-        assertThat(bean.isConnected()).isTrue();
-
+        for (Runnable r : handlerRunnables) {
+            r.run();
+        }
+        verify(mockListener).onConnected();
     }
 
 }

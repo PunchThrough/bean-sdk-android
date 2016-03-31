@@ -7,15 +7,13 @@ import java.util.List;
 
 import com.punchthrough.bean.sdk.internal.ble.BaseProfile;
 import com.punchthrough.bean.sdk.internal.ble.GattClient;
+import com.punchthrough.bean.sdk.internal.utility.Constants;
 
 
 /**
  * Encapsulation of the <a href="https://developer.bluetooth.org/TechnologyOverview/Pages/BAS.aspx">Device Information Service Profile (DIS).</a>
  */
 public class BatteryProfile extends BaseProfile {
-
-    private static final int BATTERY_SERVICE_UID = 0x180F;
-    private static final int BATTERY_CHARACTERISTIC_UID = 0x2A19;
 
     private BluetoothGattService mBatteryService;
     private BatteryLevelCallback mCallback;
@@ -28,7 +26,7 @@ public class BatteryProfile extends BaseProfile {
     public void onProfileReady() {
         List<BluetoothGattService> services = mGattClient.getServices();
         for (BluetoothGattService service : services) {
-            if ((service.getUuid().getMostSignificantBits() >> 32) == BATTERY_SERVICE_UID) {
+            if (service.getUuid().equals(Constants.UUID_BATTERY_SERVICE)) {
                 mBatteryService = service;
             }
         }
@@ -37,7 +35,7 @@ public class BatteryProfile extends BaseProfile {
     public void getBatteryLevel(BatteryLevelCallback callback) {
         mCallback = callback;
         for (BluetoothGattCharacteristic characteristic : mBatteryService.getCharacteristics()) {
-            if ((characteristic.getUuid().getMostSignificantBits() >> 32) == BATTERY_CHARACTERISTIC_UID) {
+            if (characteristic.getUuid().equals(Constants.UUID_BATTERY_CHARACTERISTIC)) {
                 mGattClient.readCharacteristic(characteristic);
             }
         }
@@ -45,7 +43,7 @@ public class BatteryProfile extends BaseProfile {
 
     @Override
     public void onCharacteristicRead(GattClient client, BluetoothGattCharacteristic characteristic) {
-        if ((characteristic.getUuid().getMostSignificantBits() >> 32) == BATTERY_CHARACTERISTIC_UID) {
+        if (characteristic.getUuid().equals(Constants.UUID_BATTERY_CHARACTERISTIC)) {
             byte[] value = characteristic.getValue();
             if (mCallback != null) {
                 int percentage = value[0] & 0xff;
@@ -58,6 +56,10 @@ public class BatteryProfile extends BaseProfile {
                 mCallback = null;
             }
         }
+    }
+
+    public String getName() {
+        return "Battery Profile";
     }
 
     public static interface BatteryLevelCallback {
