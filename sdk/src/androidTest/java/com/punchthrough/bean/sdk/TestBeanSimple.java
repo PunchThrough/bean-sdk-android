@@ -73,6 +73,10 @@ public class TestBeanSimple extends AndroidTestCase {
             public void onError(BeanError error) {
                 fail(error.toString());
             }
+
+            @Override
+            public void onReadRemoteRssi(final int rssi) {
+            }
         };
 
         bean.connect(getContext(), beanListener);
@@ -135,6 +139,10 @@ public class TestBeanSimple extends AndroidTestCase {
             @Override
             public void onError(BeanError error) {
                 fail(error.toString());
+            }
+
+            @Override
+            public void onReadRemoteRssi(final int rssi) {
             }
         };
 

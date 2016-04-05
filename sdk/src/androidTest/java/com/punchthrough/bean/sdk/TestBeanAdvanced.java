@@ -46,6 +46,10 @@ public class TestBeanAdvanced extends AndroidTestCase {
         bean.sendSerialMessage(msg);
     }
 
+    private void triggerReadRemoteRssi(Bean bean) {
+        bean.readRemoteRssi();
+    }
+
     @Suppress
     public void testBeanListenerCallbacks() throws Exception {
         /**
@@ -62,8 +66,8 @@ public class TestBeanAdvanced extends AndroidTestCase {
 
         final Bean bean = TestingUtils.BeanUtils.getBeanByName("TESTBEAN");
 
-        // TODO: The latch should have a value of 4 when all callbacks are operational
-        final CountDownLatch testCompletionLatch = new CountDownLatch(2);
+        // TODO: The latch should have a value of 5 when all callbacks are operational
+        final CountDownLatch testCompletionLatch = new CountDownLatch(3);
 
         BeanListener beanListener = new BeanListener() {
             @Override
@@ -71,6 +75,7 @@ public class TestBeanAdvanced extends AndroidTestCase {
                 testCompletionLatch.countDown();
                 triggerBeanScratchChange(bean);
                 triggerBeanSerialMessage(bean);
+                triggerReadRemoteRssi(bean);
             }
 
             @Override
@@ -107,6 +112,12 @@ public class TestBeanAdvanced extends AndroidTestCase {
             @Override
             public void onError(BeanError error) {
                 fail(error.toString());
+            }
+
+            @Override
+            public void onReadRemoteRssi(final int rssi) {
+                System.out.println("onReadRemoteRssi: " + rssi);
+                testCompletionLatch.countDown();
             }
         };
 
@@ -173,6 +184,10 @@ public class TestBeanAdvanced extends AndroidTestCase {
             @Override
             public void onError(BeanError error) {
                 fail(error.toString());
+            }
+
+            @Override
+            public void onReadRemoteRssi(final int rssi) {
             }
         };
 
