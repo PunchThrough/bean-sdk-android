@@ -43,7 +43,7 @@ Then sync with Gradle and Android Studio will install the Bean SDK from Maven Ce
 
 # Use the SDK
 
-Check out our [Bean SDK API Documentation](http://punchthrough.github.io/Bean-Android-SDK/) to learn more about the Bean SDK's available methods.
+Check out our [Bean SDK API Documentation](http://punchthrough.github.io/bean-sdk-android/) to learn more about the Bean SDK's available methods.
 
 ## List nearby Bean(s)
 
