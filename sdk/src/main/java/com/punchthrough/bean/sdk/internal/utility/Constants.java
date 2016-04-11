@@ -39,8 +39,8 @@ public class Constants {
     /**
      * Serial UUIDs
      */
-    public static final UUID UUID_SERIAL_SERVICE = UUID.fromString("a495ff11-c5b1-4b44-b512-1370f02d74de");
-    public static final UUID UUID_SERIAL_CHAR = UUID.fromString("a495ff10-c5b1-4b44-b512-1370f02d74de");
+    public static final UUID UUID_SERIAL_SERVICE = UUID.fromString("a495ff10-c5b1-4b44-b512-1370f02d74de");
+    public static final UUID UUID_SERIAL_CHAR = UUID.fromString("a495ff11-c5b1-4b44-b512-1370f02d74de");
 
     /**
      * Scratch UUIDs

@@ -219,7 +219,10 @@ public class GattClient {
         public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 disconnect();
+                return;
             }
+            fireReadRemoteRssi(rssi);
+            executeNextOperation();
         }
     };
 
@@ -280,6 +283,12 @@ public class GattClient {
     private void fireCharacteristicsRead(BluetoothGattCharacteristic characteristic) {
         for (BaseProfile profile : mProfiles) {
             profile.onCharacteristicRead(this, characteristic);
+        }
+    }
+
+    private void fireReadRemoteRssi(int rssi) {
+        for (BaseProfile profile : mProfiles) {
+            profile.onReadRemoteRssi(this, rssi);
         }
     }
 

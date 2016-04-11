@@ -71,4 +71,12 @@ public interface BeanListener {
      * @param error The {@link com.punchthrough.bean.sdk.message.BeanError} that occurred
      */
     public void onError(BeanError error);
+
+    /**
+     * Called when a new RSSI value is received, in response to a previous call to
+     * {@link Bean#readRemoteRssi()}.
+     *
+     * @param rssi The RSSI for a connected remote device.
+     */
+    public void onReadRemoteRssi(int rssi);
 }

@@ -1,5 +1,7 @@
 package com.punchthrough.bean.sdk;
 
+import android.test.suitebuilder.annotation.Suppress;
+
 import com.punchthrough.bean.sdk.internal.exception.ImageParsingException;
 import com.punchthrough.bean.sdk.message.Callback;
 import com.punchthrough.bean.sdk.message.UploadProgress;
@@ -61,6 +63,7 @@ public class TestBeanFirmwareUpdate extends BeanTestCase {
         return new FirmwareBundle(fwImages);
     }
 
+    @Suppress
     public void testFirmwareUpdate() throws Exception {
 
         final CountDownLatch fwLatch = new CountDownLatch(1);

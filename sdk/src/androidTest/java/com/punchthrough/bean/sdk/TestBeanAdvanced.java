@@ -44,6 +44,10 @@ public class TestBeanAdvanced extends BeanTestCase {
         bean.sendSerialMessage(msg);
     }
 
+    private void triggerReadRemoteRssi(Bean bean) {
+        bean.readRemoteRssi();
+    }
+
     @Suppress
     public void testBeanSketchUpload() throws Exception {
         final Bean bean = discoverBean();
@@ -123,6 +127,7 @@ public class TestBeanAdvanced extends BeanTestCase {
                 testCompletionLatch.countDown();
                 triggerBeanScratchChange(bean);
                 triggerBeanSerialMessage(bean);
+                triggerReadRemoteRssi(bean);
             }
 
             @Override
@@ -158,6 +163,12 @@ public class TestBeanAdvanced extends BeanTestCase {
             @Override
             public void onError(BeanError error) {
                 fail(error.toString());
+            }
+
+            @Override
+            public void onReadRemoteRssi(final int rssi) {
+                System.out.println("onReadRemoteRssi: " + rssi);
+                testCompletionLatch.countDown();
             }
         };
 
@@ -224,6 +235,11 @@ public class TestBeanAdvanced extends BeanTestCase {
             @Override
             public void onError(BeanError error) {
                 fail(error.toString());
+            }
+
+            @Override
+            public void onReadRemoteRssi(final int rssi) {
+                System.out.println("onReadRemoteRssi: " + rssi);
             }
         };
 

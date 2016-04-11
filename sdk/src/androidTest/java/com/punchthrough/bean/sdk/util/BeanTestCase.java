@@ -105,6 +105,11 @@ public class BeanTestCase extends AndroidTestCase {
             System.out.println("On Error: " + error.toString());
             fail(error.toString());
         }
+
+        @Override
+        public void onReadRemoteRssi(int rssi) {
+
+        }
     };
 
     protected void ensureConnected(Bean bean, CountDownLatch connectLatch) throws InterruptedException {

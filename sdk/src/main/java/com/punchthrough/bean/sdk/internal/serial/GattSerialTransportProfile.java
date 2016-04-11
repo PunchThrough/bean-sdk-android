@@ -79,8 +79,8 @@ public class GattSerialTransportProfile extends BaseProfile {
     @Override
     public void onProfileReady() {
 
-        BluetoothGattService service = mGattClient.getService(Constants.UUID_SERIAL_CHAR);
-        mSerialCharacteristic = service.getCharacteristic(Constants.UUID_SERIAL_SERVICE);
+        BluetoothGattService service = mGattClient.getService(Constants.UUID_SERIAL_SERVICE);
+        mSerialCharacteristic = service.getCharacteristic(Constants.UUID_SERIAL_CHAR);
         if (mSerialCharacteristic == null) {
             Log.w(TAG, "Did not find bean serial on device");
             abort("Did not find bean serial on device");
@@ -186,6 +186,16 @@ public class GattSerialTransportProfile extends BaseProfile {
         }
     }
 
+    @Override
+    public void onReadRemoteRssi(GattClient client, int rssi) {
+        final SerialListener listener = mListener;
+        if (listener != null) {
+            listener.onReadRemoteRssi(rssi);
+        } else {
+            abort("No listener, this must be a stale connection --> disconnect");
+        }
+    }
+
     public void abort(String message) {
         mListener.onError(message);
     }
@@ -227,5 +237,7 @@ public class GattSerialTransportProfile extends BaseProfile {
         public void onScratchValueChanged(ScratchBank bank, byte[] value);
 
         public void onError(String message);
+
+        public void onReadRemoteRssi(int rssi);
     }
 }

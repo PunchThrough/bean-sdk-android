@@ -122,21 +122,21 @@ public class Bean implements Parcelable {
         }
 
         @Override
-        public void onDisconnected() {
-        }
+        public void onDisconnected() {}
 
         @Override
-        public void onSerialMessageReceived(byte[] data) {
-        }
+        public void onSerialMessageReceived(byte[] data) {}
 
         @Override
-        public void onScratchValueChanged(ScratchBank bank, byte[] value) {
-        }
+        public void onScratchValueChanged(ScratchBank bank, byte[] value) {}
 
         @Override
         public void onError(BeanError error) {
             Log.e(TAG, "Bean returned error: " + error);
         }
+
+        @Override
+        public void onReadRemoteRssi(final int rssi) {}
     };
 
     /**
@@ -353,6 +353,16 @@ public class Bean implements Parcelable {
                     @Override
                     public void run() {
                         beanListener.onError(BeanError.GATT_SERIAL_TRANSPORT_ERROR);
+                    }
+                });
+            }
+
+            @Override
+            public void onReadRemoteRssi(final int rssi) {
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        beanListener.onReadRemoteRssi(rssi);
                     }
                 });
             }
@@ -788,6 +798,13 @@ public class Bean implements Parcelable {
      */
     public BluetoothDevice getDevice() {
         return device;
+    }
+
+    /**
+    *  Read the RSSI for a connected remote device. Value will be returned in {@link BeanListener#onReadRemoteRssi(int)}.
+    */
+    public void readRemoteRssi() {
+        gattClient.readRemoteRssi();
     }
 
     /**
