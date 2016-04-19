@@ -1,18 +1,15 @@
 package com.punchthrough.bean.sdk;
 
-import com.punchthrough.bean.sdk.util.TestingUtils.LooperRunner;
-import com.punchthrough.bean.sdk.util.TestingUtils.BeanUtils;
-
-import android.test.AndroidTestCase;
-
-import com.punchthrough.bean.sdk.message.BeanError;
-import com.punchthrough.bean.sdk.message.Callback;
-import com.punchthrough.bean.sdk.message.DeviceInfo;
+import com.punchthrough.bean.sdk.message.BatteryLevel;
 import com.punchthrough.bean.sdk.message.ScratchBank;
 import com.punchthrough.bean.sdk.message.ScratchData;
+import com.punchthrough.bean.sdk.util.BeanTestCase;
 
-import java.util.HashMap;
+import com.punchthrough.bean.sdk.message.Callback;
+import com.punchthrough.bean.sdk.message.DeviceInfo;
+
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,182 +17,107 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Integration tests for the Bean.
  *
  * Prerequisites:
- * - Bean within range named TESTBEAN
+ * - Bean within range
  * - Android device connected over USB
  */
-public class TestBeanSimple extends AndroidTestCase {
+public class TestBeanSimple extends BeanTestCase {
 
-    private LooperRunner lr = new LooperRunner(BeanManager.getInstance().mHandler.getLooper());
-    private Thread lrThread = new Thread(lr);
-
-    protected void setUp() {
-        lrThread.start();
+    public void setUp() {
+        super.setUp();
+        setUpTestBean();
     }
 
-    protected void tearDown() throws InterruptedException {}
+    public void tearDown() {
+        super.tearDown();
+        tearDownTestBean();
+    }
+
+    private boolean validHardwareVersion(String version) {
+        return (
+            version.equals("E") ||
+            version.startsWith("1") ||
+            version.startsWith("2")
+        );
+    }
+
+    private boolean validFirmwareVersion(String version) {
+        return version.length() > 0;
+    }
+
+    private boolean validSoftwareVersion(String version) {
+        return version.length() > 0;
+    }
+
 
     public void testBeanDeviceInfo() throws Exception {
         /** Read device information from a bean
          *
-         * Warning: This test requires a nearby bean named "TESTBEAN"
+         * Warning: This test requires a nearby Bean
          */
+        DeviceInfo info = getDeviceInformation(testBean);
 
-        Bean bean = BeanUtils.getBeanByName("TESTBEAN");
-        final CountDownLatch connectionLatch = new CountDownLatch(1);
-        final HashMap testState = new HashMap();
-        testState.put("connected", false);
-
-        BeanListener beanListener = new BeanListener() {
-            @Override
-            public void onConnected() {
-                testState.put("connected", true);
-                connectionLatch.countDown();
-            }
-
-            @Override
-            public void onConnectionFailed() {
-                fail("Connection failed!");
-            }
-
-            @Override
-            public void onDisconnected() {
-            }
-
-            @Override
-            public void onSerialMessageReceived(byte[] data) {
-            }
-
-            @Override
-            public void onScratchValueChanged(ScratchBank bank, byte[] value) {
-            }
-
-            @Override
-            public void onError(BeanError error) {
-                fail(error.toString());
-            }
-
-            @Override
-            public void onReadRemoteRssi(final int rssi) {
-            }
-        };
-
-        bean.connect(getContext(), beanListener);
-        connectionLatch.await();
-        assertThat(testState.get("connected")).isEqualTo(true);
-
-        final CountDownLatch deviceInfoLatch = new CountDownLatch(1);
-        testState.put("device_info", null);
-        bean.readDeviceInfo(new Callback<DeviceInfo>() {
-            @Override
-            public void onResult(DeviceInfo deviceInfo) {
-                testState.put("device_info", deviceInfo);
-                deviceInfoLatch.countDown();
-            }
-        });
-        deviceInfoLatch.await();
-        assertThat(testState.get("device_info")).isNotNull();
-
-        if (bean.isConnected()) {
-            bean.disconnect();
+        if (!validHardwareVersion(info.hardwareVersion())) {
+            fail("Unexpected HW version: " + info.hardwareVersion());
+        }
+        if (!validFirmwareVersion(info.firmwareVersion())) {
+            fail("Unexpected FW version: " + info.firmwareVersion());
+        }
+        if (!validSoftwareVersion(info.softwareVersion())) {
+            fail("Unexpected SW version: " + info.softwareVersion());
         }
     }
 
     public void testBeanReadWriteScratchBank() throws Exception {
         /** Test Scratch characteristic functionality
          *
-         * Warning: This test requires a nearby bean named "TESTBEAN"
+         * Warning: This test requires a nearby Bean
          */
-        Bean bean = BeanUtils.getBeanByName("TESTBEAN");
-        final CountDownLatch connectionLatch = new CountDownLatch(1);
-        final HashMap testState = new HashMap();
-        testState.put("connected", false);
-
-        BeanListener beanListener = new BeanListener() {
-            @Override
-            public void onConnected() {
-                testState.put("connected", true);
-                connectionLatch.countDown();
-
-            }
-
-            @Override
-            public void onConnectionFailed() {
-                fail("Connection failed!");
-            }
-
-            @Override
-            public void onDisconnected() {
-                System.out.println("Disconnected");
-            }
-
-            @Override
-            public void onSerialMessageReceived(byte[] data) {
-            }
-
-            @Override
-            public void onScratchValueChanged(ScratchBank bank, byte[] value) {
-            }
-
-            @Override
-            public void onError(BeanError error) {
-                fail(error.toString());
-            }
-
-            @Override
-            public void onReadRemoteRssi(final int rssi) {
-            }
-        };
-
-        bean.connect(getContext(), beanListener);
-        connectionLatch.await();
-        assertThat(testState.get("connected")).isEqualTo(true);
 
         // write to BANK_1 and BANK_5
-
-        bean.setScratchData(ScratchBank.BANK_1, new byte[]{11, 12, 13});
-        bean.setScratchData(ScratchBank.BANK_5, new byte[]{51, 52, 53});
+        testBean.setScratchData(ScratchBank.BANK_1, new byte[]{11, 12, 13});
+        testBean.setScratchData(ScratchBank.BANK_5, new byte[]{51, 52, 53});
 
         // read BANK_1
-
         final CountDownLatch scratch1Latch = new CountDownLatch(1);
-        bean.readScratchData(ScratchBank.BANK_1, new Callback<ScratchData>() {
+        testBean.readScratchData(ScratchBank.BANK_1, new Callback<ScratchData>() {
             @Override
             public void onResult(ScratchData result) {
-                testState.put("scratch1", result);
+                assertThat(result.number()).isEqualTo(1);
+                assertThat(result.data()[0]).isEqualTo((byte) 11);
+                assertThat(result.data()[1]).isEqualTo((byte)12);
+                assertThat(result.data()[2]).isEqualTo((byte) 13);
                 scratch1Latch.countDown();
             }
         });
 
         scratch1Latch.await();
 
-        ScratchData scratch1 = (ScratchData)testState.get("scratch1");
-        assertThat(scratch1.number()).isEqualTo(1);
-        assertThat(scratch1.data()[0]).isEqualTo((byte)11);
-        assertThat(scratch1.data()[1]).isEqualTo((byte)12);
-        assertThat(scratch1.data()[2]).isEqualTo((byte)13);
-
         // read BANK_5
-
         final CountDownLatch scratch5Latch = new CountDownLatch(1);
-        bean.readScratchData(ScratchBank.BANK_5, new Callback<ScratchData>() {
+        testBean.readScratchData(ScratchBank.BANK_5, new Callback<ScratchData>() {
             @Override
             public void onResult(ScratchData result) {
-                testState.put("scratch5", result);
+                assertThat(result.number()).isEqualTo(5);
+                assertThat(result.data()[0]).isEqualTo((byte) 51);
+                assertThat(result.data()[1]).isEqualTo((byte) 52);
+                assertThat(result.data()[2]).isEqualTo((byte) 53);
                 scratch5Latch.countDown();
             }
         });
 
         scratch5Latch.await();
-
-        ScratchData scratch5 = (ScratchData)testState.get("scratch5");
-        assertThat(scratch5.number()).isEqualTo(5);
-        assertThat(scratch5.data()[0]).isEqualTo((byte)51);
-        assertThat(scratch5.data()[1]).isEqualTo((byte)52);
-        assertThat(scratch5.data()[2]).isEqualTo((byte)53);
-
-        if (bean.isConnected()) {
-            bean.disconnect();
-        }
     }
 
+    public void testBatteryProfile() throws Exception {
+
+        final CountDownLatch tlatch = new CountDownLatch(1);
+        testBean.readBatteryLevel(new Callback<BatteryLevel>() {
+            @Override
+            public void onResult(BatteryLevel result) {
+                assertThat(result.getPercentage()).isGreaterThan(0);
+                tlatch.countDown();
+            }
+        });
+        tlatch.await(20, TimeUnit.SECONDS);
+    }
 }

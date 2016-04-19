@@ -28,6 +28,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothAdapter.LeScanCallback;
 import android.bluetooth.BluetoothDevice;
 import android.os.Handler;
+import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -38,29 +39,60 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * A thin wrapper to discover nearby Beans.
+ * Singleton object that provides an interface for discovery Beans.
  */
 public class BeanManager {
+
+    // Singleton
+    private static BeanManager self = null;
+
+    // Constants
     private static final String TAG = "BeanManager";
     private static final UUID BEAN_UUID = UUID.fromString("a495ff10-c5b1-4b44-b512-1370f02d74de");
     private static final long SCAN_TIMEOUT = 30000;
-    private static BeanManager sInstance = new BeanManager();
-    protected Handler mHandler = new Handler();
+
+    // Dependencies
+    private BluetoothAdapter btAdapter;
+    private Handler mHandler = new Handler();
     private BeanDiscoveryListener mListener;
+
+    // Internal State
     private boolean mScanning = false;
+    private HashMap<String, Bean> mBeans = new HashMap<>(32);
+
+    private BeanManager() {
+        btAdapter = BluetoothAdapter.getDefaultAdapter();
+    }
+
     private Runnable mCompleteDiscoveryCallback = new Runnable() {
         @Override
         public void run() {
             completeDiscovery();
         }
     };
+
     private final LeScanCallback mCallback = new LeScanCallback() {
         @Override
         public void onLeScan(BluetoothDevice device, final int rssi, byte[] scanRecord) {
-            if (!mBeans.containsKey(device.getAddress()) && isBean(scanRecord)) {
+            if (isBean(scanRecord)) {
                 mHandler.removeCallbacks(mCompleteDiscoveryCallback);
-                final Bean bean = new Bean(device);
-                mBeans.put(device.getAddress(), bean);
+
+                final Bean bean;
+
+                if (mBeans.containsKey(device.getAddress())) {
+                    // We already know about this bean
+                    bean = mBeans.get(device.getAddress());
+                } else {
+                    // New Bean
+                    bean = new Bean(device);
+                    mBeans.put(device.getAddress(), bean);
+                }
+
+                if (bean.shouldReconnect()) {
+                    Log.i(TAG, "Auto-reconnecting to Bean: " + bean.describe());
+                    bean.connect(bean.getLastKnownContext(), bean.getBeanListener());
+                }
+
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -68,21 +100,26 @@ public class BeanManager {
                     }
                 });
                 mHandler.postDelayed(mCompleteDiscoveryCallback, SCAN_TIMEOUT / 2);
+
             }
         }
     };
-    private HashMap<String, Bean> mBeans = new HashMap<>(32);
-
-    private BeanManager() {
-    }
 
     /**
      * Get the shared {@link BeanManager} instance.
      *
      * @return The shared BeanManager instance.
      */
-    public static BeanManager getInstance() {
-        return sInstance;
+    public static synchronized BeanManager getInstance() {
+        if (self == null) {
+            self = new BeanManager();
+        }
+
+        return self;
+    }
+
+    public Handler getHandler() {
+        return mHandler;
     }
 
     /**
@@ -100,10 +137,36 @@ public class BeanManager {
         if (mScanning) {
             cancelDiscovery();
         }
-        mBeans.clear();
+
         mListener = listener;
         mScanning = true;
-        if (BluetoothAdapter.getDefaultAdapter().startLeScan(mCallback)) {
+
+        if (btAdapter.startLeScan(mCallback)) {
+            mHandler.postDelayed(mCompleteDiscoveryCallback, SCAN_TIMEOUT);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Start discovering nearby Beans using an existing BeanListener.
+     *
+     * Currently this function is only used by OADProfile to start scanning after
+     * the Bean disconnects during the OAD process.
+     */
+    public boolean startDiscovery() {
+        if (mListener == null) {
+            throw new NullPointerException("Listener cannot be null");
+        }
+
+        if (mScanning) {
+            cancelDiscovery();
+        }
+
+        mScanning = true;
+
+        if (btAdapter.startLeScan(mCallback)) {
             mHandler.postDelayed(mCompleteDiscoveryCallback, SCAN_TIMEOUT);
             return true;
         }
@@ -127,6 +190,15 @@ public class BeanManager {
      */
     public Collection<Bean> getBeans() {
         return new ArrayList<>(mBeans.values());
+    }
+
+    /**
+     * Clear the Beans that this BeanManager has discovered.
+     *
+     * This disables auto-reconnect on all Beans handled by this BeanManager.
+     */
+    public void forgetBeans() {
+        mBeans.clear();
     }
 
     /**

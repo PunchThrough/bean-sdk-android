@@ -3,6 +3,8 @@ package com.punchthrough.bean.sdk.internal.ble;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 
+import java.util.UUID;
+
 
 /**
  * Base class that all GATT based Bluetooth profiles should extend
@@ -15,33 +17,28 @@ public class BaseProfile {
         this.mGattClient = client;
     }
 
-    public void onServicesDiscovered(GattClient client) {
+    public String getName() {
+        return "Base Profile";
     }
 
-    public void onCharacteristicRead(GattClient client, BluetoothGattCharacteristic characteristic) {
-    }
+    public void onProfileReady() {}
 
-    public void onCharacteristicWrite(GattClient client, BluetoothGattCharacteristic characteristic) {
-    }
+    public void onBeanConnected() {}
 
-    public void onCharacteristicChanged(GattClient client, BluetoothGattCharacteristic characteristic) {
-    }
+    public void onBeanDisconnected() {}
 
-    public void onDescriptorRead(GattClient client, BluetoothGattDescriptor descriptor) {
-    }
+    public void onBeanConnectionFailed() {}
 
-    public void onDescriptorWrite(GattClient client, BluetoothGattDescriptor descriptor) {
-    }
+    public void onCharacteristicRead(GattClient client, BluetoothGattCharacteristic characteristic) {}
 
-    public void onReadRemoteRssi(GattClient client, int rssi) {
-    }
+    public void onCharacteristicWrite(GattClient client, BluetoothGattCharacteristic characteristic) {}
 
-    public void onConnected() {
-    }
+    public void onCharacteristicChanged(GattClient client, BluetoothGattCharacteristic characteristic) {}
 
-    public void onDisconnected() {
-    }
+    public void onDescriptorRead(GattClient client, BluetoothGattDescriptor descriptor) {}
 
-    public void onConnectionStateChange(int newState) {
-    }
+    public void onDescriptorWrite(GattClient client, BluetoothGattDescriptor descriptor) {}
+
+    public void onReadRemoteRssi(GattClient client, int rssi) {}
+
 }

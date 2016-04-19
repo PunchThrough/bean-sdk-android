@@ -1,6 +1,5 @@
 package com.punchthrough.bean.sdk.internal.serial;
 
-import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
@@ -14,6 +13,7 @@ import com.punchthrough.bean.sdk.internal.ble.GattClient;
 import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
 import com.punchthrough.bean.sdk.internal.utility.EnumParse;
 import com.punchthrough.bean.sdk.message.ScratchBank;
+import com.punchthrough.bean.sdk.internal.utility.Constants;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,22 +26,29 @@ import okio.Buffer;
  * Custom BLE profile that allows serial communications
  */
 public class GattSerialTransportProfile extends BaseProfile {
-    public static final int PACKET_TX_MAX_PAYLOAD_LENGTH = 19;
-    private static final String TAG = "GattSerialXportProfile";
-    private static final UUID BEAN_SERIAL_CHARACTERISTIC_UUID = UUID.fromString("a495ff11-c5b1-4b44-b512-1370f02d74de");
-    private static final UUID BEAN_SERIAL_SERVICE_UUID = UUID.fromString("a495ff10-c5b1-4b44-b512-1370f02d74de");
-    private static final UUID BEAN_SCRATCH_SERVICE_UUID = UUID.fromString("a495ff20-c5b1-4b44-b512-1370f02d74de");
 
+    private static final String TAG = "GattSerialXportProfile";
+
+    // Constants
+    public static final int PACKET_TX_MAX_PAYLOAD_LENGTH = 19;
     private static final List<UUID> BEAN_SCRATCH_UUIDS = Arrays.asList(
-            UUID.fromString("a495ff21-c5b1-4b44-b512-1370f02d74de"),
-            UUID.fromString("a495ff22-c5b1-4b44-b512-1370f02d74de"),
-            UUID.fromString("a495ff23-c5b1-4b44-b512-1370f02d74de"),
-            UUID.fromString("a495ff24-c5b1-4b44-b512-1370f02d74de"),
-            UUID.fromString("a495ff25-c5b1-4b44-b512-1370f02d74de")
+            Constants.UUID_SCRATCH_CHAR_1,
+            Constants.UUID_SCRATCH_CHAR_2,
+            Constants.UUID_SCRATCH_CHAR_3,
+            Constants.UUID_SCRATCH_CHAR_4,
+            Constants.UUID_SCRATCH_CHAR_5
     );
-    private Listener mListener;
+
+    // Internal dependencies
+    private SerialListener mListener;
     private BluetoothGattCharacteristic mSerialCharacteristic;
+    private Handler mHandler;
+    private MessageAssembler mMessageAssembler = new MessageAssembler();
+
+    // Internal state
     private boolean mReadyToSend = false;
+    private List<GattSerialPacket> mPendingPackets = new ArrayList<>(32);
+    private int mOutgoingMessageCount = 0;
 
     private final Runnable mDequeueRunnable = new Runnable() {
         @Override
@@ -52,15 +59,12 @@ public class GattSerialTransportProfile extends BaseProfile {
                     GattSerialPacket packet = mPendingPackets.remove(0);
                     mSerialCharacteristic.setValue(packet.getPacketData());
                     mGattClient.writeCharacteristic(mSerialCharacteristic);
+                } else {
+                    mHandler.postDelayed(this, 150);
                 }
-                mHandler.postDelayed(this, 150);
             }
         }
     };
-    private List<GattSerialPacket> mPendingPackets = new ArrayList<>(32);
-    private Handler mHandler;
-    private int mOutgoingMessageCount = 0;
-    private MessageAssembler mMessageAssembler = new MessageAssembler();
 
     public GattSerialTransportProfile(GattClient client) {
         super(client);
@@ -73,35 +77,27 @@ public class GattSerialTransportProfile extends BaseProfile {
     }
 
     @Override
-    public void onConnectionStateChange(int newState) {
-        if (newState == BluetoothGatt.STATE_CONNECTED) {
-            mGattClient.discoverServices();
-        } else if (newState == BluetoothGatt.STATE_DISCONNECTED) {
-            abort();
-        }
-    }
+    public void onProfileReady() {
 
-    @Override
-    public void onServicesDiscovered(GattClient client) {
-        BluetoothGattService service = client.getService(BEAN_SERIAL_SERVICE_UUID);
-        mSerialCharacteristic = service.getCharacteristic(BEAN_SERIAL_CHARACTERISTIC_UUID);
+        BluetoothGattService service = mGattClient.getService(Constants.UUID_SERIAL_SERVICE);
+        mSerialCharacteristic = service.getCharacteristic(Constants.UUID_SERIAL_CHAR);
         if (mSerialCharacteristic == null) {
-            Log.w(TAG, "Did not find bean serial on device, disconnecting");
-            abort();
+            Log.w(TAG, "Did not find bean serial on device");
+            abort("Did not find bean serial on device");
         } else {
-            if (BuildConfig.DEBUG) {
-                Log.i(TAG, "Connected");
-            }
 
-            client.setCharacteristicNotification(mSerialCharacteristic, true);
+            // Enable Notifications for Serial chars
+            mGattClient.setCharacteristicNotification(mSerialCharacteristic, true);
             for (BluetoothGattDescriptor descriptor : mSerialCharacteristic.getDescriptors()) {
                 if ((descriptor.getUuid().getMostSignificantBits() >> 32) == 0x2902) {
                     descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                    client.writeDescriptor(descriptor);
+                    mGattClient.writeDescriptor(descriptor);
                 }
             }
 
-            service = client.getService(BEAN_SCRATCH_SERVICE_UUID);
+            service = mGattClient.getService(Constants.UUID_SCRATCH_SERVICE);
+
+            boolean hasScratchChars = true;
 
             for (BluetoothGattCharacteristic characteristic : service.getCharacteristics()) {
                 if (characteristic.getDescriptors().size() < 2) {
@@ -116,19 +112,29 @@ public class GattSerialTransportProfile extends BaseProfile {
                      * To fix this problem, update these Beans to the latest firmware before
                      * use.
                      */
-                    return;
+                    hasScratchChars = false;
                 }
             }
 
-            for (BluetoothGattCharacteristic characteristic : service.getCharacteristics()) {
-                client.setCharacteristicNotification(characteristic, true);
-                for (BluetoothGattDescriptor descriptor : characteristic.getDescriptors()) {
-                    if ((descriptor.getUuid().getMostSignificantBits() >> 32) == 0x2902) {
+            if (hasScratchChars) {
+                // Enable Notifications for Scratch chars
+                for (BluetoothGattCharacteristic characteristic : service.getCharacteristics()) {
+                    mGattClient.setCharacteristicNotification(characteristic, true);
+                    for (BluetoothGattDescriptor descriptor : characteristic.getDescriptors()) {
+                        if ((descriptor.getUuid().getMostSignificantBits() >> 32) == 0x2902) {
 
-                        descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                        client.writeDescriptor(descriptor);
+                            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                            mGattClient.writeDescriptor(descriptor);
+                        }
                     }
                 }
+            }
+
+            mMessageAssembler.reset();
+            mReadyToSend = true;
+            mOutgoingMessageCount = 0;
+            if (BuildConfig.DEBUG) {
+                Log.i(TAG, "Setup complete");
             }
         }
     }
@@ -150,9 +156,8 @@ public class GattSerialTransportProfile extends BaseProfile {
                 if (BuildConfig.DEBUG) {
                     Log.d(TAG, "Received data");
                 }
-                Listener listener = mListener;
-                if (listener != null) {
-                    listener.onMessageReceived(data);
+                if (mListener != null) {
+                    mListener.onMessageReceived(data);
                 } else {
                     client.disconnect();
                 }
@@ -165,11 +170,10 @@ public class GattSerialTransportProfile extends BaseProfile {
                 if (BuildConfig.DEBUG) {
                     Log.d(TAG, "Received scratch bank update (" + index + ")");
                 }
-                Listener listener = mListener;
-                if (listener != null) {
+                if (mListener != null) {
                     try {
                         ScratchBank bank = EnumParse.enumWithRawValue(ScratchBank.class, index);
-                        listener.onScratchValueChanged(bank, characteristic.getValue());
+                        mListener.onScratchValueChanged(bank, characteristic.getValue());
                     } catch (NoEnumFoundException e) {
                         Log.e(TAG, "Couldn't parse bank enum from scratch bank with index " +
                                 index);
@@ -183,52 +187,17 @@ public class GattSerialTransportProfile extends BaseProfile {
     }
 
     @Override
-    public void onDescriptorWrite(GattClient client, BluetoothGattDescriptor descriptor) {
-        if (Arrays.equals(descriptor.getValue(), BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)) {
-            if (descriptor.getCharacteristic() == mSerialCharacteristic) {
-                // connection has completed
-                mMessageAssembler.reset();
-                mReadyToSend = true;
-                mOutgoingMessageCount = 0;
-
-                if (BuildConfig.DEBUG) {
-                    Log.i(TAG, "Setup complete");
-                }
-
-                Listener listener = mListener;
-                if (listener != null) {
-                    listener.onConnected();
-                } else {
-                    Log.e(TAG, "No listener, this must be a stale connection --> disconnect");
-                    abort();
-                }
-            }
-        }
-    }
-
-    @Override
     public void onReadRemoteRssi(GattClient client, int rssi) {
-        final Listener listener = mListener;
+        final SerialListener listener = mListener;
         if (listener != null) {
             listener.onReadRemoteRssi(rssi);
         } else {
-            Log.e(TAG, "No listener, this must be a stale connection --> disconnect");
-            abort();
+            abort("No listener, this must be a stale connection --> disconnect");
         }
     }
 
-    private void abort() {
-        boolean wasConnected = mSerialCharacteristic != null;
-        mSerialCharacteristic = null;
-        Listener listener = mListener;
-        if (listener != null) {
-            if (wasConnected) {
-                listener.onDisconnected();
-            } else {
-                listener.onConnectionFailed();
-            }
-        }
-        mGattClient.disconnect();
+    public void abort(String message) {
+        mListener.onError(message);
     }
 
     public void sendMessage(Buffer message) {
@@ -247,22 +216,27 @@ public class GattSerialTransportProfile extends BaseProfile {
         mHandler.post(mDequeueRunnable);
     }
 
-    public void setListener(Listener listener) {
+    /**
+     * Sets a listener that will be alerted for serial and scratch events
+     *
+     * @param listener SerialListener object
+     */
+    public void setListener(SerialListener listener) {
         this.mListener = listener;
     }
 
+    public String getName() {
+        return "Serial Profile";
+    }
 
     // This listener is only for communicating with the Bean class
-    public static interface Listener {
-        public void onConnected();
-
-        public void onConnectionFailed();
-
-        public void onDisconnected();
+    public static interface SerialListener {
 
         public void onMessageReceived(byte[] data);
 
         public void onScratchValueChanged(ScratchBank bank, byte[] value);
+
+        public void onError(String message);
 
         public void onReadRemoteRssi(int rssi);
     }

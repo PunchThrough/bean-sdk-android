@@ -5,20 +5,25 @@ public enum FirmwareUploadState {
      * No firmware upload is in progress
      */
     INACTIVE,
+
     /**
-     * Waiting for notify to be enabled on OAD characteristics
+     * Making sure the Bean needs an update based on the bundle version
      */
-    AWAIT_NOTIFY_ENABLED,
+    CHECKING_FW_VERSION,
+
     /**
-     * Waiting for current OAD request header
+     * Offering each image available in the FW bundle (4 total - A, B, C, D)
      */
-    AWAIT_CURRENT_HEADER,
+    OFFERING_IMAGES,
+
     /**
-     * Wrote the OAD response header, waiting for the device to accept a FW transfer
+     * Transferring the blocks of an accepted image
      */
-    AWAIT_XFER_ACCEPT,
+    BLOCK_XFER,
+
     /**
-     * FW transfer accepted, currently sending blocks
+     * Waiting for device to reboot and reconnect
      */
-    SEND_FW_BLOCKS
+    RECONNECTING,
+
 }
