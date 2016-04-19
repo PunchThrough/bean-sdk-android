@@ -5,6 +5,7 @@ com.punchthrough.bean.sdk.internal.ble
 com.punchthrough.bean.sdk.internal.device
 com.punchthrough.bean.sdk.internal.exception
 com.punchthrough.bean.sdk.internal.intelhex
+com.punchthrough.bean.sdk.internal.scratch
 com.punchthrough.bean.sdk.internal.serial
 com.punchthrough.bean.sdk.internal.upload.firmware
 com.punchthrough.bean.sdk.internal.upload.sketch
