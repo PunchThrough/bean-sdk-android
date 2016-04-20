@@ -42,6 +42,9 @@ public class OADProfile extends BaseProfile {
     private Runnable onComplete;
     private Callback<BeanError> onError;
     private Callback<UploadProgress> onProgress;
+    private final int MAX_IN_AIR_BLOCKS = 8;
+    private int nextBlock = 0;
+    private long blockTransferStarted = 0;
 
     public OADProfile(GattClient client) {
         super(client);
@@ -86,24 +89,50 @@ public class OADProfile extends BaseProfile {
     }
 
     private void onNotificationBlock(BluetoothGattCharacteristic characteristic) {
-        int blk = Convert.twoBytesToInt(characteristic.getValue(), Constants.CC2540_BYTE_ORDER);
+        /**
+         * Received a notification on Block characteristic
+         *
+         * A notification to this characteristic means the Bean has accepted the most recent
+         * firmware file we have offered, which is stored as `this.currentImage`. It is now
+         * time to start sending blocks of FW to the device.
+         *
+         * @param buf 2 byte Buffer containing the block number
+         */
 
-        if (blk == 0) {
+        int requestedBlock = Convert.twoBytesToInt(characteristic.getValue(), Constants.CC2540_BYTE_ORDER);
+
+        if (requestedBlock == 0) {
             Log.i(TAG, "Image accepted: " + currentImage.name());
             Log.i(TAG, String.format("Starting Block Transfer of %d blocks", currentImage.blockCount()));
+            blockTransferStarted = System.currentTimeMillis() / 1000L;
             setState(OADState.BLOCK_XFER);
         }
 
-        if (blk % 100 == 0) {
-            Log.i(TAG, "Block request: " + blk);
+        if (requestedBlock % 512 == 0) {
+            Log.i(TAG, "REQUESTED: " + requestedBlock);
         }
 
-        writeToCharacteristic(oadBlock, currentImage.block(blk));
-        onProgress.onResult(UploadProgress.create(blk, currentImage.blockCount()));
+        while (oadState == OADState.BLOCK_XFER &&
+               nextBlock <= currentImage.blockCount() &&
+               nextBlock < (requestedBlock + MAX_IN_AIR_BLOCKS)) {
 
-        if (blk == currentImage.blockCount() - 1) {
+            writeToCharacteristic(oadBlock, currentImage.block(nextBlock));
+            onProgress.onResult(UploadProgress.create(requestedBlock, currentImage.blockCount()));
+            nextBlock++;
+        }
+
+        if (nextBlock > currentImage.blockCount()) {
+            long secondsElapsed = System.currentTimeMillis() / 1000L - blockTransferStarted;
+            double KBs = (double) (currentImage.sizeBytes() / secondsElapsed) / 1000;
+            String blkTimeMsg = String.format("Sent %d blocks in %d seconds (%.2f KB/s)",
+                    currentImage.blockCount(),
+                    secondsElapsed,
+                    KBs
+                    );
             Log.i(TAG, "Last block sent!");
+            Log.i(TAG, blkTimeMsg);
             Log.i(TAG, "Waiting for device to reconnect...");
+            nextBlock = 0;
             setState(OADState.RECONNECTING);
         }
     }

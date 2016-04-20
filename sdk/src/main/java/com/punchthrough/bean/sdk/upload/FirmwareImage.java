@@ -60,6 +60,10 @@ public class FirmwareImage implements Chunk.Chunkable {
         return  filename.replace(".bin", "");
     }
 
+    public int sizeBytes() {
+        return rawData.length;
+    }
+
     public long version() {
         return Long.parseLong(filename.split("_")[0]);
     }
