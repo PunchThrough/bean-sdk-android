@@ -11,6 +11,8 @@ import static org.assertj.core.api.Assertions.fail;
 public class FirmwareImageTest {
 
     byte[] rawImageData_valid = intArrayToByteArray(new int[] {
+
+            // Header data (first and only block)
             0x2B, 0x65,                // CRC
             0xFF, 0xFF,                // CRC Shadow
             0x64, 0x00,                // Version
@@ -98,7 +100,8 @@ public class FirmwareImageTest {
     }
 
     @Test
-    public void testFirmwareBlocks() throws ImageParsingException {
+    public void testFirmwareBlocksInvalid() throws ImageParsingException {
+        // This test expects the last "invalid" block to be padded with zeros
 
         FirmwareImage image = new FirmwareImage(rawImageData_invalid, "");
 
@@ -149,6 +152,33 @@ public class FirmwareImageTest {
         } catch (Exception e) {
             assertThat(e).isNotNull();
         }
+    }
+
+    @Test
+    public void testFirmwareBlocksValid() throws ImageParsingException {
+        FirmwareImage image1 = new FirmwareImage(rawImageData_valid, "");
+
+        assertThat(image1.block(0)).isEqualTo(intArrayToByteArray(new int[]{
+
+                // Block index (0x0000 little endian)
+                0x00, 0x00,
+
+                // Block data
+                0x2B, 0x65,                // CRC
+                0xFF, 0xFF,                // CRC Shadow
+                0x64, 0x00,                // Version
+                0x00, 0x7C,                // Length
+                0x41, 0x41, 0x41, 0x41,    // AAAA
+                0xFF, 0xFF, 0xFF, 0xFF     // Reserved
+        }));
+
+        try {
+            image1.block(1);
+            fail("Shouldn't have worked");
+        } catch (ArrayIndexOutOfBoundsException e) {
+            assertThat(e).isNotNull();
+        }
+
     }
 
     @Test
