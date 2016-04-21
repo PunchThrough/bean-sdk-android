@@ -82,6 +82,22 @@ public class FirmwareImageTest {
     }
 
     @Test
+    public void testSizeBytes() throws ImageParsingException {
+        FirmwareImage image1 = new FirmwareImage(rawImageData_valid, "");
+        FirmwareImage image2 = new FirmwareImage(rawImageData_invalid, "");
+        assertThat(image1.sizeBytes()).isEqualTo(16);
+        assertThat(image2.sizeBytes()).isEqualTo(42);
+    }
+
+    @Test
+    public void testBlockCount() throws ImageParsingException {
+        FirmwareImage image1 = new FirmwareImage(rawImageData_valid, "");
+        FirmwareImage image2 = new FirmwareImage(rawImageData_invalid, "");
+        assertThat(image1.blockCount()).isEqualTo(1);
+        assertThat(image2.blockCount()).isEqualTo(3);
+    }
+
+    @Test
     public void testFirmwareBlocks() throws ImageParsingException {
 
         FirmwareImage image = new FirmwareImage(rawImageData_invalid, "");
