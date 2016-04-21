@@ -113,7 +113,7 @@ public class OADProfile extends BaseProfile {
         }
 
         while (oadState == OADState.BLOCK_XFER &&
-               nextBlock <= currentImage.blockCount() &&
+               nextBlock <= currentImage.blockCount() - 1 &&
                nextBlock < (requestedBlock + MAX_IN_AIR_BLOCKS)) {
 
             writeToCharacteristic(oadBlock, currentImage.block(nextBlock));
@@ -121,9 +121,12 @@ public class OADProfile extends BaseProfile {
             nextBlock++;
         }
 
-        if (nextBlock > currentImage.blockCount()) {
+        if (nextBlock >= currentImage.blockCount()) {
             long secondsElapsed = System.currentTimeMillis() / 1000L - blockTransferStarted;
-            double KBs = (double) (currentImage.sizeBytes() / secondsElapsed) / 1000;
+            double KBs = 0;
+            if (secondsElapsed > 0) {
+                KBs = (double) (currentImage.sizeBytes() / secondsElapsed) / 1000;
+            }
             String blkTimeMsg = String.format("Sent %d blocks in %d seconds (%.2f KB/s)",
                     currentImage.blockCount(),
                     secondsElapsed,
@@ -203,9 +206,7 @@ public class OADProfile extends BaseProfile {
     private boolean enableNotifyForChar(BluetoothGattCharacteristic characteristic) {
         boolean result = mGattClient.setCharacteristicNotification(characteristic, true);
 
-        String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
-        BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
-                UUID.fromString(CLIENT_CHARACTERISTIC_CONFIG));
+        BluetoothGattDescriptor descriptor = characteristic.getDescriptor(Constants.UUID_CLIENT_CHAR_CONFIG);
         descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
         mGattClient.writeDescriptor(descriptor);
         if (result) {
