@@ -36,14 +36,32 @@ public class OADProfile extends BaseProfile {
     private BluetoothGattCharacteristic oadBlock;
 
     // OAD Internal State
+
+    /* The current state of the OAD state-machine */
     private OADState oadState = OADState.INACTIVE;
+
+    /* The last offered image or the accepted image depending on state of the OAD process */
     private FirmwareImage currentImage;
+
+    /* Bundle of firmware images provided by the client */
     private FirmwareBundle firmwareBundle;
+
+    /* Called when the OAD process completes successfully */
     private Runnable onComplete;
+
+    /* Called when an error occurs */
     private Callback<BeanError> onError;
+
+    /* Called each time progress is made during block transfer state */
     private Callback<UploadProgress> onProgress;
+
+    /* The maximum allowed blocks queued and/or in-flight before receiving a new request */
     private final int MAX_IN_AIR_BLOCKS = 8;
+
+    /* Keeps track of the next block to send which is not equal to the block requested */
     private int nextBlock = 0;
+
+    /* Used to record KB/s during block transfers */
     private long blockTransferStarted = 0;
 
     public OADProfile(GattClient client) {
