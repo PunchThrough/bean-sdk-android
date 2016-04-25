@@ -60,6 +60,10 @@ public class FirmwareImage implements Chunk.Chunkable {
         return  filename.replace(".bin", "");
     }
 
+    public int sizeBytes() {
+        return rawData.length;
+    }
+
     public long version() {
         return Long.parseLong(filename.split("_")[0]);
     }
@@ -135,17 +139,24 @@ public class FirmwareImage implements Chunk.Chunkable {
 
     /**
      * Get a firmware block for this image. Blocks are made up of a UINT16 block index followed
-     * by a 16-byte data block.
+     * by a 16-byte data block (total of 18 bytes).
      *
      * @param index The index of the block to be returned
      * @return The block at the given index
      */
     public byte[] block(int index) {
+
+        if (index >= blockCount()) {
+            throw new ArrayIndexOutOfBoundsException("Invalid block index " + index);
+        }
+
         byte[] theBlock = new byte[FW_BLOCK_SIZE + 2];
 
+        // Copy the UINT16 block index into the array (2 bytes)
         byte[] rawIndex = intToTwoBytes(index, Constants.CC2540_BYTE_ORDER);
         System.arraycopy(rawIndex, 0, theBlock, 0, 2);
 
+        // Copy the block data into the array (16 bytes)
         int blockStart = index * FW_BLOCK_SIZE;
         int length = FW_BLOCK_SIZE;
         while (blockStart + length > data().length) { length--; }

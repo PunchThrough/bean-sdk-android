@@ -59,4 +59,7 @@ public class Constants {
     public static final UUID UUID_OAD_CHAR_IDENTIFY = UUID.fromString("F000FFC1-0451-4000-B000-000000000000");
     public static final UUID UUID_OAD_CHAR_BLOCK = UUID.fromString("F000FFC2-0451-4000-B000-000000000000");
 
+    // Used for registering BLE characteristic notifications
+    public static final UUID UUID_CLIENT_CHAR_CONFIG = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
+
 }

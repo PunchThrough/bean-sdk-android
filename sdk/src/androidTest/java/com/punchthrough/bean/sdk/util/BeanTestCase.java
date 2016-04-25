@@ -220,14 +220,15 @@ public class BeanTestCase extends AndroidTestCase {
 
             @Override
             public void onDiscoveryComplete() {
-                System.out.println("[BeanUtils] Discovery Complete");
+                System.out.println("Discovery Complete");
                 beanLatch.countDown();
             }
         };
 
+        System.out.println(String.format("Scanning for Bean (%s) or nearest Bean.", beanName));
         boolean startedOK = BeanManager.getInstance().startDiscovery(listener);
         assertThat(startedOK).isTrue();
-        beanLatch.await(20, TimeUnit.SECONDS);
+        beanLatch.await(120, TimeUnit.SECONDS);
         if (beans.isEmpty()) {
             throw new Exception("No beans found");
         }
