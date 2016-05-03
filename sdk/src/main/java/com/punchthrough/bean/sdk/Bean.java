@@ -1022,6 +1022,11 @@ public class Bean implements Parcelable {
         });
     }
 
+    /**
+     * Read the Bean hardware version
+     *
+     * @param callback the callback for the version string
+     */
     public void readFirmwareVersion(final Callback<String> callback) {
         gattClient.getDeviceProfile().getFirmwareVersion(new DeviceProfile.VersionCallback() {
             @Override
@@ -1031,6 +1036,11 @@ public class Bean implements Parcelable {
         });
     }
 
+    /**
+     * Read Bean firmware version
+     *
+     * @param callback the callback for the version string
+     */
     public void readHardwareVersion(final Callback<String> callback) {
         gattClient.getDeviceProfile().getHardwareVersion(new DeviceProfile.VersionCallback() {
             @Override

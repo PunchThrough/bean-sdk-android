@@ -35,7 +35,7 @@ public class OADProfile extends BaseProfile {
     private BluetoothGattCharacteristic oadIdentify;
     private BluetoothGattCharacteristic oadBlock;
 
-    // OAD Internal State7
+    // OAD Internal State
 
     /* The current state of the OAD state-machine */
     private OADState oadState = OADState.INACTIVE;
