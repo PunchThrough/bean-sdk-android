@@ -35,6 +35,7 @@ import android.util.Log;
 import com.punchthrough.bean.sdk.internal.BeanMessageID;
 import com.punchthrough.bean.sdk.internal.battery.BatteryProfile.BatteryLevelCallback;
 import com.punchthrough.bean.sdk.internal.ble.GattClient;
+import com.punchthrough.bean.sdk.internal.device.DeviceProfile;
 import com.punchthrough.bean.sdk.internal.device.DeviceProfile.DeviceInfoCallback;
 import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
 import com.punchthrough.bean.sdk.internal.serial.GattSerialMessage;
@@ -1008,7 +1009,7 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Read the device information (hardware / software version)
+     * Read the device information (hardware, firmware and software version)
      *
      * @param callback the callback for the result
      */
@@ -1017,6 +1018,24 @@ public class Bean implements Parcelable {
             @Override
             public void onDeviceInfo(DeviceInfo info) {
                 callback.onResult(info);
+            }
+        });
+    }
+
+    public void readFirmwareVersion(final Callback<String> callback) {
+        gattClient.getDeviceProfile().getFirmwareVersion(new DeviceProfile.VersionCallback() {
+            @Override
+            public void onComplete(String version) {
+                callback.onResult(version);
+            }
+        });
+    }
+
+    public void readHardwareVersion(final Callback<String> callback) {
+        gattClient.getDeviceProfile().getHardwareVersion(new DeviceProfile.VersionCallback() {
+            @Override
+            public void onComplete(String version) {
+                callback.onResult(version);
             }
         });
     }

@@ -61,7 +61,7 @@ public class OADProfileTest {
     });
 
     // Test state
-    DeviceProfile.FirmwareVersionCallback fwVersionCallback;
+    DeviceProfile.VersionCallback fwVersionCallback;
     List<BeanError> testErrors = new ArrayList<>();
 
     // Mocks
@@ -107,10 +107,10 @@ public class OADProfileTest {
         doAnswer(new Answer() {
             public Object answer(InvocationOnMock invocation) {
                 Object[] args = invocation.getArguments();
-                fwVersionCallback = (DeviceProfile.FirmwareVersionCallback) args[0];
+                fwVersionCallback = (DeviceProfile.VersionCallback) args[0];
                 return null;
             }
-        }).when(mockDeviceProfile).getFirmwareVersion(any(DeviceProfile.FirmwareVersionCallback.class));
+        }).when(mockDeviceProfile).getFirmwareVersion(any(DeviceProfile.VersionCallback.class));
 
         // Setup mock GattClient
         mockGattClient = mock(GattClient.class);
