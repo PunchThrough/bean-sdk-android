@@ -67,6 +67,24 @@ public class TestBeanSimple extends BeanTestCase {
         }
     }
 
+    public void testReadFirmwareVersion() {
+        testBean.readFirmwareVersion(new Callback<String>() {
+            @Override
+            public void onResult(String result) {
+                assertThat(validFirmwareVersion(result)).isTrue();
+            }
+        });
+    }
+
+    public void testReadHardwareVersion() {
+        testBean.readHardwareVersion(new Callback<String>() {
+            @Override
+            public void onResult(String result) {
+                assertThat(validHardwareVersion(result)).isTrue();
+            }
+        });
+    }
+
     public void testBeanReadWriteScratchBank() throws Exception {
         /** Test Scratch characteristic functionality
          *

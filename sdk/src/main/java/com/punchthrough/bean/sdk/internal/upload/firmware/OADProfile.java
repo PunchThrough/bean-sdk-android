@@ -277,7 +277,7 @@ public class OADProfile extends BaseProfile {
     private void checkFirmwareVersion() {
         Log.i(TAG, "Checking Firmware version...");
         setState(OADState.CHECKING_FW_VERSION);
-        mGattClient.getDeviceProfile().getFirmwareVersion(new DeviceProfile.FirmwareVersionCallback() {
+        mGattClient.getDeviceProfile().getFirmwareVersion(new DeviceProfile.VersionCallback() {
             @Override
             public void onComplete(String version) {
                 if (needsUpdate(firmwareBundle.version(), version)) {

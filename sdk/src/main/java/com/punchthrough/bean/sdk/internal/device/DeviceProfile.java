@@ -22,7 +22,8 @@ public class DeviceProfile extends BaseProfile {
     private String mFirmwareVersion;
     private BluetoothGattService mDeviceService;
     private DeviceInfoCallback deviceInfoCallback;
-    private FirmwareVersionCallback firmwareVersionCallback;
+    private VersionCallback firmwareVersionCallback;
+    private VersionCallback hardwareVersionCallback;
 
     public DeviceProfile(GattClient client) {
         super(client);
@@ -59,6 +60,11 @@ public class DeviceProfile extends BaseProfile {
             firmwareVersionCallback.onComplete(mFirmwareVersion);
             firmwareVersionCallback = null;
         }
+
+        if (mHardwareVersion != null && hardwareVersionCallback != null) {
+            hardwareVersionCallback.onComplete(mHardwareVersion);
+            hardwareVersionCallback = null;
+        }
     }
 
     public void getDeviceInfo(DeviceInfoCallback callback) {
@@ -72,18 +78,25 @@ public class DeviceProfile extends BaseProfile {
         }
     }
 
-    public void getFirmwareVersion(FirmwareVersionCallback callback) {
+    public void getFirmwareVersion(VersionCallback callback) {
         firmwareVersionCallback = callback;
         mGattClient.readCharacteristic(
                 mDeviceService.getCharacteristic(
                         Constants.UUID_DEVICE_INFO_CHAR_FIRMWARE_VERSION));
     }
 
+    public void getHardwareVersion(VersionCallback callback) {
+        hardwareVersionCallback = callback;
+        mGattClient.readCharacteristic(
+                mDeviceService.getCharacteristic(
+                        Constants.UUID_DEVICE_INFO_CHAR_HARDWARE_VERSION));
+    }
+
     public String getName() {
         return "Device Info Profile";
     }
 
-    public static interface FirmwareVersionCallback {
+    public static interface VersionCallback {
         public void onComplete(String version);
     }
 
