@@ -228,7 +228,7 @@ public class BeanTestCase extends AndroidTestCase {
         System.out.println(String.format("Scanning for Bean (%s) or nearest Bean.", beanName));
         boolean startedOK = BeanManager.getInstance().startDiscovery(listener);
         assertThat(startedOK).isTrue();
-        beanLatch.await(120, TimeUnit.SECONDS);
+        beanLatch.await(30, TimeUnit.SECONDS);
         if (beans.isEmpty()) {
             throw new Exception("No beans found");
         }

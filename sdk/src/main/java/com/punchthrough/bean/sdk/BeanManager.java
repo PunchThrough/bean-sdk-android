@@ -99,8 +99,6 @@ public class BeanManager {
                         mListener.onBeanDiscovered(bean, rssi);
                     }
                 });
-                mHandler.postDelayed(mCompleteDiscoveryCallback, SCAN_TIMEOUT / 2);
-
             }
         }
     };
