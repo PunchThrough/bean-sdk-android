@@ -34,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -145,54 +146,34 @@ public class OADProfileTest {
         oadProfile.onBeanConnectionFailed();
     }
 
-    private Callback<UploadProgress> onProgress = new Callback<UploadProgress>() {
-        @Override
-        public void onResult(UploadProgress result) {
-
-        }
-    };
-
-    private Runnable onComplete = mock(Runnable.class);
-
-    private Callback<BeanError> onError = new Callback<BeanError>() {
-        @Override
-        public void onResult(BeanError result) {
-            testErrors.add(result);
-        }
-    };
-
-    private void assertNoErrors() {
-        for (BeanError e : testErrors) {
-            fail(e.toString());
-        }
-    }
-
     private void assertState(OADState state) {
         assertThat(state).isEqualTo(oadProfile.getState());
     }
 
     @Test
     public void testNoUpdateNeeded() throws ImageParsingException {
-        oadProfile.programWithFirmware(buildBundle(), onProgress, onComplete, onError);
+        OADProfile.OADListener oadListener = mock(OADProfile.OADListener.class);
+        OADProfile.OADApproval oadApproval = oadProfile.programWithFirmware(buildBundle(), oadListener);
         assertState(OADState.CHECKING_FW_VERSION);
         fwVersionCallback.onComplete("12345");  // Same as bundle version
         assertState(OADState.INACTIVE);
-        assertNoErrors();
-        verify(onComplete).run();
+        verify(oadListener).updateRequired(false);
+        verify(oadListener).complete();
+        verify(oadListener, never()).error(any(BeanError.class));
     }
 
     @Test
     public void testUpdateNeeded() throws ImageParsingException {
 
-        // Start test
-        oadProfile.programWithFirmware(buildBundle(), onProgress, onComplete, onError);
+        OADProfile.OADListener oadListener = mock(OADProfile.OADListener.class);
+        OADProfile.OADApproval oadApproval = oadProfile.programWithFirmware(buildBundle(), oadListener);
         assertState(OADState.CHECKING_FW_VERSION);
         fwVersionCallback.onComplete("1234"); // Less than bundle version
+        oadApproval.allow();
         assertState(OADState.OFFERING_IMAGES);
         requestBlock(0);
         assertState(OADState.RECONNECTING);
         reconnect();
         verify(mockBeanManager).startDiscovery();
-        assertNoErrors();
     }
 }

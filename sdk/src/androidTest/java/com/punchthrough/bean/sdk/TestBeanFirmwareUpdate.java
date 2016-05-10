@@ -3,6 +3,8 @@ package com.punchthrough.bean.sdk;
 import android.test.suitebuilder.annotation.Suppress;
 
 import com.punchthrough.bean.sdk.internal.exception.ImageParsingException;
+import com.punchthrough.bean.sdk.internal.upload.firmware.OADProfile;
+import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.Callback;
 import com.punchthrough.bean.sdk.message.UploadProgress;
 import com.punchthrough.bean.sdk.upload.FirmwareBundle;
@@ -23,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 public class TestBeanFirmwareUpdate extends BeanTestCase {
 
     private Bean bean;
+    private OADProfile.OADApproval oadApproval;
 
     public void setUp() {
         super.setUp();
@@ -63,26 +66,39 @@ public class TestBeanFirmwareUpdate extends BeanTestCase {
         return new FirmwareBundle(fwImages);
     }
 
-    @Suppress
     public void testFirmwareUpdate() throws Exception {
 
         final CountDownLatch fwLatch = new CountDownLatch(1);
 
-        final Callback<UploadProgress> onProgress = new Callback<UploadProgress>() {
+        oadApproval = bean.programWithFirmware(getAsymmBundle(), new OADProfile.OADListener() {
             @Override
-            public void onResult(UploadProgress result) {
-            }
-        };
-
-        final Runnable onComplete = new Runnable() {
-            @Override
-            public void run() {
-                System.out.println("[BEANTEST] - Complete!");
+            public void complete() {
+                System.out.println("[TestBeanFirmwareUpdate] OAD Process Complete!");
                 fwLatch.countDown();
             }
-        };
 
-        bean.programWithFirmware(getAsymmBundle(), onProgress, onComplete);
+            @Override
+            public void error(BeanError error) {
+                System.out.println("[TestBeanFirmwareUpdate] OAD Error: " + error.toString());
+                fwLatch.countDown();
+            }
+
+            @Override
+            public void progress(UploadProgress uploadProgress) {
+//                System.out.println("[TestBeanFirmwareUpdate] FW Progress: " + uploadProgress.toString());
+            }
+
+            @Override
+            public void updateRequired(boolean required) {
+                if (required) {
+                    oadApproval.allow();
+                } else {
+                    fwLatch.countDown();
+                }
+            }
+        });
+
+        // Wait 8 minutes for it to complete or fail
         fwLatch.await(8000, TimeUnit.SECONDS);
     }
 }

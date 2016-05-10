@@ -13,13 +13,11 @@ import com.punchthrough.bean.sdk.internal.exception.OADException;
 import com.punchthrough.bean.sdk.internal.utility.Constants;
 import com.punchthrough.bean.sdk.internal.utility.Convert;
 import com.punchthrough.bean.sdk.message.BeanError;
-import com.punchthrough.bean.sdk.message.Callback;
 import com.punchthrough.bean.sdk.message.UploadProgress;
 import com.punchthrough.bean.sdk.upload.FirmwareBundle;
 import com.punchthrough.bean.sdk.upload.FirmwareImage;
 
 import java.util.Arrays;
-import java.util.UUID;
 
 public class OADProfile extends BaseProfile {
     /**
@@ -46,14 +44,8 @@ public class OADProfile extends BaseProfile {
     /* Bundle of firmware images provided by the client */
     private FirmwareBundle firmwareBundle;
 
-    /* Called when the OAD process completes successfully */
-    private Runnable onComplete;
-
-    /* Called when an error occurs */
-    private Callback<BeanError> onError;
-
-    /* Called each time progress is made during block transfer state */
-    private Callback<UploadProgress> onProgress;
+    /* Oad Listener */
+    private OADListener oadListener;
 
     /* The maximum allowed blocks queued and/or in-flight before receiving a new request */
     private final int MAX_IN_AIR_BLOCKS = 8;
@@ -69,6 +61,22 @@ public class OADProfile extends BaseProfile {
         resetState();
     }
 
+    private OADApproval oadApproval = new OADApproval() {
+
+        @Override
+        public void allow() {
+            Log.i(TAG, "Client has allowed the OAD Process to continue.");
+            startOfferingImages();
+        }
+
+        @Override
+        public void deny() {
+            Log.i(TAG, "Client denied the OAD Process from continuing.");
+            finishOAD();
+        }
+
+    };
+
     private void setState(OADState state) {
         Log.i(TAG, String.format("OAD State Change: %s -> %s", oadState.name(), state.name()));
         oadState = state;
@@ -76,8 +84,6 @@ public class OADProfile extends BaseProfile {
 
     private void resetState() {
         setState(OADState.INACTIVE);
-        onComplete = null;
-        onError = null;
         currentImage = null;
     }
 
@@ -135,7 +141,7 @@ public class OADProfile extends BaseProfile {
                nextBlock < (requestedBlock + MAX_IN_AIR_BLOCKS)) {
 
             writeToCharacteristic(oadBlock, currentImage.block(nextBlock));
-            onProgress.onResult(UploadProgress.create(requestedBlock, currentImage.blockCount()));
+            oadListener.progress(UploadProgress.create(requestedBlock, currentImage.blockCount()));
             nextBlock++;
         }
 
@@ -159,14 +165,12 @@ public class OADProfile extends BaseProfile {
     }
 
     /**
-     * Stop the firmware upload and return an error to the user's {@link #onError} handler.
+     * Stop the firmware upload and alert the OADListener
      *
      * @param error The error to be returned to the user
      */
     private void throwBeanError(BeanError error) {
-        if (onError != null) {
-            onError.onResult(error);
-        }
+        oadListener.error(error);
         resetState();
     }
 
@@ -281,8 +285,9 @@ public class OADProfile extends BaseProfile {
             @Override
             public void onComplete(String version) {
                 if (needsUpdate(firmwareBundle.version(), version)) {
-                    startOfferingImages();
+                    oadListener.updateRequired(true);
                 } else {
+                    oadListener.updateRequired(false);
                     finishOAD();
                 }
             }
@@ -292,7 +297,7 @@ public class OADProfile extends BaseProfile {
     private void finishOAD() {
         Log.i(TAG, "OAD Finished");
         setState(OADState.INACTIVE);
-        onComplete.run();
+        oadListener.complete();
     }
 
     /****************************************************************************
@@ -355,27 +360,34 @@ public class OADProfile extends BaseProfile {
      * Program the Bean's CC2540 with new firmware.
      *
      * @param bundle        The {@link com.punchthrough.bean.sdk.upload.FirmwareBundle} to be sent
-     * @param onProgress    Called when progress is made during the upload
-     * @param onComplete    Called when the upload is complete
-     * @param onError       Called if an error occurs during the upload
+     * @param listener      Listener object to alert client of events/state of the Firmware update process
      */
-    public void programWithFirmware(final FirmwareBundle bundle,
-                                    final Callback<UploadProgress> onProgress,
-                                    final Runnable onComplete,
-                                    Callback<BeanError> onError) {
+    public OADApproval programWithFirmware(final FirmwareBundle bundle, OADListener listener) {
 
         if (!mGattClient.isConnected()) {
-            onError.onResult(BeanError.NOT_CONNECTED);
+            listener.error(BeanError.NOT_CONNECTED);
         }
 
         Log.i(TAG, "Starting firmware update procedure");
 
         // Save state for this firmware procedure
-        this.onComplete = onComplete;
-        this.onError = onError;
-        this.onProgress = onProgress;
+        this.oadListener = listener;
         this.firmwareBundle = bundle;
 
         checkFirmwareVersion();
+
+        return this.oadApproval;
+    }
+
+    public interface OADListener {
+        public void complete();
+        public void error(BeanError error);
+        public void progress(UploadProgress uploadProgress);
+        public void updateRequired(boolean required);
+    }
+
+    public interface OADApproval {
+        public void allow();
+        public void deny();
     }
 }

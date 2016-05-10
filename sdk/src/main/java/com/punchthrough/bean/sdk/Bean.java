@@ -40,6 +40,7 @@ import com.punchthrough.bean.sdk.internal.device.DeviceProfile.DeviceInfoCallbac
 import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
 import com.punchthrough.bean.sdk.internal.serial.GattSerialMessage;
 import com.punchthrough.bean.sdk.internal.serial.GattSerialTransportProfile;
+import com.punchthrough.bean.sdk.internal.upload.firmware.OADProfile;
 import com.punchthrough.bean.sdk.internal.upload.sketch.BeanState;
 import com.punchthrough.bean.sdk.internal.upload.sketch.SketchUploadState;
 import com.punchthrough.bean.sdk.internal.utility.Chunk;
@@ -1139,22 +1140,10 @@ public class Bean implements Parcelable {
      * Programs the Bean with new firmware images.
      *
      * @param bundle        The firmware package holding A and B images to be sent to the Bean
-     * @param onProgress    Called with progress while the sketch upload is occurring
-     * @param onComplete    Called when the sketch upload is complete
+     * @param listener      OADListener to alert the client of OAD state
      */
-    public void programWithFirmware(FirmwareBundle bundle, Callback<UploadProgress> onProgress,
-                                    Runnable onComplete) {
-
-        Callback<BeanError> onError = new Callback<BeanError>() {
-            @Override
-            public void onResult(BeanError error) {
-                returnError(error);
-            }
-        };
-
-        // Since TI OAD FW uploads access BLE characteristics directly, we need to delegate this
-        // to GattClient
-        gattClient.getOADProfile().programWithFirmware(bundle, onProgress, onComplete, onError);
+    public OADProfile.OADApproval programWithFirmware(FirmwareBundle bundle, OADProfile.OADListener listener) {
+        return gattClient.getOADProfile().programWithFirmware(bundle, listener);
     }
 
     public boolean firmwareUpdateInProgress() {
