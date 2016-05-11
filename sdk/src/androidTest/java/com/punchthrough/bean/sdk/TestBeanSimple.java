@@ -33,6 +33,7 @@ public class TestBeanSimple extends BeanTestCase {
     }
 
     private boolean validHardwareVersion(String version) {
+        System.out.println("Validating hardware version: " + version);
         return (
             version.equals("E") ||
             version.startsWith("1") ||
@@ -41,10 +42,12 @@ public class TestBeanSimple extends BeanTestCase {
     }
 
     private boolean validFirmwareVersion(String version) {
+        System.out.println("Validating firmware version: " + version);
         return version.length() > 0;
     }
 
     private boolean validSoftwareVersion(String version) {
+        System.out.println("Validationg software version: " + version);
         return version.length() > 0;
     }
 
@@ -67,22 +70,28 @@ public class TestBeanSimple extends BeanTestCase {
         }
     }
 
-    public void testReadFirmwareVersion() {
+    public void testReadFirmwareVersion() throws InterruptedException {
+        final CountDownLatch l = new CountDownLatch(1);
         testBean.readFirmwareVersion(new Callback<String>() {
             @Override
             public void onResult(String result) {
                 assertThat(validFirmwareVersion(result)).isTrue();
+                l.countDown();
             }
         });
+        l.await(20, TimeUnit.SECONDS);
     }
 
-    public void testReadHardwareVersion() {
+    public void testReadHardwareVersion() throws InterruptedException {
+        final CountDownLatch l = new CountDownLatch(1);
         testBean.readHardwareVersion(new Callback<String>() {
             @Override
             public void onResult(String result) {
                 assertThat(validHardwareVersion(result)).isTrue();
+                l.countDown();
             }
         });
+        l.await(20, TimeUnit.SECONDS);
     }
 
     public void testBeanReadWriteScratchBank() throws Exception {
