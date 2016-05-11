@@ -5,7 +5,6 @@ import android.test.suitebuilder.annotation.Suppress;
 import com.punchthrough.bean.sdk.internal.exception.ImageParsingException;
 import com.punchthrough.bean.sdk.internal.upload.firmware.OADProfile;
 import com.punchthrough.bean.sdk.message.BeanError;
-import com.punchthrough.bean.sdk.message.Callback;
 import com.punchthrough.bean.sdk.message.UploadProgress;
 import com.punchthrough.bean.sdk.upload.FirmwareBundle;
 import com.punchthrough.bean.sdk.upload.FirmwareImage;
@@ -32,7 +31,6 @@ public class TestBeanFirmwareUpdate extends BeanTestCase {
         try {
             bean = discoverBean();
             synchronousConnect(bean);
-            bean.setAutoReconnect(true);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Could not connect to close Bean");

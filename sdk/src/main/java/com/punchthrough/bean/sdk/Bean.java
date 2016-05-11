@@ -158,10 +158,6 @@ public class Bean implements Parcelable {
      */
     private final BluetoothDevice device;
 
-    /**
-     * Auto reconnect state flag
-     */
-    private boolean autoReconnect = false;
 
     /**
      * Last known Android Context (Activity)
@@ -751,19 +747,6 @@ public class Bean implements Parcelable {
 
     public boolean isConnected() {
         return gattClient.isConnected();
-    }
-
-    /**
-     * Set the auto-reconnect behavior for this Bean. (True means auto reconnect).
-     *
-     * @param reconnect Boolean value setting auto reconnect behavior
-     */
-    public void setAutoReconnect(boolean reconnect) {
-        autoReconnect = reconnect;
-    }
-
-    public boolean shouldReconnect() {
-        return autoReconnect;
     }
 
     public Context getLastKnownContext() {
