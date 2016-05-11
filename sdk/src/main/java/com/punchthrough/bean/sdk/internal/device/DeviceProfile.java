@@ -2,11 +2,13 @@ package com.punchthrough.bean.sdk.internal.device;
 
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
+import android.util.Log;
 
 import java.util.List;
 
 import com.punchthrough.bean.sdk.internal.ble.BaseProfile;
 import com.punchthrough.bean.sdk.internal.ble.GattClient;
+import com.punchthrough.bean.sdk.internal.utility.Convert;
 import com.punchthrough.bean.sdk.message.DeviceInfo;
 import com.punchthrough.bean.sdk.internal.utility.Constants;
 
@@ -43,10 +45,13 @@ public class DeviceProfile extends BaseProfile {
     public void onCharacteristicRead(GattClient client, BluetoothGattCharacteristic characteristic) {
 
         if (characteristic.getUuid().equals(Constants.UUID_DEVICE_INFO_CHAR_FIRMWARE_VERSION)) {
+            Log.i(TAG, "Read response (FW Version): " + Convert.bytesToHexString(characteristic.getValue()));
             mFirmwareVersion = characteristic.getStringValue(0);
         } else if (characteristic.getUuid().equals(Constants.UUID_DEVICE_INFO_CHAR_HARDWARE_VERSION)) {
+            Log.i(TAG, "Read response (HW Version): " + Convert.bytesToHexString(characteristic.getValue()));
             mHardwareVersion = characteristic.getStringValue(0);
         } else if (characteristic.getUuid().equals(Constants.UUID_DEVICE_INFO_CHAR_SOFTWARE_VERSION)) {
+            Log.i(TAG, "Read response (SW Version): " + Convert.bytesToHexString(characteristic.getValue()));
             mSoftwareVersion = characteristic.getStringValue(0);
         }
 
