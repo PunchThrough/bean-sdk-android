@@ -42,4 +42,16 @@ public class TestBeanManager extends BeanTestCase {
         BeanManager.getInstance().cancelDiscovery();
     }
 
+    public void testCancelRemoveTimeoutCallback() throws InterruptedException {
+        latch = new CountDownLatch(1);
+        BeanManager.getInstance().setScanTimeout(10);
+        BeanManager.getInstance().startDiscovery(bdl);
+        BeanManager.getInstance().cancelDiscovery();
+        latch.await(2, TimeUnit.SECONDS);
+        if (latch.getCount() > 0) {
+            BeanManager.getInstance().cancelDiscovery();
+            fail("Cancel didn't work");
+        }
+    }
+
 }

@@ -83,15 +83,23 @@ public class BeanManager {
                     // New Bean
                     bean = new Bean(device);
                     mBeans.put(device.getAddress(), bean);
-
-                    mHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            mListener.onBeanDiscovered(bean, rssi);
-                        }
-                    });
                 }
+
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mListener.onBeanDiscovered(bean, rssi);
+                    }
+                });
             }
+        }
+    };
+
+    private Runnable scanTimeoutCallback = new Runnable() {
+        @Override
+        public void run() {
+            Log.i(TAG, "Scan timeout!");
+            cancelDiscovery();
         }
     };
 
@@ -105,15 +113,7 @@ public class BeanManager {
             mScanning = true;
             Log.i(TAG, "BLE scan started successfully");
 
-            boolean success = mHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    Log.i(TAG, "Scan timeout!");
-                    cancelDiscovery();
-                }
-            }, scanTimeout * 1000);
-
-            if (success) {
+            if (mHandler.postDelayed(scanTimeoutCallback, scanTimeout * 1000)) {
                 Log.i(TAG, String.format("Cancelling discovery in %d seconds", scanTimeout));
             } else {
                 Log.e(TAG, "Failed to schedule discovery complete callback!");
@@ -194,6 +194,8 @@ public class BeanManager {
      * Cancel a scan currently in progress. If no scan is in progress, this method does nothing.
      */
     public void cancelDiscovery() {
+        mHandler.removeCallbacks(scanTimeoutCallback);
+
         if (mScanning) {
             Log.i(TAG, "Cancelling discovery process");
             BluetoothAdapter.getDefaultAdapter().stopLeScan(mCallback);
