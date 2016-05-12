@@ -49,12 +49,12 @@ public class BeanManager {
     // Constants
     private static final String TAG = "BeanManager";
     private static final UUID BEAN_UUID = UUID.fromString("a495ff10-c5b1-4b44-b512-1370f02d74de");
-    private static final long SCAN_TIMEOUT = 30000;
 
     // Dependencies
     private BluetoothAdapter btAdapter;
     private Handler mHandler = new Handler();
     private BeanDiscoveryListener mListener;
+    private int scanTimeout = 30;  // Seconds
 
     // Internal State
     private boolean mScanning = false;
@@ -64,18 +64,10 @@ public class BeanManager {
         btAdapter = BluetoothAdapter.getDefaultAdapter();
     }
 
-    private Runnable mCompleteDiscoveryCallback = new Runnable() {
-        @Override
-        public void run() {
-            completeDiscovery();
-        }
-    };
-
     private final LeScanCallback mCallback = new LeScanCallback() {
         @Override
         public void onLeScan(BluetoothDevice device, final int rssi, byte[] scanRecord) {
             if (isBean(scanRecord)) {
-                mHandler.removeCallbacks(mCompleteDiscoveryCallback);
 
                 final Bean bean;
 
@@ -103,17 +95,45 @@ public class BeanManager {
         }
     };
 
+    /**
+     * Helper function for starting scan and scheduling the scan timeout
+     *
+     * @return boolean success flag
+     */
     private boolean scan() {
         if (btAdapter.startLeScan(mCallback)) {
+            mScanning = true;
             Log.i(TAG, "BLE scan started successfully");
-            if (!mHandler.postDelayed(mCompleteDiscoveryCallback, SCAN_TIMEOUT)) {
+
+            boolean success = mHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    Log.i(TAG, "Scan timeout!");
+                    cancelDiscovery();
+                }
+            }, scanTimeout * 1000);
+
+            if (success) {
+                Log.i(TAG, String.format("Cancelling discovery in %d seconds", scanTimeout));
+            } else {
                 Log.e(TAG, "Failed to schedule discovery complete callback!");
             }
+
             return true;
         } else {
             Log.i(TAG, "BLE scan failed!");
             return false;
         }
+    }
+
+    /**
+     * Set the desired scan timeout in seconds
+     *
+     * @param timeout seconds
+     */
+    public void setScanTimeout(int timeout) {
+        scanTimeout = timeout;
+        Log.i(TAG, String.format("New scan timeout set: %d seconds", scanTimeout));
     }
 
     /**
@@ -142,6 +162,11 @@ public class BeanManager {
      * @return false if the Bluetooth stack was unable to start the scan.
      */
     public boolean startDiscovery(BeanDiscoveryListener listener) {
+        if (mScanning) {
+            Log.e(TAG, "Already discovering");
+            return true;
+        }
+
         mListener = listener;
         return scan();
     }
@@ -153,9 +178,15 @@ public class BeanManager {
      * the Bean disconnects during the OAD process.
      */
     public boolean startDiscovery() {
+        if (mScanning) {
+            Log.e(TAG, "Already discovering");
+            return true;
+        }
+
         if (mListener == null) {
             throw new NullPointerException("Listener cannot be null");
         }
+
         return scan();
     }
 
@@ -163,7 +194,22 @@ public class BeanManager {
      * Cancel a scan currently in progress. If no scan is in progress, this method does nothing.
      */
     public void cancelDiscovery() {
-        BluetoothAdapter.getDefaultAdapter().stopLeScan(mCallback);
+        if (mScanning) {
+            Log.i(TAG, "Cancelling discovery process");
+            BluetoothAdapter.getDefaultAdapter().stopLeScan(mCallback);
+            mScanning = false;
+            boolean success = mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    mListener.onDiscoveryComplete();
+                }
+            });
+            if (!success) {
+                Log.e(TAG, "Failed to post Discovery Complete callback!");
+            }
+        } else {
+            Log.e(TAG, "No discovery in progress");
+        }
     }
 
     /**
@@ -182,22 +228,6 @@ public class BeanManager {
      */
     public void forgetBeans() {
         mBeans.clear();
-    }
-
-    /**
-     * Finish Bean discovery.
-     */
-    private void completeDiscovery() {
-        if (mScanning) {
-            BluetoothAdapter.getDefaultAdapter().stopLeScan(mCallback);
-            mScanning = false;
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    mListener.onDiscoveryComplete();
-                }
-            });
-        }
     }
 
     /**
