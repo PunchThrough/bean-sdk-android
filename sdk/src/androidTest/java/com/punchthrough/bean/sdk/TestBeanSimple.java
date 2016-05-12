@@ -47,7 +47,7 @@ public class TestBeanSimple extends BeanTestCase {
     }
 
     private boolean validSoftwareVersion(String version) {
-        System.out.println("Validationg software version: " + version);
+        System.out.println("Validating software version: " + version);
         return version.length() > 0;
     }
 

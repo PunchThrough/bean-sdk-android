@@ -82,26 +82,39 @@ public class BeanManager {
                 if (mBeans.containsKey(device.getAddress())) {
                     // We already know about this bean
                     bean = mBeans.get(device.getAddress());
+                    if (bean.firmwareUpdateInProgress()) {
+                        cancelDiscovery();
+                        bean.connect(bean.getLastKnownContext(), bean.getBeanListener());
+                    }
+
                 } else {
                     // New Bean
                     bean = new Bean(device);
                     mBeans.put(device.getAddress(), bean);
-                }
 
-                if (bean.shouldReconnect()) {
-                    Log.i(TAG, "Auto-reconnecting to Bean: " + bean.describe());
-                    bean.connect(bean.getLastKnownContext(), bean.getBeanListener());
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            mListener.onBeanDiscovered(bean, rssi);
+                        }
+                    });
                 }
-
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        mListener.onBeanDiscovered(bean, rssi);
-                    }
-                });
             }
         }
     };
+
+    private boolean scan() {
+        if (btAdapter.startLeScan(mCallback)) {
+            Log.i(TAG, "BLE scan started successfully");
+            if (!mHandler.postDelayed(mCompleteDiscoveryCallback, SCAN_TIMEOUT)) {
+                Log.e(TAG, "Failed to schedule discovery complete callback!");
+            }
+            return true;
+        } else {
+            Log.i(TAG, "BLE scan failed!");
+            return false;
+        }
+    }
 
     /**
      * Get the shared {@link BeanManager} instance.
@@ -129,22 +142,8 @@ public class BeanManager {
      * @return false if the Bluetooth stack was unable to start the scan.
      */
     public boolean startDiscovery(BeanDiscoveryListener listener) {
-        if (listener == null) {
-            throw new NullPointerException("Listener cannot be null");
-        }
-        if (mScanning) {
-            cancelDiscovery();
-        }
-
         mListener = listener;
-        mScanning = true;
-
-        if (btAdapter.startLeScan(mCallback)) {
-            mHandler.postDelayed(mCompleteDiscoveryCallback, SCAN_TIMEOUT);
-            return true;
-        }
-
-        return false;
+        return scan();
     }
 
     /**
@@ -157,28 +156,14 @@ public class BeanManager {
         if (mListener == null) {
             throw new NullPointerException("Listener cannot be null");
         }
-
-        if (mScanning) {
-            cancelDiscovery();
-        }
-
-        mScanning = true;
-
-        if (btAdapter.startLeScan(mCallback)) {
-            mHandler.postDelayed(mCompleteDiscoveryCallback, SCAN_TIMEOUT);
-            return true;
-        }
-        return false;
+        return scan();
     }
 
     /**
      * Cancel a scan currently in progress. If no scan is in progress, this method does nothing.
      */
     public void cancelDiscovery() {
-        if (mScanning) {
-            BluetoothAdapter.getDefaultAdapter().stopLeScan(mCallback);
-            mScanning = false;
-        }
+        BluetoothAdapter.getDefaultAdapter().stopLeScan(mCallback);
     }
 
     /**

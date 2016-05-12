@@ -58,23 +58,36 @@ public class OADProfile extends BaseProfile {
 
     public OADProfile(GattClient client) {
         super(client);
-        resetState();
+        reset();
     }
 
     private OADApproval oadApproval = new OADApproval() {
 
+        public boolean approved = false;
+
         @Override
         public void allow() {
             Log.i(TAG, "Client has allowed the OAD Process to continue.");
+            approved = true;
             startOfferingImages();
         }
 
         @Override
         public void deny() {
             Log.i(TAG, "Client denied the OAD Process from continuing.");
-            finishOAD();
+            approved = false;
+            finish();
         }
 
+        @Override
+        public void reset() {
+            approved = false;
+        }
+
+        @Override
+        public boolean isApproved() {
+            return approved;
+        }
     };
 
     private void setState(OADState state) {
@@ -82,22 +95,28 @@ public class OADProfile extends BaseProfile {
         oadState = state;
     }
 
-    private void resetState() {
+    private void reset() {
         setState(OADState.INACTIVE);
         currentImage = null;
+        oadApproval.reset();
     }
 
     private void offerNextImage() {
-        try {
-            currentImage = firmwareBundle.getNextImage();
-        } catch (OADException e) {
-            Log.e(TAG, e.getMessage());
-            finishOAD();
-        }
-
-        if (currentImage != null) {
-            Log.i(TAG, "Offering image: " + currentImage.name());
-            writeToCharacteristic(oadIdentify, currentImage.metadata());
+        if (oadState == OADState.OFFERING_IMAGES) {
+            try {
+                currentImage = firmwareBundle.getNextImage();
+                if (currentImage != null) {
+                    Log.i(TAG, "Offering image: " + currentImage.name());
+                    writeToCharacteristic(oadIdentify, currentImage.metadata());
+                }
+            } catch (OADException e) {
+                // This gets thrown if the firmware bundle is "exhausted", meaning the Bean
+                // has rejected all of the images in the bundle
+                Log.e(TAG, e.getMessage());
+                fail(BeanError.BEAN_REJECTED_FW);
+            }
+        } else {
+            Log.e(TAG, "Got notification on OAD Identify while in unexpected state: " + oadState);
         }
     }
 
@@ -120,58 +139,60 @@ public class OADProfile extends BaseProfile {
          * firmware file we have offered, which is stored as `this.currentImage`. It is now
          * time to start sending blocks of FW to the device.
          *
-         * @param buf 2 byte Buffer containing the block number
+         * @param characteristic BLE characteristic with a value equal to the the block number
          */
 
         int requestedBlock = Convert.twoBytesToInt(characteristic.getValue(), Constants.CC2540_BYTE_ORDER);
 
+        // Check for First block
         if (requestedBlock == 0) {
-            Log.i(TAG, "Image accepted: " + currentImage.name());
-            Log.i(TAG, String.format("Starting Block Transfer of %d blocks", currentImage.blockCount()));
+            Log.i(TAG, String.format("Image accepted (Name: %s) (Size: %s bytes)",currentImage.name(), currentImage.sizeBytes()));
             blockTransferStarted = System.currentTimeMillis() / 1000L;
             setState(OADState.BLOCK_XFER);
+            nextBlock = 0;
         }
 
-        if (requestedBlock % 512 == 0) {
-            Log.i(TAG, "REQUESTED: " + requestedBlock);
-        }
-
+        // Normal BLOCK XFER state logic
         while (oadState == OADState.BLOCK_XFER &&
                nextBlock <= currentImage.blockCount() - 1 &&
                nextBlock < (requestedBlock + MAX_IN_AIR_BLOCKS)) {
 
             writeToCharacteristic(oadBlock, currentImage.block(nextBlock));
             oadListener.progress(UploadProgress.create(requestedBlock, currentImage.blockCount()));
+
+            if (nextBlock % 50 == 0) {
+                Log.i(TAG, String.format("OAD Block SENT: %s/%s", nextBlock, currentImage.blockCount()));
+            }
+
             nextBlock++;
         }
 
+        // Check for final block
         if (nextBlock >= currentImage.blockCount()) {
+
+            // Log final block
+            Log.i(TAG, String.format("OAD Block SENT: %s/%s", nextBlock - 1, currentImage.blockCount()));
+
+            // Log timing and throughput
             long secondsElapsed = System.currentTimeMillis() / 1000L - blockTransferStarted;
             double KBs = 0;
             if (secondsElapsed > 0) {
                 KBs = (double) (currentImage.sizeBytes() / secondsElapsed) / 1000;
             }
-            String blkTimeMsg = String.format("Sent %d blocks in %d seconds (%.2f KB/s)",
+            String blkTimeMsg = String.format(
+                    "Sent %d blocks in %d seconds (%.2f KB/s)",
                     currentImage.blockCount(),
                     secondsElapsed,
                     KBs
-                    );
-            Log.i(TAG, "Last block sent!");
+            );
             Log.i(TAG, blkTimeMsg);
+
+            // Change states
+            setState(OADState.RECONNECTING);
             Log.i(TAG, "Waiting for device to reconnect...");
             nextBlock = 0;
-            setState(OADState.RECONNECTING);
         }
-    }
 
-    /**
-     * Stop the firmware upload and alert the OADListener
-     *
-     * @param error The error to be returned to the user
-     */
-    private void throwBeanError(BeanError error) {
-        oadListener.error(error);
-        resetState();
     }
 
     /**
@@ -180,19 +201,19 @@ public class OADProfile extends BaseProfile {
     private void setupOAD() {
         BluetoothGattService oadService = mGattClient.getService(Constants.UUID_OAD_SERVICE);
         if (oadService == null) {
-            throwBeanError(BeanError.MISSING_OAD_SERVICE);
+            fail(BeanError.MISSING_OAD_SERVICE);
             return;
         }
 
         oadIdentify = oadService.getCharacteristic(Constants.UUID_OAD_CHAR_IDENTIFY);
         if (oadIdentify == null) {
-            throwBeanError(BeanError.MISSING_OAD_IDENTIFY);
+            fail(BeanError.MISSING_OAD_IDENTIFY);
             return;
         }
 
         oadBlock = oadService.getCharacteristic(Constants.UUID_OAD_CHAR_BLOCK);
         if (oadBlock == null) {
-            throwBeanError(BeanError.MISSING_OAD_BLOCK);
+            fail(BeanError.MISSING_OAD_BLOCK);
             return;
         }
     }
@@ -210,7 +231,7 @@ public class OADProfile extends BaseProfile {
         if (oadIdentifyNotifying && oadBlockNotifying) {
             Log.d(TAG, "Enable notifications successful");
         } else {
-            throwBeanError(BeanError.ENABLE_OAD_NOTIFY_FAILED);
+            fail(BeanError.ENABLE_OAD_NOTIFY_FAILED);
         }
     }
 
@@ -257,7 +278,7 @@ public class OADProfile extends BaseProfile {
     }
 
     private boolean needsUpdate(Long bundleVersion, String beanVersion) {
-        if (beanVersion.startsWith("OAD")) {
+        if (beanVersion.contains("OAD")) {
             Log.i(TAG, "Bundle version: " + bundleVersion);
             Log.i(TAG, "Bean version: " + beanVersion);
             return true;
@@ -273,6 +294,7 @@ public class OADProfile extends BaseProfile {
                 }
             } catch (NumberFormatException e) {
                 Log.e(TAG, "Couldn't parse Bean Version: " + beanVersion);
+                fail(BeanError.UNPARSABLE_FW_VERSION);
             }
         }
         return false;
@@ -284,19 +306,36 @@ public class OADProfile extends BaseProfile {
         mGattClient.getDeviceProfile().getFirmwareVersion(new DeviceProfile.VersionCallback() {
             @Override
             public void onComplete(String version) {
-                if (needsUpdate(firmwareBundle.version(), version)) {
+
+                boolean updateNeeded = needsUpdate(firmwareBundle.version(), version);
+                if (updateNeeded && oadApproval.isApproved()) {
+                    // Needs update and client has approved, keep the update going
+                    startOfferingImages();
+                } else if (updateNeeded && !oadApproval.isApproved()) {
+                    // Needs update but client has not approved, ask for approval
                     oadListener.updateRequired(true);
                 } else {
+                    // Does not need update
                     oadListener.updateRequired(false);
-                    finishOAD();
+                    finish();
                 }
             }
         });
     }
 
-    private void finishOAD() {
+    /**
+     * Stop the firmware upload and alert the OADListener
+     *
+     * @param error The error to be returned to the user
+     */
+    private void fail(BeanError error) {
+        oadListener.error(error);
+        reset();
+    }
+
+    private void finish() {
         Log.i(TAG, "OAD Finished");
-        setState(OADState.INACTIVE);
+        reset();
         oadListener.complete();
     }
 
@@ -323,12 +362,16 @@ public class OADProfile extends BaseProfile {
     }
 
     @Override
-    public void onBeanConnected() {
-        Log.i(TAG, "OAD Profile Detected Bean Connection");
+    public void beanReady() {
         if (uploadInProgress()) {
             checkFirmwareVersion();
             BeanManager.getInstance().cancelDiscovery();
         }
+    }
+
+    @Override
+    public void onBeanConnected() {
+        Log.i(TAG, "OAD Profile Detected Bean Connection");
     }
 
     @Override
@@ -389,5 +432,7 @@ public class OADProfile extends BaseProfile {
     public interface OADApproval {
         public void allow();
         public void deny();
+        public void reset();
+        public boolean isApproved();
     }
 }

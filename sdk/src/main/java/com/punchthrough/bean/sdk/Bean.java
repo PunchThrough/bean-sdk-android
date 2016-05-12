@@ -158,7 +158,6 @@ public class Bean implements Parcelable {
      */
     private final BluetoothDevice device;
 
-
     /**
      * Last known Android Context (Activity)
      */
@@ -1130,7 +1129,8 @@ public class Bean implements Parcelable {
     }
 
     public boolean firmwareUpdateInProgress() {
-        return gattClient.getOADProfile().uploadInProgress();
+        return gattClient.getOADProfile() != null && gattClient.getOADProfile().uploadInProgress();
+
     }
 
     /**
