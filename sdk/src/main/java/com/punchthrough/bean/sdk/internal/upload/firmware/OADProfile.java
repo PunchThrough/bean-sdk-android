@@ -95,12 +95,18 @@ public class OADProfile extends BaseProfile {
         oadState = state;
     }
 
+    /**
+     * Set the state to INACTIVE and clear state variables
+     */
     private void reset() {
         setState(OADState.INACTIVE);
         currentImage = null;
         oadApproval.reset();
     }
 
+    /**
+     * Offer the next image available in the Firmware Bundle
+     */
     private void offerNextImage() {
         if (oadState == OADState.OFFERING_IMAGES) {
             try {
@@ -120,6 +126,9 @@ public class OADProfile extends BaseProfile {
         }
     }
 
+    /**
+     * Begin the OFFERING_IMAGES state
+     */
     private void startOfferingImages() {
         setState(OADState.OFFERING_IMAGES);
         currentImage = null;
@@ -127,20 +136,25 @@ public class OADProfile extends BaseProfile {
         offerNextImage();
     }
 
+    /**
+     *  Received a notification on Identify characteristic
+     *
+     * @param characteristic Not used
+     */
     private void onNotificationIdentify(BluetoothGattCharacteristic characteristic) {
         offerNextImage();
     }
 
+    /**
+     * Received a notification on Block characteristic
+     *
+     * A notification to this characteristic means the Bean has accepted the most recent
+     * firmware file we have offered, which is stored as `this.currentImage`. It is now
+     * time to start sending blocks of FW to the device.
+     *
+     * @param characteristic BLE characteristic with a value equal to the the block number
+     */
     private void onNotificationBlock(BluetoothGattCharacteristic characteristic) {
-        /**
-         * Received a notification on Block characteristic
-         *
-         * A notification to this characteristic means the Bean has accepted the most recent
-         * firmware file we have offered, which is stored as `this.currentImage`. It is now
-         * time to start sending blocks of FW to the device.
-         *
-         * @param characteristic BLE characteristic with a value equal to the the block number
-         */
 
         int requestedBlock = Convert.twoBytesToInt(characteristic.getValue(), Constants.CC2540_BYTE_ORDER);
 
@@ -161,7 +175,7 @@ public class OADProfile extends BaseProfile {
             oadListener.progress(UploadProgress.create(requestedBlock, currentImage.blockCount()));
 
             if (nextBlock % 50 == 0) {
-                Log.i(TAG, String.format("OAD Block SENT: %s/%s", nextBlock, currentImage.blockCount()));
+                Log.i(TAG, String.format("OAD Block SENT: %s/%s", nextBlock + 1, currentImage.blockCount()));
             }
 
             nextBlock++;
@@ -171,7 +185,7 @@ public class OADProfile extends BaseProfile {
         if (nextBlock >= currentImage.blockCount()) {
 
             // Log final block
-            Log.i(TAG, String.format("OAD Block SENT: %s/%s", nextBlock - 1, currentImage.blockCount()));
+            Log.i(TAG, String.format("OAD Block SENT: %s/%s", nextBlock, currentImage.blockCount()));
 
             // Log timing and throughput
             long secondsElapsed = System.currentTimeMillis() / 1000L - blockTransferStarted;
@@ -261,6 +275,8 @@ public class OADProfile extends BaseProfile {
     }
 
     /**
+     * Write to a OAD characteristic
+     *
      * @param charc The characteristic being inspected
      * @return      true if it's the OAD Block characteristic
      */
@@ -277,6 +293,13 @@ public class OADProfile extends BaseProfile {
         return result;
     }
 
+    /**
+     * Helper function to determine whether a Bean needs a FW update given a specific Bundle version
+     *
+     * @param bundleVersion the version string from the provided firmware bundle
+     * @param beanVersion the version string provided from the Bean Device Information Service
+     * @return boolean value stating whether the Bean needs an update
+     */
     private boolean needsUpdate(Long bundleVersion, String beanVersion) {
         if (beanVersion.contains("OAD")) {
             Log.i(TAG, "Bundle version: " + bundleVersion);
@@ -300,6 +323,9 @@ public class OADProfile extends BaseProfile {
         return false;
     }
 
+    /**
+     * Check the Beans FW version to determine if an update is required
+     */
     private void checkFirmwareVersion() {
         Log.i(TAG, "Checking Firmware version...");
         setState(OADState.CHECKING_FW_VERSION);
@@ -329,10 +355,13 @@ public class OADProfile extends BaseProfile {
      * @param error The error to be returned to the user
      */
     private void fail(BeanError error) {
-        oadListener.error(error);
         reset();
+        oadListener.error(error);
     }
 
+    /**
+     * Finish the OAD process, similar to fail() except assumes a better outcome
+     */
     private void finish() {
         Log.i(TAG, "OAD Finished");
         reset();
