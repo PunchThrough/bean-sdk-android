@@ -33,8 +33,12 @@ public abstract class UploadProgress implements Parcelable {
      *
      * @return Completion percentage, from 0.0 to 1.0
      */
-    public float percent() {
-        return ( (float) blocksSent() ) / totalBlocks();
+    public float completionPercent() {
+        return ((float) blocksSent() ) / totalBlocks();
+    }
+
+    public String completionBlocks() {
+        return String.format("%s/%s", blocksSent(), totalBlocks());
     }
 
 }

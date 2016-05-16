@@ -1,6 +1,7 @@
 package com.punchthrough.bean.sdk;
 
 import android.test.suitebuilder.annotation.Suppress;
+import android.util.Log;
 
 import com.punchthrough.bean.sdk.internal.exception.ImageParsingException;
 import com.punchthrough.bean.sdk.internal.upload.firmware.OADProfile;
@@ -22,6 +23,8 @@ import java.util.concurrent.TimeUnit;
 
 
 public class TestBeanFirmwareUpdate extends BeanTestCase {
+
+    private final String TAG = "TestBeanFirmwareUpdate";
 
     private Bean bean;
     private OADProfile.OADApproval oadApproval;
@@ -84,7 +87,9 @@ public class TestBeanFirmwareUpdate extends BeanTestCase {
 
             @Override
             public void progress(UploadProgress uploadProgress) {
-//                System.out.println("[TestBeanFirmwareUpdate] FW Progress: " + uploadProgress.toString());
+                if (uploadProgress.blocksSent() % 50 == 0) {
+                    Log.i(TAG, "OAD Progress: " + uploadProgress.completionBlocks());
+                }
             }
 
             @Override

@@ -171,13 +171,9 @@ public class OADProfile extends BaseProfile {
                nextBlock <= currentImage.blockCount() - 1 &&
                nextBlock < (requestedBlock + MAX_IN_AIR_BLOCKS)) {
 
+            // Write the block, tell the OAD Listener
             writeToCharacteristic(oadBlock, currentImage.block(nextBlock));
             oadListener.progress(UploadProgress.create(requestedBlock, currentImage.blockCount()));
-
-            if (nextBlock % 50 == 0) {
-                Log.i(TAG, String.format("OAD Block SENT: %s/%s", nextBlock + 1, currentImage.blockCount()));
-            }
-
             nextBlock++;
         }
 
