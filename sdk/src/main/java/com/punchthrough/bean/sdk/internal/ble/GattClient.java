@@ -44,6 +44,7 @@ public class GattClient {
     // Internal dependencies
     private BluetoothGatt mGatt;
     private ConnectionListener connectionListener;
+    private BluetoothDevice device;
 
     // Internal state
     private Queue<Runnable> mOperationsQueue = new ArrayDeque<>(32);
@@ -51,20 +52,8 @@ public class GattClient {
     private boolean mConnected = false;
     private boolean connecting = false;
 
-    public GattClient() {
-        mSerialProfile = new GattSerialTransportProfile(this);
-        mDeviceProfile = new DeviceProfile(this);
-        mBatteryProfile = new BatteryProfile(this);
-        mOADProfile = new OADProfile(this);
-        mScratchProfile = new ScratchProfile(this);
-        mProfiles.add(mSerialProfile);
-        mProfiles.add(mDeviceProfile);
-        mProfiles.add(mBatteryProfile);
-        mProfiles.add(mOADProfile);
-        mProfiles.add(mScratchProfile);
-    }
-
-    public GattClient(Handler handler) {
+    public GattClient(Handler handler, BluetoothDevice device) {
+        this.device = device;
         mSerialProfile = new GattSerialTransportProfile(this, handler);
         mDeviceProfile = new DeviceProfile(this);
         mBatteryProfile = new BatteryProfile(this);
@@ -303,6 +292,10 @@ public class GattClient {
     /****************************************************************************
                                   PUBLIC API
      ****************************************************************************/
+
+    public String bleAddress() {
+        return device.getAddress();
+    }
 
     public void connect(Context context, BluetoothDevice device) {
         if (mGatt != null) {

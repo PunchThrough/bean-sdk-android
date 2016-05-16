@@ -91,7 +91,7 @@ public class OADProfile extends BaseProfile {
     };
 
     private void setState(OADState state) {
-        Log.i(TAG, String.format("OAD State Change: %s -> %s", oadState.name(), state.name()));
+        Log.i(TAG, String.format("(%s) OAD State Change: %s -> %s", mGattClient.bleAddress(), oadState.name(), state.name()));
         oadState = state;
     }
 

@@ -159,6 +159,11 @@ public class Bean implements Parcelable {
     private final BluetoothDevice device;
 
     /**
+     * Handler created for each Bean
+     */
+    private final Handler handler;
+
+    /**
      * Last known Android Context (Activity)
      */
     private Context lastKnownContext;
@@ -267,25 +272,31 @@ public class Bean implements Parcelable {
      */
     private Runnable onSketchUploadComplete;
 
-    public Bean(BluetoothDevice device) {
-        this.device = device;
-        this.gattClient = new GattClient();
-        init(new Handler(Looper.getMainLooper()));
-    }
-
     /**
      * Create a Bean using its {@link android.bluetooth.BluetoothDevice}
      * The Bean will not be connected until {@link #connect(android.content.Context, BeanListener)} is called.
      *
      * @param device The BluetoothDevice representing a Bean
      */
+    public Bean(BluetoothDevice device) {
+        this.device = device;
+        this.handler = new Handler(Looper.getMainLooper());
+        this.gattClient = new GattClient(handler, device);
+        init();
+    }
+
+    /**
+     * Alternate Bean constructor practicing dependency injection, currently used by tests only
+     *
+     */
     public Bean(BluetoothDevice device, GattClient client, final Handler handler) {
         this.device = device;
         this.gattClient = client;
-        init(handler);
+        this.handler = handler;
+        init();
     }
 
-    private void init(final Handler handler) {
+    private void init() {
 
         GattClient.ConnectionListener connectionListener = new GattClient.ConnectionListener() {
             @Override
