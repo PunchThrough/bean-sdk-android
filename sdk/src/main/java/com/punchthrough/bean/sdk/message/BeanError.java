@@ -59,6 +59,11 @@ public enum BeanError {
     BEAN_REJECTED_FW,
 
     /**
+     * The client (user) rejected the OAD process
+     */
+    CLIENT_REJECTED,
+
+    /**
      * Bean responded with a message with an ID we don't know anything about
      */
     UNKNOWN_MESSAGE_ID,

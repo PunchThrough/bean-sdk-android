@@ -76,7 +76,7 @@ public class OADProfile extends BaseProfile {
         public void deny() {
             Log.i(TAG, "Client denied the OAD Process from continuing.");
             approved = false;
-            finish();
+            fail(BeanError.CLIENT_REJECTED);
         }
 
         @Override
@@ -355,6 +355,7 @@ public class OADProfile extends BaseProfile {
      * @param error The error to be returned to the user
      */
     private void fail(BeanError error) {
+        Log.e(TAG, "OAD Error: " + error.toString());
         reset();
         oadListener.error(error);
     }
