@@ -1,6 +1,7 @@
 package com.punchthrough.bean.sdk;
 
 import android.test.suitebuilder.annotation.Suppress;
+import android.util.Log;
 
 import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.Callback;
@@ -31,6 +32,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  */
 public class TestBeanAdvanced extends BeanTestCase {
+
+    private static final String TAG = "TestBeanAdvanced";
 
     private final byte START_FRAME = 0x77;
 
@@ -118,12 +121,21 @@ public class TestBeanAdvanced extends BeanTestCase {
 
         final Bean bean = discoverBean();
 
-        // TODO: The latch should have a value of 4 when all callbacks are operational
-        final CountDownLatch testCompletionLatch = new CountDownLatch(3);
+        // TODO: The latch should have a value of 5 when all callbacks are operational
+        final CountDownLatch testCompletionLatch = new CountDownLatch(4);
 
         BeanListener beanListener = new BeanListener() {
+
+            private void disconnect() {
+                if (testCompletionLatch.getCount() == 1) {
+                    Log.i(TAG, "Disconnecting!");
+                    bean.disconnect();
+                }
+            }
+
             @Override
             public void onConnected() {
+                Log.i(TAG, "SUCCESS: Connected");
                 testCompletionLatch.countDown();
                 triggerBeanScratchChange(bean);
                 triggerBeanSerialMessage(bean);
@@ -132,43 +144,43 @@ public class TestBeanAdvanced extends BeanTestCase {
 
             @Override
             public void onConnectionFailed() {
+                Log.e(TAG, "FAILURE: Connection failed");
                 fail("Connection failed!");
             }
 
             @Override
             public void onDisconnected() {
-                System.out.println("Disconnected");
+                Log.i(TAG, "SUCCESS: Disconnected");
                 testCompletionLatch.countDown();
             }
 
             @Override
             public void onSerialMessageReceived(byte[] data) {
+                Log.i(TAG, "SUCCESS: Serial Message Received!");
+
                 // TODO: Broken, never called!
                 testCompletionLatch.countDown();
-                if (testCompletionLatch.getCount() == 1) {
-                    System.out.println("Disconnecting");
-                    bean.disconnect();
-                }
+                disconnect();
             }
 
             @Override
             public void onScratchValueChanged(ScratchBank bank, byte[] value) {
+                Log.i(TAG, "SUCCESS: Scratch Value Changed!");
                 testCompletionLatch.countDown();
-                if (testCompletionLatch.getCount() == 1) {
-                    System.out.println("Disconnecting");
-                    bean.disconnect();
-                }
+                disconnect();
             }
 
             @Override
             public void onError(BeanError error) {
+                Log.e(TAG, "FAILURE: Bean error " + error.toString());
                 fail(error.toString());
             }
 
             @Override
             public void onReadRemoteRssi(final int rssi) {
-                System.out.println("onReadRemoteRssi: " + rssi);
+                Log.i(TAG, "SUCCESS: Read remote RSSI");
                 testCompletionLatch.countDown();
+                disconnect();
             }
         };
 
