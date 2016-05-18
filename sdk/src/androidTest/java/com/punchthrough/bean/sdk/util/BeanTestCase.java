@@ -29,8 +29,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class BeanTestCase extends AndroidTestCase {
 
     public Bean testBean;
-    public final String beanName = BuildConfig.BEAN_NAME; // there is a beanName gradle property, so
-                                                          // set with -PbeanName=\"TESTBEAN\"
+
+    // beanName and beanAddress are Gradle properties
+    public final String beanName = BuildConfig.BEAN_NAME;
+    public final String beanAddress = BuildConfig.BEAN_ADDRESS;
 
     private LooperRunner lr = new LooperRunner(BeanManager.getInstance().getHandler().getLooper());
 
@@ -207,7 +209,11 @@ public class BeanTestCase extends AndroidTestCase {
                 if (beanName.equals(bean.getDevice().getName())) {
                     beans.add(bean);
                     beanLatch.countDown();
-                } else if (rssi > highestRssi) {
+                } else if (beanAddress.equals(bean.getDevice().getAddress())) {
+                    beans.add(bean);
+                    beanLatch.countDown();
+                }
+                else if (rssi > highestRssi) {
                     highestRssi = rssi;
                     beans.add(bean);
 
