@@ -10,13 +10,14 @@ import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
 import android.os.Handler;
 import android.test.AndroidTestCase;
+import android.test.suitebuilder.annotation.Suppress;
 import android.util.Log;
 
 import com.punchthrough.bean.sdk.internal.utility.Constants;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -47,11 +48,12 @@ public class TestBeanBLE extends AndroidTestCase {
     private final CountDownLatch discoveryLatch = new CountDownLatch(1);
     private final CountDownLatch gattConnectLatch = new CountDownLatch(1);
     private final CountDownLatch discoverServicesLatch = new CountDownLatch(1);
-    private final CountDownLatch hardwareVersionLatch = new CountDownLatch(1);
+    private final CountDownLatch readHardwareVersionLatch = new CountDownLatch(1);
     private final CountDownLatch notificationIdentifyLatch = new CountDownLatch(1);
 
     // Internal state
     private final List<BluetoothDevice> devices = new ArrayList<>();
+    private String targetAddress = "C4:BE:84:49:BD:3C";  // Change this
     private int lastKnownGattState;
     private String hardwareVersionString = null;
     private byte[] notificationIdentifyValue = null;
@@ -62,20 +64,11 @@ public class TestBeanBLE extends AndroidTestCase {
     }
 
     private final BluetoothAdapter.LeScanCallback leScanCallback = new BluetoothAdapter.LeScanCallback() {
-
-        int highestRssi = -120;
-
         @Override
         public void onLeScan(BluetoothDevice device, final int rssi, byte[] scanRecord) {
-
-            if (rssi > highestRssi) {
-                highestRssi = rssi;
+            if (device.getAddress().equals(targetAddress)) {
                 devices.add(device);
-
-                if (rssi >= -50) {
-                    // This Device is very close, lets quit early to speed up the test
-                    discoveryLatch.countDown();
-                }
+                discoveryLatch.countDown();
             }
         }
     };
@@ -108,9 +101,19 @@ public class TestBeanBLE extends AndroidTestCase {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (characteristic.getUuid().equals(Constants.UUID_DEVICE_INFO_CHAR_HARDWARE_VERSION)) {
                     hardwareVersionString = characteristic.getStringValue(0);
-                    hardwareVersionLatch.countDown();
+                    readHardwareVersionLatch.countDown();
                 }
             }
+        }
+
+        @Override
+        public void onReliableWriteCompleted (BluetoothGatt gatt, int status) {
+            Log.i(TAG, "onReliableWriteCompleted: " + status);
+        }
+
+        @Override
+        public void onCharacteristicWrite (BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            Log.i(TAG, "onCharacteristicWrite: " + status);
         }
 
         @Override
@@ -122,7 +125,22 @@ public class TestBeanBLE extends AndroidTestCase {
         }
     };
 
-    private BluetoothDevice findNearbyDevice() throws InterruptedException {
+    private void refreshDeviceCache(BluetoothGatt gatt){
+        try {
+            BluetoothGatt localBluetoothGatt = gatt;
+            Method localMethod = localBluetoothGatt.getClass().getMethod("refresh", new Class[0]);
+            if (localMethod != null) {
+                localMethod.invoke(localBluetoothGatt, new Object[0]);
+            } else {
+                Log.e(TAG, "Couldn't find local method: refresh");
+            }
+        }
+        catch (Exception localException) {
+            Log.e(TAG, "An exception occurred while refreshing device");
+        }
+    }
+
+    private BluetoothDevice findDevice() throws InterruptedException {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -133,7 +151,7 @@ public class TestBeanBLE extends AndroidTestCase {
         bleAdapter.startLeScan(leScanCallback);
         discoveryLatch.await(10, TimeUnit.SECONDS);
         if (devices.size() < 1) {
-            fail("FAILURE: No Devices Found");
+            fail("FAILURE: No Device Found");
         }
 
         BluetoothDevice device = devices.get(devices.size() - 1);
@@ -154,7 +172,7 @@ public class TestBeanBLE extends AndroidTestCase {
 
     private void discoverServices(BluetoothGatt gatt) throws InterruptedException {
         gatt.discoverServices();
-        discoverServicesLatch.await(10, TimeUnit.SECONDS);
+        discoverServicesLatch.await(20, TimeUnit.SECONDS);
         if (discoverServicesLatch.getCount() > 0) {
             fail("FAILURE: Couldn't discover services");
         }
@@ -167,12 +185,12 @@ public class TestBeanBLE extends AndroidTestCase {
         BluetoothGattService dis = gatt.getService(Constants.UUID_DEVICE_INFO_SERVICE);
         BluetoothGattCharacteristic hwv = dis.getCharacteristic(Constants.UUID_DEVICE_INFO_CHAR_HARDWARE_VERSION);
         if (hwv == null) {
-            fail("FAILURE: No characteristic");
+            fail("FAILURE: No characteristic Hardware Version");
         }
         if (!gatt.readCharacteristic(hwv)) {
-            fail("FAILURE: Read char failed");
+            fail("FAILURE: Read char failed Hardware Version");
         }
-        hardwareVersionLatch.await(10, TimeUnit.SECONDS);
+        readHardwareVersionLatch.await(10, TimeUnit.SECONDS);
         if (hardwareVersionString == null) {
             fail("FAILURE: No hardware version");
         }
@@ -183,10 +201,14 @@ public class TestBeanBLE extends AndroidTestCase {
     private void enableNotificationOADIdentify(BluetoothGatt gatt) {
         BluetoothGattService oads = gatt.getService(Constants.UUID_OAD_SERVICE);
         BluetoothGattCharacteristic iden = oads.getCharacteristic(Constants.UUID_OAD_CHAR_IDENTIFY);
-        gatt.setCharacteristicNotification(iden, true);
+        if (!gatt.setCharacteristicNotification(iden, true)) {
+            Log.e(TAG, "FAILURE: Set Characteristic Notification");
+        }
         BluetoothGattDescriptor descriptor = iden.getDescriptor(Constants.UUID_CLIENT_CHAR_CONFIG);
         descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-        gatt.writeDescriptor(descriptor);
+        if (!gatt.writeDescriptor(descriptor)) {
+            Log.e(TAG, "FAILURE: Set Write Descriptor");
+        }
         Log.i(TAG, "SUCCESS: Notification enabled");
     }
 
@@ -197,9 +219,9 @@ public class TestBeanBLE extends AndroidTestCase {
         zeros[0] = 0;
         zeros[1] = 0;
         iden.setValue(zeros);
-        boolean success = gatt.writeCharacteristic(iden);
-        if (!success) {
-            fail("FAILURE: Write char");
+        if (!gatt.writeCharacteristic(iden)) {
+            Log.e(TAG, "FAILURE: Write char OAD Identify 0x0000");
+            fail("FAILURE: Write char OAD Identify 0x0000");
         }
         Log.i(TAG, "SUCCESS: Wrote characteristic");
     }
@@ -212,13 +234,17 @@ public class TestBeanBLE extends AndroidTestCase {
         Log.i(TAG, "SUCCESS: Received notification " + notificationIdentifyValue.toString());
     }
 
+    @Suppress
     public void testBLE() throws InterruptedException {
 
         // Scan/Discover
-        BluetoothDevice device = findNearbyDevice();
+        BluetoothDevice device = findDevice();
 
         // Connect to closest device (hopefully a Bean)
         BluetoothGatt gatt = connectGatt(device);
+
+        // Clear Android Cache
+        refreshDeviceCache(gatt);
 
         // Discover services
         discoverServices(gatt);
@@ -234,6 +260,9 @@ public class TestBeanBLE extends AndroidTestCase {
 
         // Receive notification
         receiveNotificationOADIdentify();
+
+        gatt.disconnect();
+        gatt.close();
 
     }
 }
