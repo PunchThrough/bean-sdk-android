@@ -233,14 +233,15 @@ public class OADProfile extends BaseProfile {
      */
     private void setupNotifications() {
 
-        Log.d(TAG, "Enabling OAD notifications");
+        Log.i(TAG, "Enabling OAD notifications");
 
         boolean oadIdentifyNotifying = enableNotifyForChar(oadIdentify);
         boolean oadBlockNotifying = enableNotifyForChar(oadBlock);
 
         if (oadIdentifyNotifying && oadBlockNotifying) {
-            Log.d(TAG, "Enable notifications successful");
+            Log.i(TAG, "Enable notifications successful");
         } else {
+            Log.e(TAG, "Error while enabling notifications");
             fail(BeanError.ENABLE_OAD_NOTIFY_FAILED);
         }
     }
@@ -257,17 +258,30 @@ public class OADProfile extends BaseProfile {
      * @return                  true if notifications were enabled successfully
      */
     private boolean enableNotifyForChar(BluetoothGattCharacteristic characteristic) {
-        boolean result = mGattClient.setCharacteristicNotification(characteristic, true);
+
+        boolean success = true;
+
+        // Enable notifications/indications for this characteristic
+        boolean successEnable = mGattClient.setCharacteristicNotification(characteristic, true);
+        if (successEnable) {
+            Log.i(TAG, "Enabled notify for characteristic: " + characteristic.getUuid());
+        } else {
+            success = false;
+            Log.e(TAG, "Enable notify failed for characteristic: " + characteristic.getUuid());
+        }
 
         BluetoothGattDescriptor descriptor = characteristic.getDescriptor(Constants.UUID_CLIENT_CHAR_CONFIG);
         descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-        mGattClient.writeDescriptor(descriptor);
-        if (result) {
-            Log.d(TAG, "Enabled notify for characteristic: " + characteristic.getUuid());
+        boolean successDescriptor = mGattClient.writeDescriptor(descriptor);
+
+        if (successDescriptor) {
+            Log.i(TAG, "Successfully wrote notification descriptor: " + descriptor.getUuid());
         } else {
-            Log.e(TAG, "Enable notify failed for characteristic: " + characteristic.getUuid());
+            success = false;
+            Log.e(TAG, "Failed to write notification descriptor: " + descriptor.getUuid());
         }
-        return result;
+
+        return success;
     }
 
     /**
@@ -415,6 +429,7 @@ public class OADProfile extends BaseProfile {
 
     @Override
     public void onCharacteristicChanged(GattClient client, BluetoothGattCharacteristic characteristic) {
+        Log.i(TAG, "Char changed");
         if (uploadInProgress()) {
 
             if (characteristic.getUuid().equals(Constants.UUID_OAD_CHAR_IDENTIFY)) {

@@ -58,7 +58,9 @@ public class GattSerialTransportProfile extends BaseProfile {
                     mReadyToSend = false;
                     GattSerialPacket packet = mPendingPackets.remove(0);
                     mSerialCharacteristic.setValue(packet.getPacketData());
-                    mGattClient.writeCharacteristic(mSerialCharacteristic);
+                    if (!mGattClient.writeCharacteristic(mSerialCharacteristic)) {
+                        Log.e(TAG, "Failed char write");
+                    }
                 } else {
                     mHandler.postDelayed(this, 150);
                 }
