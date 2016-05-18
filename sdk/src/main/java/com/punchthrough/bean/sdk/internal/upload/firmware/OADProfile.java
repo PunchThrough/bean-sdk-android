@@ -429,9 +429,7 @@ public class OADProfile extends BaseProfile {
 
     @Override
     public void onCharacteristicChanged(GattClient client, BluetoothGattCharacteristic characteristic) {
-        Log.i(TAG, "Char changed");
         if (uploadInProgress()) {
-
             if (characteristic.getUuid().equals(Constants.UUID_OAD_CHAR_IDENTIFY)) {
                 onNotificationIdentify(characteristic);
             } else if (characteristic.getUuid().equals(Constants.UUID_OAD_CHAR_BLOCK)) {

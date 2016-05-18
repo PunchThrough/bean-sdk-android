@@ -75,14 +75,14 @@ public class TestBeanFirmwareUpdate extends BeanTestCase {
         oadApproval = bean.programWithFirmware(getAsymmBundle(), new OADProfile.OADListener() {
             @Override
             public void complete() {
-                System.out.println("[TestBeanFirmwareUpdate] OAD Process Complete!");
+                Log.i(TAG, "OAD Process Complete!");
                 fwLatch.countDown();
             }
 
             @Override
             public void error(BeanError error) {
-                System.out.println("[TestBeanFirmwareUpdate] OAD Error: " + error.toString());
-                fwLatch.countDown();
+                Log.e(TAG, "OAD Error: " + error.toString());
+                fail();
             }
 
             @Override
