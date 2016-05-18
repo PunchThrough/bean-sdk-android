@@ -465,17 +465,62 @@ public class OADProfile extends BaseProfile {
         return this.oadApproval;
     }
 
+    /**
+     * Communication interface from SDK to client
+     */
     public interface OADListener {
+
+        /**
+         * Called when the OAD procedure completes without error
+         */
         public void complete();
+
+        /**
+         * Called when there is an error during the OAD procedure
+         *
+         * @param error BeanError
+         */
         public void error(BeanError error);
+
+        /**
+         * Called when forward progress has been made during OAD procedure
+         *
+         * @param uploadProgress UploadProgress object describing the OAD procedure progress
+         */
         public void progress(UploadProgress uploadProgress);
+
+        /**
+         * Called to let the client know if a FW update is required
+         *
+         * @param required Boolean flag
+         */
         public void updateRequired(boolean required);
     }
 
+    /**
+     * Communication interface from client to SDK
+     */
     public interface OADApproval {
+
+        /**
+         * Client should call this method to allow the OAD procedure to continue
+         */
         public void allow();
+
+        /**
+         * Client should call this method to deny the OAD procedure from continuing
+         */
         public void deny();
+
+        /**
+         * Reset this objects state
+         */
         public void reset();
+
+        /**
+         *
+         * @return Boolean flag representing the last approval status
+         */
         public boolean isApproved();
     }
 }
