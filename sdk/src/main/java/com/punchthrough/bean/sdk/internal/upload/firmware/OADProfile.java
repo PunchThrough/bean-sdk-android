@@ -366,8 +366,10 @@ public class OADProfile extends BaseProfile {
      */
     private void fail(BeanError error) {
         Log.e(TAG, "OAD Error: " + error.toString());
-        reset();
-        oadListener.error(error);
+        if (uploadInProgress()) {
+            reset();
+            oadListener.error(error);
+        }
     }
 
     /**
@@ -375,8 +377,10 @@ public class OADProfile extends BaseProfile {
      */
     private void finish() {
         Log.i(TAG, "OAD Finished");
-        reset();
-        oadListener.complete();
+        if (uploadInProgress()) {
+            reset();
+            oadListener.complete();
+        }
     }
 
     /****************************************************************************
