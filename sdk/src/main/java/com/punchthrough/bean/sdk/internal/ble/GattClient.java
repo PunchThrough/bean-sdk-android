@@ -63,6 +63,7 @@ public class GattClient {
         mProfiles.add(mDeviceProfile);
         mProfiles.add(mBatteryProfile);
         mProfiles.add(mScratchProfile);
+        mProfiles.add(mOADProfile);
     }
 
     private BaseProfile profileForUUID(UUID uuid) throws UnimplementedProfileException {
