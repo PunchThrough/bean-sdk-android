@@ -173,7 +173,7 @@ public class OADProfile extends BaseProfile {
 
             // Write the block, tell the OAD Listener
             writeToCharacteristic(oadBlock, currentImage.block(nextBlock));
-            oadListener.progress(UploadProgress.create(requestedBlock, currentImage.blockCount()));
+            oadListener.progress(UploadProgress.create(nextBlock, currentImage.blockCount()));
             nextBlock++;
         }
 
