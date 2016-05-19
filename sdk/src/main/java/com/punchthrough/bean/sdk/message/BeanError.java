@@ -49,24 +49,19 @@ public enum BeanError {
     UNPARSABLE_FW_VERSION,
 
     /**
-     * Timed out requesting current firmware version
+     * Timed out during OAD
      */
-    FW_VER_REQ_TIMEOUT,
-
-    /**
-     * Timed out starting firmware download
-     */
-    FW_START_TIMEOUT,
-
-    /**
-     * Timed out while sending firmware packets
-     */
-    FW_TRANSFER_TIMEOUT,
+    OAD_TIMEOUT,
 
     /**
      * Bean rejected firmware version for being older than the current version
      */
     BEAN_REJECTED_FW,
+
+    /**
+     * The client (user) rejected the OAD process
+     */
+    CLIENT_REJECTED,
 
     /**
      * Bean responded with a message with an ID we don't know anything about

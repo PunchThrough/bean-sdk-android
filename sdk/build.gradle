@@ -15,6 +15,7 @@ android {
         versionCode 1
         versionName version
         buildConfigField "String", "BEAN_NAME", beanName
+        buildConfigField "String", "BEAN_ADDRESS", beanAddress
     }
 
     defaultPublishConfig "release"

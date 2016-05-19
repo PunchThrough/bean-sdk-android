@@ -21,6 +21,8 @@ public class BaseProfile {
         return "Base Profile";
     }
 
+    public void beanReady() {}
+
     public void onProfileReady() {}
 
     public void onBeanConnected() {}

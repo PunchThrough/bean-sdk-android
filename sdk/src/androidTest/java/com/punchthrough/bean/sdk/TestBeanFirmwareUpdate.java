@@ -1,9 +1,11 @@
 package com.punchthrough.bean.sdk;
 
 import android.test.suitebuilder.annotation.Suppress;
+import android.util.Log;
 
 import com.punchthrough.bean.sdk.internal.exception.ImageParsingException;
-import com.punchthrough.bean.sdk.message.Callback;
+import com.punchthrough.bean.sdk.internal.upload.firmware.OADProfile;
+import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.UploadProgress;
 import com.punchthrough.bean.sdk.upload.FirmwareBundle;
 import com.punchthrough.bean.sdk.upload.FirmwareImage;
@@ -22,14 +24,16 @@ import java.util.concurrent.TimeUnit;
 
 public class TestBeanFirmwareUpdate extends BeanTestCase {
 
+    private final String TAG = "TestBeanFirmwareUpdate";
+
     private Bean bean;
+    private OADProfile.OADApproval oadApproval;
 
     public void setUp() {
         super.setUp();
         try {
             bean = discoverBean();
             synchronousConnect(bean);
-            bean.setAutoReconnect(true);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Could not connect to close Bean");
@@ -68,21 +72,37 @@ public class TestBeanFirmwareUpdate extends BeanTestCase {
 
         final CountDownLatch fwLatch = new CountDownLatch(1);
 
-        final Callback<UploadProgress> onProgress = new Callback<UploadProgress>() {
+        oadApproval = bean.programWithFirmware(getAsymmBundle(), new OADProfile.OADListener() {
             @Override
-            public void onResult(UploadProgress result) {
-            }
-        };
-
-        final Runnable onComplete = new Runnable() {
-            @Override
-            public void run() {
-                System.out.println("[BEANTEST] - Complete!");
+            public void complete() {
+                Log.i(TAG, "OAD Process Complete!");
                 fwLatch.countDown();
             }
-        };
 
-        bean.programWithFirmware(getAsymmBundle(), onProgress, onComplete);
-        fwLatch.await(8000, TimeUnit.SECONDS);
+            @Override
+            public void error(BeanError error) {
+                Log.e(TAG, "OAD Error: " + error.toString());
+                fail();
+            }
+
+            @Override
+            public void progress(UploadProgress uploadProgress) {
+                if (uploadProgress.blocksSent() % 50 == 0) {
+                    Log.i(TAG, "OAD Progress: " + uploadProgress.completionBlocks());
+                }
+            }
+
+            @Override
+            public void updateRequired(boolean required) {
+                if (required) {
+                    oadApproval.allow();
+                } else {
+                    fwLatch.countDown();
+                }
+            }
+        });
+
+        // Wait 5 minutes for it to complete or fail
+        fwLatch.await(300, TimeUnit.SECONDS);
     }
 }

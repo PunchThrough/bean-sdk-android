@@ -13,6 +13,19 @@ import java.util.Arrays;
  */
 public class Convert {
 
+
+    final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
+
+    public static String bytesToHexString(byte[] bytes) {
+        char[] hexChars = new char[bytes.length * 2];
+        for ( int j = 0; j < bytes.length; j++ ) {
+            int v = bytes[j] & 0xFF;
+            hexChars[j * 2] = hexArray[v >>> 4];
+            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+        }
+        return new String(hexChars);
+    }
+
     /**
      * Convert a string of ASCII hex characters (e.g. "DEADBEEF0042") to an array of bytes the hex
      * represents (e.g. [0xDE, 0xAD, 0xBE, 0xEF, 0x00, 0x42]). Treat bytes returned by this method

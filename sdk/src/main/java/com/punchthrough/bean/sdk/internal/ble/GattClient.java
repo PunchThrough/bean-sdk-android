@@ -44,26 +44,16 @@ public class GattClient {
     // Internal dependencies
     private BluetoothGatt mGatt;
     private ConnectionListener connectionListener;
+    private BluetoothDevice device;
 
     // Internal state
     private Queue<Runnable> mOperationsQueue = new ArrayDeque<>(32);
     private boolean mOperationInProgress = false;
     private boolean mConnected = false;
+    private boolean connecting = false;
 
-    public GattClient() {
-        mSerialProfile = new GattSerialTransportProfile(this);
-        mDeviceProfile = new DeviceProfile(this);
-        mBatteryProfile = new BatteryProfile(this);
-        mOADProfile = new OADProfile(this);
-        mScratchProfile = new ScratchProfile(this);
-        mProfiles.add(mSerialProfile);
-        mProfiles.add(mDeviceProfile);
-        mProfiles.add(mBatteryProfile);
-        mProfiles.add(mOADProfile);
-        mProfiles.add(mScratchProfile);
-    }
-
-    public GattClient(Handler handler) {
+    public GattClient(Handler handler, BluetoothDevice device) {
+        this.device = device;
         mSerialProfile = new GattSerialTransportProfile(this, handler);
         mDeviceProfile = new DeviceProfile(this);
         mBatteryProfile = new BatteryProfile(this);
@@ -73,6 +63,7 @@ public class GattClient {
         mProfiles.add(mDeviceProfile);
         mProfiles.add(mBatteryProfile);
         mProfiles.add(mScratchProfile);
+        mProfiles.add(mOADProfile);
     }
 
     private BaseProfile profileForUUID(UUID uuid) throws UnimplementedProfileException {
@@ -97,10 +88,19 @@ public class GattClient {
             Method localMethod = localBluetoothGatt.getClass().getMethod("refresh", new Class[0]);
             if (localMethod != null) {
                 localMethod.invoke(localBluetoothGatt, new Object[0]);
+            } else {
+                Log.e(TAG, "Couldn't find local method: refresh");
             }
         }
         catch (Exception localException) {
             Log.e(TAG, "An exception occurred while refreshing device");
+        }
+    }
+
+    private void describeService(BluetoothGattService service) {
+        Log.i(TAG, "Service Found: " + service.getUuid().toString());
+        for (BluetoothGattCharacteristic c : service.getCharacteristics()) {
+            Log.i(TAG, "    Char: " + c.getUuid().toString());
         }
     }
 
@@ -119,11 +119,13 @@ public class GattClient {
                 }
 
                 mConnected = false;
+                connecting = false;
                 return;
             }
 
             if (newState == BluetoothGatt.STATE_CONNECTED) {
                 mConnected = true;
+                connecting = false;
 
                 // Bean is connected, before alerting the ConnectionListener(s), we must
                 // discover available services (lookup GATT table).
@@ -135,6 +137,7 @@ public class GattClient {
                 mOperationsQueue.clear();
                 mOperationInProgress = false;
                 mConnected = false;
+                connecting = false;
                 connectionListener.onDisconnected();
                 for (BaseProfile profile : mProfiles) {
                     profile.onBeanDisconnected();
@@ -155,15 +158,23 @@ public class GattClient {
                 // that may be necessary such as looking up available characteristics.
                 Log.i(TAG, "Starting to setup each available profile!");
                 for (BluetoothGattService service : mGatt.getServices()) {
+                    describeService(service);
                     try {
                         BaseProfile profile = profileForUUID(service.getUuid());
                         profile.onProfileReady();
-                        profile.onBeanConnected();
                         Log.i(TAG, "Profile ready: " + profile.getName());
                     } catch (UnimplementedProfileException e) {
                         Log.e(TAG, "No profile with UUID: " + service.getUuid().toString());
                     }
                 }
+
+                // Tell each profile that everything is setup and ready for use
+                Log.i(TAG, "All profiles ready! Bean ready for use!");
+                mSerialProfile.beanReady();
+                mDeviceProfile.beanReady();
+                mBatteryProfile.beanReady();
+                mOADProfile.beanReady();
+                mScratchProfile.beanReady();
 
                 // Alert ConnectionListener(s) and profiles that the Bean is ready (connected)
                 connectionListener.onConnected();
@@ -249,19 +260,6 @@ public class GattClient {
         }
     }
 
-    public void connect(Context context, BluetoothDevice device) {
-        if (mGatt != null) {
-            mGatt.disconnect();
-            mGatt.close();
-        }
-        mConnected = false;
-
-        Log.i(TAG, "Gatt connection started");
-        mGatt = device.connectGatt(context, false, mBluetoothGattCallback);
-        Log.i(TAG, "Refreshing GATT Cache");
-        refreshDeviceCache(mGatt);
-    }
-
     private void fireDescriptorWrite(BluetoothGattDescriptor descriptor) {
         for (BaseProfile profile : mProfiles) {
             profile.onDescriptorWrite(this, descriptor);
@@ -295,6 +293,26 @@ public class GattClient {
     /****************************************************************************
                                   PUBLIC API
      ****************************************************************************/
+
+    public String bleAddress() {
+        return device.getAddress();
+    }
+
+    public void connect(Context context, BluetoothDevice device) {
+        if (mGatt != null) {
+            mGatt.disconnect();
+            mGatt.close();
+            mConnected = false;
+        }
+
+        if (!connecting) {
+            connecting = true;
+            Log.i(TAG, "Gatt connection started");
+            mGatt = device.connectGatt(context, false, mBluetoothGattCallback);
+            Log.i(TAG, "Refreshing GATT Cache");
+            refreshDeviceCache(mGatt);
+        }
+    }
 
     /**
      * Sets a listener that will be alerted on connection related events
@@ -375,10 +393,6 @@ public class GattClient {
 
     public boolean setCharacteristicNotification(BluetoothGattCharacteristic characteristic, boolean enable) {
         return mGatt.setCharacteristicNotification(characteristic, enable);
-    }
-
-    private boolean connect() {
-        return mGatt != null && mGatt.connect();
     }
 
     public void disconnect() {
