@@ -102,7 +102,7 @@ public class TestBeanFirmwareUpdate extends BeanTestCase {
             }
         });
 
-        // Wait 8 minutes for it to complete or fail
-        fwLatch.await(8000, TimeUnit.SECONDS);
+        // Wait 5 minutes for it to complete or fail
+        fwLatch.await(300, TimeUnit.SECONDS);
     }
 }

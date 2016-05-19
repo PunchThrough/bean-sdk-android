@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
  *
  * These tests do the following:
  *   - Scan/Discover
- *   - Connect to closest device (hopefully a Bean)
+ *   - Connect to Device
  *   - Discover services
  *   - Read HW version from Device Info Service
  *   - Enable notifications on OAD Identify char
