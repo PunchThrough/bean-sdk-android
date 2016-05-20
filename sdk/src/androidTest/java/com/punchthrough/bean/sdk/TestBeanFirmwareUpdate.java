@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.punchthrough.bean.sdk.internal.exception.ImageParsingException;
 import com.punchthrough.bean.sdk.internal.upload.firmware.OADProfile;
+import com.punchthrough.bean.sdk.internal.upload.firmware.OADState;
 import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.UploadProgress;
 import com.punchthrough.bean.sdk.upload.FirmwareBundle;
@@ -100,6 +101,10 @@ public class TestBeanFirmwareUpdate extends BeanTestCase {
                     fwLatch.countDown();
                 }
             }
+
+            @Override
+            public void stateChange(OADState state){};
+
         });
 
         // Wait 5 minutes for it to complete or fail

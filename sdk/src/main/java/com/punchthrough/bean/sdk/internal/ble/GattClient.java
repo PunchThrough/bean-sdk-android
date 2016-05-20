@@ -17,6 +17,7 @@ import com.punchthrough.bean.sdk.internal.scratch.ScratchProfile;
 import com.punchthrough.bean.sdk.internal.serial.GattSerialTransportProfile;
 import com.punchthrough.bean.sdk.internal.upload.firmware.OADProfile;
 import com.punchthrough.bean.sdk.internal.utility.Constants;
+import com.punchthrough.bean.sdk.internal.utility.Watchdog;
 
 import java.lang.reflect.Method;
 import java.util.ArrayDeque;
@@ -57,7 +58,7 @@ public class GattClient {
         mSerialProfile = new GattSerialTransportProfile(this, handler);
         mDeviceProfile = new DeviceProfile(this);
         mBatteryProfile = new BatteryProfile(this);
-        mOADProfile = new OADProfile(this);
+        mOADProfile = new OADProfile(this, new Watchdog(handler));
         mScratchProfile = new ScratchProfile(this);
         mProfiles.add(mSerialProfile);
         mProfiles.add(mDeviceProfile);
@@ -177,6 +178,7 @@ public class GattClient {
                 mScratchProfile.beanReady();
 
                 // Alert ConnectionListener(s) and profiles that the Bean is ready (connected)
+                Log.i(TAG, "Connection Listener called back");
                 connectionListener.onConnected();
             }
         }
