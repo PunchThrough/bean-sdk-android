@@ -157,7 +157,6 @@ public class OADProfileTest {
         fwVersionCallback.onComplete("12345");  // Same as bundle version
         assertState(OADState.INACTIVE);
         verify(oadListener).updateRequired(false);
-        verify(oadListener).complete();
         verify(oadListener, never()).error(any(BeanError.class));
     }
 

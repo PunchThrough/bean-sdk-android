@@ -359,19 +359,37 @@ public class OADProfile extends BaseProfile {
             @Override
             public void onComplete(String version) {
 
+                // Check the Bean version against the Bundle version
                 boolean updateNeeded = needsUpdate(firmwareBundle.version(), version);
+
                 if (updateNeeded && oadApproval.isApproved()) {
                     // Needs update and client has approved, keep the update going
+
                     startOfferingImages();
+
                 } else if (updateNeeded && !oadApproval.isApproved()) {
                     // Needs update but client has not approved, ask for approval
+
                     watchdog.pause();
                     oadListener.updateRequired(true);
-                } else {
-                    // Does not need update
+
+                } else if (!updateNeeded && !oadApproval.isApproved()){
+                    // Does not need update and the client has never approved. This means
+                    // no update is required, and no firmware update ever occurred
+
                     oadListener.updateRequired(false);
-                    finish();
+                    finishNoUpdateOccurred();
+
+                } else if (!updateNeeded && oadApproval.isApproved()) {
+                    // Does not need update, and the client has approved. This means that
+                    // the firmware process actually took place, and completed
+
+                    finishUpdateOccurred();
+
+                } else {
+                    Log.w(TAG, "Unexpected OAD Condition!");
                 }
+
             }
         });
     }
@@ -392,12 +410,15 @@ public class OADProfile extends BaseProfile {
     /**
      * Finish the OAD process, similar to fail() except assumes a better outcome
      */
-    private void finish() {
-        Log.i(TAG, "OAD Finished");
-        if (uploadInProgress()) {
-            oadListener.complete();
-            reset();
-        }
+    private void finishUpdateOccurred() {
+        Log.i(TAG, "OAD Finished: Update Occurred");
+        oadListener.complete();
+        reset();
+    }
+
+    private void finishNoUpdateOccurred() {
+        Log.i(TAG, "OAD Finished: No update Occurred");
+        reset();
     }
 
     /****************************************************************************
