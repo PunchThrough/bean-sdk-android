@@ -51,7 +51,6 @@ public class GattClient {
     private Queue<Runnable> mOperationsQueue = new ArrayDeque<>(32);
     private boolean mOperationInProgress = false;
     private boolean mConnected = false;
-    private boolean connecting = false;
 
     public GattClient(Handler handler, BluetoothDevice device) {
         this.device = device;
@@ -83,7 +82,14 @@ public class GattClient {
         }
     }
 
-    private void refreshDeviceCache(BluetoothGatt gatt){
+    /**
+     * Attempt to invalidate Androids internal GATT table cache
+     *
+     * http://stackoverflow.com/a/22709467/5640435
+     *
+     * @param gatt BluetoothGatt object
+     */
+    private void refreshDeviceCache(BluetoothGatt gatt) {
         try {
             BluetoothGatt localBluetoothGatt = gatt;
             Method localMethod = localBluetoothGatt.getClass().getMethod("refresh", new Class[0]);
@@ -120,13 +126,11 @@ public class GattClient {
                 }
 
                 mConnected = false;
-                connecting = false;
                 return;
             }
 
             if (newState == BluetoothGatt.STATE_CONNECTED) {
                 mConnected = true;
-                connecting = false;
 
                 // Bean is connected, before alerting the ConnectionListener(s), we must
                 // discover available services (lookup GATT table).
@@ -138,7 +142,6 @@ public class GattClient {
                 mOperationsQueue.clear();
                 mOperationInProgress = false;
                 mConnected = false;
-                connecting = false;
                 connectionListener.onDisconnected();
                 for (BaseProfile profile : mProfiles) {
                     profile.onBeanDisconnected();
@@ -155,11 +158,14 @@ public class GattClient {
             } else {
                 Log.i(TAG, "Service discovery complete!");
 
+                for (BaseProfile profile : mProfiles) {
+                    profile.clearReady();
+                }
+
                 // Tell each profile that they are ready and to do any other further configuration
                 // that may be necessary such as looking up available characteristics.
                 Log.i(TAG, "Starting to setup each available profile!");
                 for (BluetoothGattService service : mGatt.getServices()) {
-                    describeService(service);
                     try {
                         BaseProfile profile = profileForUUID(service.getUuid());
                         profile.onProfileReady();
@@ -169,17 +175,19 @@ public class GattClient {
                     }
                 }
 
-                // Tell each profile that everything is setup and ready for use
-                Log.i(TAG, "All profiles ready! Bean ready for use!");
-                mSerialProfile.beanReady();
-                mDeviceProfile.beanReady();
-                mBatteryProfile.beanReady();
-                mOADProfile.beanReady();
-                mScratchProfile.beanReady();
+                if (mOADProfile.uploadInProgress()) {
+                    Log.i(TAG, "OAD In progress, continuing OAD process without calling ConnectionListener.onConnected()");
+                    mOADProfile.continueOAD();
+                } else {
 
-                // Alert ConnectionListener(s) and profiles that the Bean is ready (connected)
-                Log.i(TAG, "Connection Listener called back");
-                connectionListener.onConnected();
+                    for (BaseProfile profile : mProfiles) {
+                        if (!profile.isReady()) {
+                            Log.e(TAG, "Profile NOT Discovered: " + profile.getName());
+                        }
+                    }
+
+                    connectionListener.onConnected();
+                }
             }
         }
 
@@ -307,13 +315,10 @@ public class GattClient {
             mConnected = false;
         }
 
-        if (!connecting) {
-            connecting = true;
-            Log.i(TAG, "Gatt connection started");
-            mGatt = device.connectGatt(context, false, mBluetoothGattCallback);
-            Log.i(TAG, "Refreshing GATT Cache");
-            refreshDeviceCache(mGatt);
-        }
+        Log.i(TAG, "Gatt connection started");
+        mGatt = device.connectGatt(context, false, mBluetoothGattCallback);
+        Log.i(TAG, "Refreshing GATT Cache");
+        refreshDeviceCache(mGatt);
     }
 
     /**

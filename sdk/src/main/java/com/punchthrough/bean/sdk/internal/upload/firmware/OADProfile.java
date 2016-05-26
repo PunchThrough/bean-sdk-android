@@ -3,7 +3,6 @@ package com.punchthrough.bean.sdk.internal.upload.firmware;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
-import android.os.Handler;
 import android.util.Log;
 
 import com.punchthrough.bean.sdk.BeanManager;
@@ -29,7 +28,7 @@ public class OADProfile extends BaseProfile {
      *
      */
 
-    public static final String TAG = "OADProfile";
+    protected static final String TAG = "OADProfile";
 
     // OAD Characteristic handles
     private BluetoothGattCharacteristic oadIdentify;
@@ -38,6 +37,8 @@ public class OADProfile extends BaseProfile {
     private Watchdog watchdog;
 
     // OAD Internal State
+
+    private boolean ready = false;
 
     /* The current state of the OAD state-machine */
     private OADState oadState = OADState.INACTIVE;
@@ -198,27 +199,21 @@ public class OADProfile extends BaseProfile {
             watchdog.poke();
         }
 
-        // Check for final block
-        if (nextBlock >= currentImage.blockCount()) {
+        // Check for final block requested, for logging purposes only
+        if (requestedBlock == currentImage.blockCount() - 1) {
 
-            // Log final block
-            Log.i(TAG, String.format("OAD Block SENT: %s/%s", nextBlock, currentImage.blockCount()));
-
-            // Log timing and throughput
+            // Calculate throughput
             long secondsElapsed = System.currentTimeMillis() / 1000L - blockTransferStarted;
             double KBs = 0;
             if (secondsElapsed > 0) {
                 KBs = (double) (currentImage.sizeBytes() / secondsElapsed) / 1000;
             }
-            String blkTimeMsg = String.format(
-                    "Sent %d blocks in %d seconds (%.2f KB/s)",
-                    currentImage.blockCount(),
-                    secondsElapsed,
-                    KBs
-            );
-            Log.i(TAG, blkTimeMsg);
 
+            // Log some stats
+            Log.i(TAG, String.format("Final OAD Block Requested: %s/%s", nextBlock, currentImage.blockCount()));
+            Log.i(TAG, String.format("Sent %d blocks in %d seconds (%.2f KB/s)", currentImage.blockCount(), secondsElapsed, KBs));
         }
+
     }
 
     /**
@@ -426,7 +421,15 @@ public class OADProfile extends BaseProfile {
      ****************************************************************************/
 
     public String getName() {
-        return "OAD Profile";
+        return TAG;
+    }
+
+    public boolean isReady() {
+        return ready;
+    }
+
+    public void clearReady() {
+        ready = false;
     }
 
     public boolean uploadInProgress() {
@@ -441,11 +444,10 @@ public class OADProfile extends BaseProfile {
     public void onProfileReady() {
         setupOAD();
         setupNotifications();
+        ready = true;
     }
 
-    @Override
-    public void beanReady() {
-        Log.i(TAG, "upload in progress: " + uploadInProgress());
+    public void continueOAD() {
         if (uploadInProgress()) {
             checkFirmwareVersion();
             BeanManager.getInstance().cancelDiscovery();

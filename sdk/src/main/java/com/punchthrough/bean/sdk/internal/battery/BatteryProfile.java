@@ -15,6 +15,8 @@ import com.punchthrough.bean.sdk.internal.utility.Constants;
  */
 public class BatteryProfile extends BaseProfile {
 
+    protected static final String TAG = "BatteryProfile";
+    protected boolean ready = false;
     private BluetoothGattService mBatteryService;
     private BatteryLevelCallback mCallback;
 
@@ -30,6 +32,7 @@ public class BatteryProfile extends BaseProfile {
                 mBatteryService = service;
             }
         }
+        ready = true;
     }
 
     public void getBatteryLevel(BatteryLevelCallback callback) {
@@ -59,7 +62,15 @@ public class BatteryProfile extends BaseProfile {
     }
 
     public String getName() {
-        return "Battery Profile";
+        return TAG;
+    }
+
+    public boolean isReady() {
+        return ready;
+    }
+
+    public void clearReady() {
+        ready = false;
     }
 
     public static interface BatteryLevelCallback {

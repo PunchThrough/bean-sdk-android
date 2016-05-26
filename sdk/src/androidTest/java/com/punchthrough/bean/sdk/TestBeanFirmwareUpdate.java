@@ -68,7 +68,6 @@ public class TestBeanFirmwareUpdate extends BeanTestCase {
         return new FirmwareBundle(fwImages);
     }
 
-    @Suppress
     public void testFirmwareUpdate() throws Exception {
 
         final CountDownLatch fwLatch = new CountDownLatch(1);

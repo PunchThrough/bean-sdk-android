@@ -55,7 +55,6 @@ public class TestBeanSimple extends BeanTestCase {
         return version.length() > 0;
     }
 
-
     public void testBeanDeviceInfo() throws Exception {
         /** Read device information from a bean
          *
