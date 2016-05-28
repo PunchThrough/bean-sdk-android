@@ -413,7 +413,11 @@ public class OADProfile extends BaseProfile {
 
     private void finishNoUpdateOccurred() {
         Log.i(TAG, "OAD Finished: No update Occurred");
-        reset();
+
+        // Don't reset() here, just set state to inactive. By not resetting, this allows
+        // the client to force an OAD update even if there isn't one required.
+        watchdog.stop();
+        setState(OADState.INACTIVE);
     }
 
     /****************************************************************************

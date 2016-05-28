@@ -81,6 +81,7 @@ public class Watchdog {
 
         // Un-pause the timer by poking it
         if (paused) {
+            Log.i(TAG, "Watchdog resumed...");
             paused = false;
         }
     }
