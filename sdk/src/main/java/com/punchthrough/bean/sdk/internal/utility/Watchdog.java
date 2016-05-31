@@ -11,7 +11,7 @@ public class Watchdog {
 
     private final String TAG = "Watchdog";
     private final int TICK_INTERVAL = 1000;
-    private final long WATCHDOG_FINISH = 360000;  // 1 hour in milliseconds
+    private final long WATCHDOG_FINISH = 3600000;  // 1 hour in milliseconds
 
     private Handler handler;
     private CountDownTimer timer;
@@ -87,9 +87,17 @@ public class Watchdog {
     }
 
     /**
+     * Interface to alert clients of watchdog events
      *
      */
     public interface WatchdogListener {
+
+        /**
+         * The watchdog has expired
+         *
+         * A watchdog expires when the client does not call .poke() for the number of
+         * seconds defined by the argument in the .start(timeoutSeconds, listener) method.
+         */
         public void expired();
     }
 
