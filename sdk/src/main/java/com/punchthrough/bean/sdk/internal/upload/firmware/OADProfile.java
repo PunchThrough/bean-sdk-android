@@ -38,6 +38,7 @@ public class OADProfile extends BaseProfile {
 
     // OAD Internal State
 
+    private static final int OAD_TIMEOUT_SECONDS = 30;
     private boolean ready = false;
 
     /* The current state of the OAD state-machine */
@@ -123,6 +124,17 @@ public class OADProfile extends BaseProfile {
         oadListener = null;
         watchdog.stop();
         oadApproval.reset();
+    }
+
+    /**
+     * Attempt to reconnect to a Bean that is in the middle of OAD process
+     */
+    private void reconnect() {
+        if(uploadInProgress()) {
+            setState(OADState.RECONNECTING);
+            BeanManager.getInstance().startDiscovery();
+            Log.i(TAG, "Waiting for device to reconnect...");
+        }
     }
 
     /**
@@ -466,16 +478,13 @@ public class OADProfile extends BaseProfile {
     @Override
     public void onBeanDisconnected() {
         Log.i(TAG, "OAD Profile Detected Bean Disconnection");
+        reconnect();
     }
 
     @Override
     public void onBeanConnectionFailed() {
         Log.i(TAG, "OAD Profile Detected Connection Failure, Likely a device reboot");
-        if(uploadInProgress()) {
-            setState(OADState.RECONNECTING);
-            BeanManager.getInstance().startDiscovery();
-            Log.i(TAG, "Waiting for device to reconnect...");
-        }
+        reconnect();
     }
 
     @Override
@@ -507,7 +516,7 @@ public class OADProfile extends BaseProfile {
         this.oadListener = listener;
         this.firmwareBundle = bundle;
 
-        watchdog.start(30, watchdogListener);
+        watchdog.start(OAD_TIMEOUT_SECONDS, watchdogListener);
         checkFirmwareVersion();
 
         return this.oadApproval;
