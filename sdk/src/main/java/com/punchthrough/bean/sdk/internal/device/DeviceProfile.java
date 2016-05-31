@@ -17,8 +17,9 @@ import com.punchthrough.bean.sdk.internal.utility.Constants;
  */
 public class DeviceProfile extends BaseProfile {
 
-    private static final String TAG = "DeviceProfile";
+    protected static final String TAG = "DeviceProfile";
 
+    private boolean ready = false;
     private String mSoftwareVersion;
     private String mHardwareVersion;
     private String mFirmwareVersion;
@@ -39,6 +40,7 @@ public class DeviceProfile extends BaseProfile {
                 mDeviceService = service;
             }
         }
+        ready = true;
     }
 
     @Override
@@ -98,7 +100,15 @@ public class DeviceProfile extends BaseProfile {
     }
 
     public String getName() {
-        return "Device Info Profile";
+        return TAG;
+    }
+
+    public boolean isReady() {
+        return ready;
+    }
+
+    public void clearReady() {
+        ready = false;
     }
 
     public static interface VersionCallback {

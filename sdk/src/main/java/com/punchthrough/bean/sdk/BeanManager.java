@@ -109,6 +109,7 @@ public class BeanManager {
      * @return boolean success flag
      */
     private boolean scan() {
+
         if (btAdapter.startLeScan(mCallback)) {
             mScanning = true;
             Log.i(TAG, "BLE scan started successfully");
@@ -225,8 +226,6 @@ public class BeanManager {
 
     /**
      * Clear the Beans that this BeanManager has discovered.
-     *
-     * This disables auto-reconnect on all Beans handled by this BeanManager.
      */
     public void forgetBeans() {
         mBeans.clear();

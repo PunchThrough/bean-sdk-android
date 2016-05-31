@@ -1,23 +1,27 @@
 package com.punchthrough.bean.sdk.internal.scratch;
 
-import android.bluetooth.BluetoothGattCharacteristic;
-
 import com.punchthrough.bean.sdk.internal.ble.BaseProfile;
 import com.punchthrough.bean.sdk.internal.ble.GattClient;
 
 public class ScratchProfile extends BaseProfile {
 
+    protected static final String TAG = "ScratchProfile";
+    private boolean ready = false;
+
     public ScratchProfile(GattClient client) {
         super(client);
     }
 
-    @Override
-    public void onProfileReady() {}
-
-    @Override
-    public void onCharacteristicRead(GattClient client, BluetoothGattCharacteristic characteristic) {}
-
     public String getName() {
-        return "Scratch Profile";
+        return TAG;
     }
+
+    public boolean isReady() {
+        return ready;
+    }
+
+    public void clearReady() {
+        ready = false;
+    }
+
 }

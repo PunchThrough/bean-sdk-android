@@ -84,8 +84,11 @@ public class Bean implements Parcelable {
      * Used by Android {@link android.os.Parcel}.
      */
     public static final Creator<Bean> CREATOR = new Creator<Bean>() {
+
         @Override
         public Bean createFromParcel(Parcel source) {
+            Log.i(TAG, "Creating Bean from Parcel!");
+
             // ugly cast to fix bogus warning in Android Studio...
             BluetoothDevice device = source.readParcelable(((Object) this).getClass().getClassLoader());
             if (device == null) {

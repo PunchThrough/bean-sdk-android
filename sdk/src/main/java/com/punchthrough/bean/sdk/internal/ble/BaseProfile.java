@@ -3,8 +3,6 @@ package com.punchthrough.bean.sdk.internal.ble;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 
-import java.util.UUID;
-
 
 /**
  * Base class that all GATT based Bluetooth profiles should extend
@@ -18,10 +16,14 @@ public class BaseProfile {
     }
 
     public String getName() {
-        return "Base Profile";
+        return "BaseProfile";
     }
 
-    public void beanReady() {}
+    public boolean isReady() {
+        return false;
+    }
+
+    public void clearReady() {}
 
     public void onProfileReady() {}
 

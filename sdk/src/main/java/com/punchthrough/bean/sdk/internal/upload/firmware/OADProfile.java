@@ -12,6 +12,7 @@ import com.punchthrough.bean.sdk.internal.device.DeviceProfile;
 import com.punchthrough.bean.sdk.internal.exception.OADException;
 import com.punchthrough.bean.sdk.internal.utility.Constants;
 import com.punchthrough.bean.sdk.internal.utility.Convert;
+import com.punchthrough.bean.sdk.internal.utility.Watchdog;
 import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.UploadProgress;
 import com.punchthrough.bean.sdk.upload.FirmwareBundle;
@@ -27,13 +28,18 @@ public class OADProfile extends BaseProfile {
      *
      */
 
-    public static final String TAG = "OADProfile";
+    protected static final String TAG = "OADProfile";
 
     // OAD Characteristic handles
     private BluetoothGattCharacteristic oadIdentify;
     private BluetoothGattCharacteristic oadBlock;
 
+    private Watchdog watchdog;
+
     // OAD Internal State
+
+    private static final int OAD_TIMEOUT_SECONDS = 30;
+    private boolean ready = false;
 
     /* The current state of the OAD state-machine */
     private OADState oadState = OADState.INACTIVE;
@@ -56,10 +62,18 @@ public class OADProfile extends BaseProfile {
     /* Used to record KB/s during block transfers */
     private long blockTransferStarted = 0;
 
-    public OADProfile(GattClient client) {
+    public OADProfile(GattClient client, Watchdog watchdog) {
         super(client);
+        this.watchdog = watchdog;
         reset();
     }
+
+    private Watchdog.WatchdogListener watchdogListener = new Watchdog.WatchdogListener() {
+        @Override
+        public void expired() {
+            fail(BeanError.OAD_TIMEOUT);
+        }
+    };
 
     private OADApproval oadApproval = new OADApproval() {
 
@@ -93,6 +107,10 @@ public class OADProfile extends BaseProfile {
     private void setState(OADState state) {
         Log.i(TAG, String.format("(%s) OAD State Change: %s -> %s", mGattClient.bleAddress(), oadState.name(), state.name()));
         oadState = state;
+        watchdog.poke();
+        if (oadListener != null ) {
+            oadListener.stateChange(state);
+        }
     }
 
     /**
@@ -101,7 +119,22 @@ public class OADProfile extends BaseProfile {
     private void reset() {
         setState(OADState.INACTIVE);
         currentImage = null;
+        firmwareBundle = null;
+        nextBlock = 0;
+        oadListener = null;
+        watchdog.stop();
         oadApproval.reset();
+    }
+
+    /**
+     * Attempt to reconnect to a Bean that is in the middle of OAD process
+     */
+    private void reconnect() {
+        if(uploadInProgress()) {
+            setState(OADState.RECONNECTING);
+            BeanManager.getInstance().startDiscovery();
+            Log.i(TAG, "Waiting for device to reconnect...");
+        }
     }
 
     /**
@@ -173,34 +206,24 @@ public class OADProfile extends BaseProfile {
 
             // Write the block, tell the OAD Listener
             writeToCharacteristic(oadBlock, currentImage.block(nextBlock));
-            oadListener.progress(UploadProgress.create(requestedBlock, currentImage.blockCount()));
+            oadListener.progress(UploadProgress.create(nextBlock + 1, currentImage.blockCount()));
             nextBlock++;
+            watchdog.poke();
         }
 
-        // Check for final block
-        if (nextBlock >= currentImage.blockCount()) {
+        // Check for final block requested, for logging purposes only
+        if (requestedBlock == currentImage.blockCount() - 1) {
 
-            // Log final block
-            Log.i(TAG, String.format("OAD Block SENT: %s/%s", nextBlock, currentImage.blockCount()));
-
-            // Log timing and throughput
+            // Calculate throughput
             long secondsElapsed = System.currentTimeMillis() / 1000L - blockTransferStarted;
             double KBs = 0;
             if (secondsElapsed > 0) {
                 KBs = (double) (currentImage.sizeBytes() / secondsElapsed) / 1000;
             }
-            String blkTimeMsg = String.format(
-                    "Sent %d blocks in %d seconds (%.2f KB/s)",
-                    currentImage.blockCount(),
-                    secondsElapsed,
-                    KBs
-            );
-            Log.i(TAG, blkTimeMsg);
 
-            // Change states
-            setState(OADState.RECONNECTING);
-            Log.i(TAG, "Waiting for device to reconnect...");
-            nextBlock = 0;
+            // Log some stats
+            Log.i(TAG, String.format("Final OAD Block Requested: %s/%s", nextBlock, currentImage.blockCount()));
+            Log.i(TAG, String.format("Sent %d blocks in %d seconds (%.2f KB/s)", currentImage.blockCount(), secondsElapsed, KBs));
         }
 
     }
@@ -343,18 +366,37 @@ public class OADProfile extends BaseProfile {
             @Override
             public void onComplete(String version) {
 
+                // Check the Bean version against the Bundle version
                 boolean updateNeeded = needsUpdate(firmwareBundle.version(), version);
+
                 if (updateNeeded && oadApproval.isApproved()) {
                     // Needs update and client has approved, keep the update going
+
                     startOfferingImages();
+
                 } else if (updateNeeded && !oadApproval.isApproved()) {
                     // Needs update but client has not approved, ask for approval
+
+                    watchdog.pause();
                     oadListener.updateRequired(true);
-                } else {
-                    // Does not need update
+
+                } else if (!updateNeeded && !oadApproval.isApproved()){
+                    // Does not need update and the client has never approved. This means
+                    // no update is required, and no firmware update ever occurred
+
                     oadListener.updateRequired(false);
-                    finish();
+                    finishNoUpdateOccurred();
+
+                } else if (!updateNeeded && oadApproval.isApproved()) {
+                    // Does not need update, and the client has approved. This means that
+                    // the firmware process actually took place, and completed
+
+                    finishUpdateOccurred();
+
+                } else {
+                    Log.w(TAG, "Unexpected OAD Condition!");
                 }
+
             }
         });
     }
@@ -367,20 +409,27 @@ public class OADProfile extends BaseProfile {
     private void fail(BeanError error) {
         Log.e(TAG, "OAD Error: " + error.toString());
         if (uploadInProgress()) {
-            reset();
             oadListener.error(error);
+            reset();
         }
     }
 
     /**
      * Finish the OAD process, similar to fail() except assumes a better outcome
      */
-    private void finish() {
-        Log.i(TAG, "OAD Finished");
-        if (uploadInProgress()) {
-            reset();
-            oadListener.complete();
-        }
+    private void finishUpdateOccurred() {
+        Log.i(TAG, "OAD Finished: Update Occurred");
+        oadListener.complete();
+        reset();
+    }
+
+    private void finishNoUpdateOccurred() {
+        Log.i(TAG, "OAD Finished: No update Occurred");
+
+        // Don't reset() here, just set state to inactive. By not resetting, this allows
+        // the client to force an OAD update even if there isn't one required.
+        watchdog.stop();
+        setState(OADState.INACTIVE);
     }
 
     /****************************************************************************
@@ -388,7 +437,15 @@ public class OADProfile extends BaseProfile {
      ****************************************************************************/
 
     public String getName() {
-        return "OAD Profile";
+        return TAG;
+    }
+
+    public boolean isReady() {
+        return ready;
+    }
+
+    public void clearReady() {
+        ready = false;
     }
 
     public boolean uploadInProgress() {
@@ -403,10 +460,10 @@ public class OADProfile extends BaseProfile {
     public void onProfileReady() {
         setupOAD();
         setupNotifications();
+        ready = true;
     }
 
-    @Override
-    public void beanReady() {
+    public void continueOAD() {
         if (uploadInProgress()) {
             checkFirmwareVersion();
             BeanManager.getInstance().cancelDiscovery();
@@ -421,14 +478,13 @@ public class OADProfile extends BaseProfile {
     @Override
     public void onBeanDisconnected() {
         Log.i(TAG, "OAD Profile Detected Bean Disconnection");
+        reconnect();
     }
 
     @Override
     public void onBeanConnectionFailed() {
         Log.i(TAG, "OAD Profile Detected Connection Failure, Likely a device reboot");
-        if(uploadInProgress()) {
-            BeanManager.getInstance().startDiscovery();
-        }
+        reconnect();
     }
 
     @Override
@@ -460,6 +516,7 @@ public class OADProfile extends BaseProfile {
         this.oadListener = listener;
         this.firmwareBundle = bundle;
 
+        watchdog.start(OAD_TIMEOUT_SECONDS, watchdogListener);
         checkFirmwareVersion();
 
         return this.oadApproval;
@@ -495,6 +552,13 @@ public class OADProfile extends BaseProfile {
          * @param required Boolean flag
          */
         public void updateRequired(boolean required);
+
+        /**
+         * Called when the OAD state machine changes states
+         *
+         * @param state OADState representing the state of the OAD procedure
+         */
+        public void stateChange(OADState state);
     }
 
     /**

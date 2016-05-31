@@ -3,6 +3,7 @@ package com.punchthrough.bean.sdk.internal.upload.firmware;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
+import android.os.Handler;
 
 import com.punchthrough.bean.sdk.BeanManager;
 import com.punchthrough.bean.sdk.internal.ble.GattClient;
@@ -10,6 +11,7 @@ import com.punchthrough.bean.sdk.internal.device.DeviceProfile;
 import com.punchthrough.bean.sdk.internal.exception.ImageParsingException;
 import com.punchthrough.bean.sdk.internal.utility.Constants;
 import com.punchthrough.bean.sdk.internal.utility.Convert;
+import com.punchthrough.bean.sdk.internal.utility.Watchdog;
 import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.Callback;
 import com.punchthrough.bean.sdk.message.UploadProgress;
@@ -123,7 +125,7 @@ public class OADProfileTest {
         when(mockGattClient.getDeviceProfile()).thenReturn(mockDeviceProfile);
 
         // Setup class under test - OADProfile
-        oadProfile = new OADProfile(mockGattClient);
+        oadProfile = new OADProfile(mockGattClient, mock(Watchdog.class));
         oadProfile.onProfileReady();
         oadProfile.onBeanConnected();
     }
@@ -142,9 +144,6 @@ public class OADProfileTest {
         oadProfile.onCharacteristicChanged(mockGattClient, mockOADBlock);
     }
 
-    private void reconnect() {
-        oadProfile.onBeanConnectionFailed();
-    }
 
     private void assertState(OADState state) {
         assertThat(state).isEqualTo(oadProfile.getState());
@@ -158,7 +157,6 @@ public class OADProfileTest {
         fwVersionCallback.onComplete("12345");  // Same as bundle version
         assertState(OADState.INACTIVE);
         verify(oadListener).updateRequired(false);
-        verify(oadListener).complete();
         verify(oadListener, never()).error(any(BeanError.class));
     }
 
@@ -172,8 +170,8 @@ public class OADProfileTest {
         oadApproval.allow();
         assertState(OADState.OFFERING_IMAGES);
         requestBlock(0);
+        oadProfile.onBeanConnectionFailed();
         assertState(OADState.RECONNECTING);
-        reconnect();
         verify(mockBeanManager).startDiscovery();
     }
 }
