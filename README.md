@@ -61,6 +61,8 @@ BeanDiscoveryListener listener = new BeanDiscoveryListener() {
 
     @Override
     public void onDiscoveryComplete() {
+        // This is called when the scan times out, defined by the .setScanTimeout(int seconds) method
+    
         for (Bean bean : beans) {
             System.out.println(bean.getDevice().getName());   // "Bean"              (example)
             System.out.println(bean.getDevice().mAddress);    // "B4:99:4C:1E:BC:75" (example)
@@ -69,6 +71,8 @@ BeanDiscoveryListener listener = new BeanDiscoveryListener() {
     }
 };
 
+
+BeanManager.getInstance().setScanTimeout(15);  // Timeout in seconds, optional, default is 30 seconds
 BeanManager.getInstance().startDiscovery(listener);
 
 ```
