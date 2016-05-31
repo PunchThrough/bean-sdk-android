@@ -1,5 +1,7 @@
 package com.punchthrough.bean.sdk;
 
+import android.util.Log;
+
 import com.punchthrough.bean.sdk.message.BatteryLevel;
 import com.punchthrough.bean.sdk.message.ScratchBank;
 import com.punchthrough.bean.sdk.message.ScratchData;
@@ -22,6 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class TestBeanSimple extends BeanTestCase {
 
+    private static final String TAG = "BeanManager";
+
     public void setUp() {
         super.setUp();
         setUpTestBean();
@@ -33,6 +37,7 @@ public class TestBeanSimple extends BeanTestCase {
     }
 
     private boolean validHardwareVersion(String version) {
+        Log.i(TAG, "Validating hardware version: " + version);
         return (
             version.equals("E") ||
             version.startsWith("1") ||
@@ -41,13 +46,14 @@ public class TestBeanSimple extends BeanTestCase {
     }
 
     private boolean validFirmwareVersion(String version) {
+        Log.i(TAG, "Validating firmware version: " + version);
         return version.length() > 0;
     }
 
     private boolean validSoftwareVersion(String version) {
+        Log.i(TAG, "Validating software version: " + version);
         return version.length() > 0;
     }
-
 
     public void testBeanDeviceInfo() throws Exception {
         /** Read device information from a bean
@@ -65,6 +71,34 @@ public class TestBeanSimple extends BeanTestCase {
         if (!validSoftwareVersion(info.softwareVersion())) {
             fail("Unexpected SW version: " + info.softwareVersion());
         }
+
+        Log.i(TAG, "TEST PASSED: Read Device Info");
+    }
+
+    public void testReadFirmwareVersion() throws InterruptedException {
+        final CountDownLatch l = new CountDownLatch(1);
+        testBean.readFirmwareVersion(new Callback<String>() {
+            @Override
+            public void onResult(String result) {
+                assertThat(validFirmwareVersion(result)).isTrue();
+                l.countDown();
+                Log.i(TAG, "TEST PASSED: Read Firmware Version");
+            }
+        });
+        l.await(20, TimeUnit.SECONDS);
+    }
+
+    public void testReadHardwareVersion() throws InterruptedException {
+        final CountDownLatch l = new CountDownLatch(1);
+        testBean.readHardwareVersion(new Callback<String>() {
+            @Override
+            public void onResult(String result) {
+                assertThat(validHardwareVersion(result)).isTrue();
+                l.countDown();
+                Log.i(TAG, "TEST PASSED: Read Hardware Version");
+            }
+        });
+        l.await(20, TimeUnit.SECONDS);
     }
 
     public void testBeanReadWriteScratchBank() throws Exception {
@@ -87,6 +121,7 @@ public class TestBeanSimple extends BeanTestCase {
                 assertThat(result.data()[1]).isEqualTo((byte)12);
                 assertThat(result.data()[2]).isEqualTo((byte) 13);
                 scratch1Latch.countDown();
+                Log.i(TAG, "TEST PASSED: Scratch Bank 1");
             }
         });
 
@@ -102,6 +137,7 @@ public class TestBeanSimple extends BeanTestCase {
                 assertThat(result.data()[1]).isEqualTo((byte) 52);
                 assertThat(result.data()[2]).isEqualTo((byte) 53);
                 scratch5Latch.countDown();
+                Log.i(TAG, "TEST PASSED: Scratch Bank 5");
             }
         });
 
@@ -116,6 +152,7 @@ public class TestBeanSimple extends BeanTestCase {
             public void onResult(BatteryLevel result) {
                 assertThat(result.getPercentage()).isGreaterThan(0);
                 tlatch.countDown();
+                Log.i(TAG, "TEST PASSED: Battery Profile");
             }
         });
         tlatch.await(20, TimeUnit.SECONDS);

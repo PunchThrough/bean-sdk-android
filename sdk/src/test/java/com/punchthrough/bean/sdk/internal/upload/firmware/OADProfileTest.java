@@ -3,6 +3,7 @@ package com.punchthrough.bean.sdk.internal.upload.firmware;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
+import android.os.Handler;
 
 import com.punchthrough.bean.sdk.BeanManager;
 import com.punchthrough.bean.sdk.internal.ble.GattClient;
@@ -10,6 +11,7 @@ import com.punchthrough.bean.sdk.internal.device.DeviceProfile;
 import com.punchthrough.bean.sdk.internal.exception.ImageParsingException;
 import com.punchthrough.bean.sdk.internal.utility.Constants;
 import com.punchthrough.bean.sdk.internal.utility.Convert;
+import com.punchthrough.bean.sdk.internal.utility.Watchdog;
 import com.punchthrough.bean.sdk.message.BeanError;
 import com.punchthrough.bean.sdk.message.Callback;
 import com.punchthrough.bean.sdk.message.UploadProgress;
@@ -34,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -61,7 +64,7 @@ public class OADProfileTest {
     });
 
     // Test state
-    DeviceProfile.FirmwareVersionCallback fwVersionCallback;
+    DeviceProfile.VersionCallback fwVersionCallback;
     List<BeanError> testErrors = new ArrayList<>();
 
     // Mocks
@@ -107,10 +110,10 @@ public class OADProfileTest {
         doAnswer(new Answer() {
             public Object answer(InvocationOnMock invocation) {
                 Object[] args = invocation.getArguments();
-                fwVersionCallback = (DeviceProfile.FirmwareVersionCallback) args[0];
+                fwVersionCallback = (DeviceProfile.VersionCallback) args[0];
                 return null;
             }
-        }).when(mockDeviceProfile).getFirmwareVersion(any(DeviceProfile.FirmwareVersionCallback.class));
+        }).when(mockDeviceProfile).getFirmwareVersion(any(DeviceProfile.VersionCallback.class));
 
         // Setup mock GattClient
         mockGattClient = mock(GattClient.class);
@@ -122,7 +125,7 @@ public class OADProfileTest {
         when(mockGattClient.getDeviceProfile()).thenReturn(mockDeviceProfile);
 
         // Setup class under test - OADProfile
-        oadProfile = new OADProfile(mockGattClient);
+        oadProfile = new OADProfile(mockGattClient, mock(Watchdog.class));
         oadProfile.onProfileReady();
         oadProfile.onBeanConnected();
     }
@@ -141,31 +144,6 @@ public class OADProfileTest {
         oadProfile.onCharacteristicChanged(mockGattClient, mockOADBlock);
     }
 
-    private void reconnect() {
-        oadProfile.onBeanConnectionFailed();
-    }
-
-    private Callback<UploadProgress> onProgress = new Callback<UploadProgress>() {
-        @Override
-        public void onResult(UploadProgress result) {
-
-        }
-    };
-
-    private Runnable onComplete = mock(Runnable.class);
-
-    private Callback<BeanError> onError = new Callback<BeanError>() {
-        @Override
-        public void onResult(BeanError result) {
-            testErrors.add(result);
-        }
-    };
-
-    private void assertNoErrors() {
-        for (BeanError e : testErrors) {
-            fail(e.toString());
-        }
-    }
 
     private void assertState(OADState state) {
         assertThat(state).isEqualTo(oadProfile.getState());
@@ -173,26 +151,27 @@ public class OADProfileTest {
 
     @Test
     public void testNoUpdateNeeded() throws ImageParsingException {
-        oadProfile.programWithFirmware(buildBundle(), onProgress, onComplete, onError);
+        OADProfile.OADListener oadListener = mock(OADProfile.OADListener.class);
+        OADProfile.OADApproval oadApproval = oadProfile.programWithFirmware(buildBundle(), oadListener);
         assertState(OADState.CHECKING_FW_VERSION);
         fwVersionCallback.onComplete("12345");  // Same as bundle version
         assertState(OADState.INACTIVE);
-        assertNoErrors();
-        verify(onComplete).run();
+        verify(oadListener).updateRequired(false);
+        verify(oadListener, never()).error(any(BeanError.class));
     }
 
     @Test
     public void testUpdateNeeded() throws ImageParsingException {
 
-        // Start test
-        oadProfile.programWithFirmware(buildBundle(), onProgress, onComplete, onError);
+        OADProfile.OADListener oadListener = mock(OADProfile.OADListener.class);
+        OADProfile.OADApproval oadApproval = oadProfile.programWithFirmware(buildBundle(), oadListener);
         assertState(OADState.CHECKING_FW_VERSION);
         fwVersionCallback.onComplete("1234"); // Less than bundle version
+        oadApproval.allow();
         assertState(OADState.OFFERING_IMAGES);
         requestBlock(0);
+        oadProfile.onBeanConnectionFailed();
         assertState(OADState.RECONNECTING);
-        reconnect();
         verify(mockBeanManager).startDiscovery();
-        assertNoErrors();
     }
 }

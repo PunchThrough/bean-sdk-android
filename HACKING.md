@@ -14,13 +14,32 @@ Unit tests can be run on your development PC and __do not__ require an Android d
 
 ## Instrumentation Tests
 
-These tests are designed to run on an Android device or emulator. You can build, install and execute the Android integration tests with Gradle.  You need a nearby Bean that the Android device can connect to.  The name is a Gradle property, so it can be set in a .properties file, command-line argument, or an environment variable.  For example:
+These tests are designed to run on an Android device or emulator. You can build, install and execute the Android integration tests with the `connectedAndroidTest` Gradle command.  You need a nearby Bean that the Android device can connect to.  
+
+### Run the tests
+
+Example: Run the tests against a Bean with **the strongest RSSI**.
+
+```sh
+./gradlew connectedAndroidTest -i
+```
+
+Example: Run the tests against a Bean with a specific **name**.`
+
 
 ```sh
 ./gradlew -PbeanName=\"TESTBEAN\" connectedAndroidTest -i
 ```
 
-And then take a peek at the results:
+Example: Run the tests against a Bean with a specific **address**.
+
+```sh
+./gradlew -PbeanAddress=\"C4:BE:84:49:BD:3C\" connectedAndroidTest -i
+```
+
+Note: The `beanName` and `beanAddress` variables are Gradle properties, so they can be set in a .properties file, command-line argument, or an environment variable.
+
+### Look at results
 
 ```sh
 firefox sdk/build/outputs/reports/androidTests/connected/index.html

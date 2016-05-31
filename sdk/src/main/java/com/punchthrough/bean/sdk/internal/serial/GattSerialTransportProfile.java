@@ -4,7 +4,6 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 
 import com.punchthrough.bean.sdk.BuildConfig;
@@ -27,7 +26,7 @@ import okio.Buffer;
  */
 public class GattSerialTransportProfile extends BaseProfile {
 
-    private static final String TAG = "GattSerialXportProfile";
+    protected static final String TAG = "GattSerialXportProfile";
 
     // Constants
     public static final int PACKET_TX_MAX_PAYLOAD_LENGTH = 19;
@@ -46,6 +45,7 @@ public class GattSerialTransportProfile extends BaseProfile {
     private MessageAssembler mMessageAssembler = new MessageAssembler();
 
     // Internal state
+    private boolean ready = false;
     private boolean mReadyToSend = false;
     private List<GattSerialPacket> mPendingPackets = new ArrayList<>(32);
     private int mOutgoingMessageCount = 0;
@@ -58,18 +58,15 @@ public class GattSerialTransportProfile extends BaseProfile {
                     mReadyToSend = false;
                     GattSerialPacket packet = mPendingPackets.remove(0);
                     mSerialCharacteristic.setValue(packet.getPacketData());
-                    mGattClient.writeCharacteristic(mSerialCharacteristic);
+                    if (!mGattClient.writeCharacteristic(mSerialCharacteristic)) {
+                        Log.e(TAG, "Failed char write");
+                    }
                 } else {
                     mHandler.postDelayed(this, 150);
                 }
             }
         }
     };
-
-    public GattSerialTransportProfile(GattClient client) {
-        super(client);
-        mHandler = new Handler(Looper.getMainLooper());
-    }
 
     public GattSerialTransportProfile(GattClient client, Handler handler) {
         super(client);
@@ -136,6 +133,7 @@ public class GattSerialTransportProfile extends BaseProfile {
             if (BuildConfig.DEBUG) {
                 Log.i(TAG, "Setup complete");
             }
+            ready = true;
         }
     }
 
@@ -201,11 +199,11 @@ public class GattSerialTransportProfile extends BaseProfile {
     }
 
     public void sendMessage(Buffer message) {
-        // create packet, add to queue, schedule
         if (mSerialCharacteristic == null) {
-            //TODO maybe don't throw here since disconnection could have raced us
-            throw new IllegalStateException("Not connected");
+            Log.e(TAG, "Unexpected: mSerialCharacteristic is null");
         }
+
+        // create packet, add to queue, schedule
         int packets = (int) (message.size() / PACKET_TX_MAX_PAYLOAD_LENGTH);
         mOutgoingMessageCount = (mOutgoingMessageCount + 1) % 4;
         int size = (int) message.size();
@@ -226,7 +224,15 @@ public class GattSerialTransportProfile extends BaseProfile {
     }
 
     public String getName() {
-        return "Serial Profile";
+        return TAG;
+    }
+
+    public boolean isReady() {
+        return ready;
+    }
+
+    public void clearReady() {
+        ready = false;
     }
 
     // This listener is only for communicating with the Bean class

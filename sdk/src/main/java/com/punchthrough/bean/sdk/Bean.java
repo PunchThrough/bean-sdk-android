@@ -35,10 +35,12 @@ import android.util.Log;
 import com.punchthrough.bean.sdk.internal.BeanMessageID;
 import com.punchthrough.bean.sdk.internal.battery.BatteryProfile.BatteryLevelCallback;
 import com.punchthrough.bean.sdk.internal.ble.GattClient;
+import com.punchthrough.bean.sdk.internal.device.DeviceProfile;
 import com.punchthrough.bean.sdk.internal.device.DeviceProfile.DeviceInfoCallback;
 import com.punchthrough.bean.sdk.internal.exception.NoEnumFoundException;
 import com.punchthrough.bean.sdk.internal.serial.GattSerialMessage;
 import com.punchthrough.bean.sdk.internal.serial.GattSerialTransportProfile;
+import com.punchthrough.bean.sdk.internal.upload.firmware.OADProfile;
 import com.punchthrough.bean.sdk.internal.upload.sketch.BeanState;
 import com.punchthrough.bean.sdk.internal.upload.sketch.SketchUploadState;
 import com.punchthrough.bean.sdk.internal.utility.Chunk;
@@ -82,8 +84,11 @@ public class Bean implements Parcelable {
      * Used by Android {@link android.os.Parcel}.
      */
     public static final Creator<Bean> CREATOR = new Creator<Bean>() {
+
         @Override
         public Bean createFromParcel(Parcel source) {
+            Log.i(TAG, "Creating Bean from Parcel!");
+
             // ugly cast to fix bogus warning in Android Studio...
             BluetoothDevice device = source.readParcelable(((Object) this).getClass().getClassLoader());
             if (device == null) {
@@ -157,9 +162,9 @@ public class Bean implements Parcelable {
     private final BluetoothDevice device;
 
     /**
-     * Auto reconnect state flag
+     * Handler created for each Bean
      */
-    private boolean autoReconnect = false;
+    private final Handler handler;
 
     /**
      * Last known Android Context (Activity)
@@ -270,25 +275,31 @@ public class Bean implements Parcelable {
      */
     private Runnable onSketchUploadComplete;
 
-    public Bean(BluetoothDevice device) {
-        this.device = device;
-        this.gattClient = new GattClient();
-        init(new Handler(Looper.getMainLooper()));
-    }
-
     /**
      * Create a Bean using its {@link android.bluetooth.BluetoothDevice}
      * The Bean will not be connected until {@link #connect(android.content.Context, BeanListener)} is called.
      *
      * @param device The BluetoothDevice representing a Bean
      */
+    public Bean(BluetoothDevice device) {
+        this.device = device;
+        this.handler = new Handler(Looper.getMainLooper());
+        this.gattClient = new GattClient(handler, device);
+        init();
+    }
+
+    /**
+     * Alternate Bean constructor practicing dependency injection, currently used by tests only
+     *
+     */
     public Bean(BluetoothDevice device, GattClient client, final Handler handler) {
         this.device = device;
         this.gattClient = client;
-        init(handler);
+        this.handler = handler;
+        init();
     }
 
-    private void init(final Handler handler) {
+    private void init() {
 
         GattClient.ConnectionListener connectionListener = new GattClient.ConnectionListener() {
             @Override
@@ -751,19 +762,6 @@ public class Bean implements Parcelable {
         return gattClient.isConnected();
     }
 
-    /**
-     * Set the auto-reconnect behavior for this Bean. (True means auto reconnect).
-     *
-     * @param reconnect Boolean value setting auto reconnect behavior
-     */
-    public void setAutoReconnect(boolean reconnect) {
-        autoReconnect = reconnect;
-    }
-
-    public boolean shouldReconnect() {
-        return autoReconnect;
-    }
-
     public Context getLastKnownContext() {
         return lastKnownContext;
     }
@@ -1008,7 +1006,7 @@ public class Bean implements Parcelable {
     }
 
     /**
-     * Read the device information (hardware / software version)
+     * Read the device information (hardware, firmware and software version)
      *
      * @param callback the callback for the result
      */
@@ -1017,6 +1015,34 @@ public class Bean implements Parcelable {
             @Override
             public void onDeviceInfo(DeviceInfo info) {
                 callback.onResult(info);
+            }
+        });
+    }
+
+    /**
+     * Read the Bean hardware version
+     *
+     * @param callback the callback for the version string
+     */
+    public void readFirmwareVersion(final Callback<String> callback) {
+        gattClient.getDeviceProfile().getFirmwareVersion(new DeviceProfile.VersionCallback() {
+            @Override
+            public void onComplete(String version) {
+                callback.onResult(version);
+            }
+        });
+    }
+
+    /**
+     * Read Bean firmware version
+     *
+     * @param callback the callback for the version string
+     */
+    public void readHardwareVersion(final Callback<String> callback) {
+        gattClient.getDeviceProfile().getHardwareVersion(new DeviceProfile.VersionCallback() {
+            @Override
+            public void onComplete(String version) {
+                callback.onResult(version);
             }
         });
     }
@@ -1110,26 +1136,15 @@ public class Bean implements Parcelable {
      * Programs the Bean with new firmware images.
      *
      * @param bundle        The firmware package holding A and B images to be sent to the Bean
-     * @param onProgress    Called with progress while the sketch upload is occurring
-     * @param onComplete    Called when the sketch upload is complete
+     * @param listener      OADListener to alert the client of OAD state
      */
-    public void programWithFirmware(FirmwareBundle bundle, Callback<UploadProgress> onProgress,
-                                    Runnable onComplete) {
-
-        Callback<BeanError> onError = new Callback<BeanError>() {
-            @Override
-            public void onResult(BeanError error) {
-                returnError(error);
-            }
-        };
-
-        // Since TI OAD FW uploads access BLE characteristics directly, we need to delegate this
-        // to GattClient
-        gattClient.getOADProfile().programWithFirmware(bundle, onProgress, onComplete, onError);
+    public OADProfile.OADApproval programWithFirmware(FirmwareBundle bundle, OADProfile.OADListener listener) {
+        return gattClient.getOADProfile().programWithFirmware(bundle, listener);
     }
 
     public boolean firmwareUpdateInProgress() {
-        return gattClient.getOADProfile().uploadInProgress();
+        return gattClient.getOADProfile() != null && gattClient.getOADProfile().uploadInProgress();
+
     }
 
     /**
