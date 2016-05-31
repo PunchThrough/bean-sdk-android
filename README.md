@@ -71,7 +71,6 @@ BeanDiscoveryListener listener = new BeanDiscoveryListener() {
     }
 };
 
-
 BeanManager.getInstance().setScanTimeout(15);  // Timeout in seconds, optional, default is 30 seconds
 BeanManager.getInstance().startDiscovery(listener);
 
@@ -107,6 +106,27 @@ BeanListener beanListener = new BeanListener() {
 // Assuming you are in an Activity, use 'this' for the context
 bean.connect(this, beanListener);
 
+```
+
+## Blink the on-board LED
+
+This snippet assumes you have a `Bean` object, like from the [Read device information second](https://github.com/PunchThrough/bean-sdk-android#read-device-information).
+
+Also, you shouldn't `Thread.sleep()`, this is just to show off the `LedColor` and `Bean` API.
+
+```
+LedColor blue = LedColor.create(0, 0, 255);
+LedColor off = LedColor.create(0, 0, 0);
+int sleep = 500;  // Milliseconds
+
+try {
+    bean.setLed(blue);
+    Thread.sleep(sleep);
+    bean.setLed(off);
+    Thread.sleep(sleep);
+} catch (InterruptedException e) {
+    e.printStackTrace()
+}
 ```
 
 # Developing and Contributing
