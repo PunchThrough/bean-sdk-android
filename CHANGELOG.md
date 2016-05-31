@@ -1,3 +1,25 @@
+# 2.1.0
+
+2016-05-31
+
+Release Notes - Bean Android SDK - Version 2.1.0
+
+## Features
+
+* Public Bean API for reading HW/FW versions individually (instead of .readDeviceInfo())
+* Add Android permissions ACCESS_COARSE_LOCATION and ACCESS_FINE_LOCATION
+* Implement deterministic scan duration with customizable scan timeout
+* New interface for communicating to/from the OADProfile for FW updates
+* Generic watchdog implementation, currently only used by OAD process
+
+## Tests
+
+* Support for `beanAddress` as a gradle property for test purposes which allows you to hardcode a BLE address used for instrumentation tests.
+* Added "pure Android" BLE test, used for debugging purposes only, which eliminates the use of the SDK itself
+* Support in `TestBeanFirmwareUpdate` for Bean+
+* Added instrumentation test for `BeanManager`
+* Added instrumentation tests for new Bean API (`readHardwareVersion`, `readFirmwareVersion`)
+
 # 2.0.1
 
 2016-04-25
@@ -6,7 +28,7 @@ Release Notes - Bean Android SDK - Version 2.0.1
 
 ## Features
 
-* Improve throughput of OAD procedure dramatically
+* Turbo OAD implementation (up to 8 FW blocks "in air", observed ~3.5 Kb/s)
 
 ## Bug fixes
 
