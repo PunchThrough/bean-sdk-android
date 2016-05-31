@@ -1,5 +1,6 @@
 package com.punchthrough.bean.sdk;
 
+import android.test.suitebuilder.annotation.Suppress;
 import android.util.Log;
 
 import com.punchthrough.bean.sdk.internal.exception.ImageParsingException;
@@ -26,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 public class TestBeanFirmwareUpdate extends BeanTestCase {
 
     private final String TAG = "TestBeanFirmwareUpdate";
-    private final int FW_TEST_MAX_DURATION = 20;  // Minutes
+    private final int FW_TEST_MAX_DURATION = 5;  // Minutes
 
     private Bean bean;
     private OADProfile.OADApproval oadApproval;
@@ -90,6 +91,7 @@ public class TestBeanFirmwareUpdate extends BeanTestCase {
         return bundle;
     }
 
+    @Suppress
     public void testFirmwareUpdate() throws Exception {
 
         final CountDownLatch fwLatch = new CountDownLatch(1);
