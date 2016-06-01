@@ -129,6 +129,55 @@ try {
 }
 ```
 
+## Upload a Sketch
+
+This example is not for novice users. Our SDK API does not handle the compilation of sketches from `.ino` files into [Intel Hex format](https://en.wikipedia.org/wiki/Intel_HEX). For this, you can make use of Arduino build tools such as [platformio](http://platformio.org/) or [Arduino Builder](https://github.com/arduino/arduino-builder).
+
+This snippet assumes you have a `Bean` object, like from the [Read device information second](https://github.com/PunchThrough/bean-sdk-android#read-device-information).
+
+First, we need to create a `SketchHex` object.
+
+```
+final String hexPath = "path/to/intel/hex/file"
+
+InputStream fileStream  = getContext().getAssets().open(hexPath);
+StringWriter writer = new StringWriter();
+IOUtils.copy(fileStream, writer);
+
+// Finally, the SketchHex object
+SketchHex sketchHex = SketchHex.create(timestamp, writer.toString());
+```
+
+Next, define a callback of type `Callback<UploadProgress>` that will back called back when sketch upload progress has been made.
+
+```
+final CountDownLatch sketchLatch = new CountDownLatch(1);
+Callback<UploadProgress> onProgress = new Callback<UploadProgress>() {
+    @Override
+    public void onResult(UploadProgress result) {
+        System.out.println("On Result: " + result);
+    }
+};
+```
+
+And a `Runnable` object that will be executed when the Sketch upload has been completed.
+
+```
+Runnable onComplete = new Runnable() {
+    @Override
+    public void run() {
+        System.out.println("all done!");
+        sketchLatch.countDown();
+    }
+};
+```
+
+Finally, use the `Bean` API to upload the sketch!
+
+```
+bean.programWithSketch(sketchHex, onProgress, onComplete);
+```
+
 # Developing and Contributing
 
 Check out [our HACKING file](HACKING.md) to read our developer's guide to the SDK.
