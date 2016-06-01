@@ -41,14 +41,13 @@ android {
 
 Then sync with Gradle and Android Studio will install the Bean SDK from Maven Central.
 
-# Use the SDK
+# Usage and Examples
 
 Check out our [Bean SDK API Documentation](http://punchthrough.github.io/bean-sdk-android/) to learn more about the Bean SDK's available methods.
 
 ## List nearby Bean(s)
 
-This snippet makes use of the `BeanManager` and the Listener pattern to provide callbacks
-when Beans are discovered and when the discovery process is complete.
+This snippet makes use of the `BeanManager` and the Listener pattern to provide callbacks when Beans are discovered and when the discovery process is complete.
 
 ```java
 final List<Bean> beans = new ArrayList<>();
@@ -78,14 +77,14 @@ BeanManager.getInstance().startDiscovery(listener);
 
 ## Read device information
 
-The following snippet will connect to a `Bean` and read it's device information using the
-Device Information Service (DIS) BLE profile.
+The following snippet will connect to a `Bean` and read it's device information using the Device Information Service (DIS) BLE profile.
 
 ```java
 // Assume we have a reference to the 'beans' ArrayList from above.
 final Bean bean = beans[0];
 
 BeanListener beanListener = new BeanListener() {
+
     @Override
     public void onConnected() {
         System.out.println("connected to Bean!");
@@ -110,7 +109,7 @@ bean.connect(this, beanListener);
 
 ## Blink the on-board LED
 
-This snippet assumes you have a `Bean` object, like from the [Read device information second](https://github.com/PunchThrough/bean-sdk-android#read-device-information).
+This snippet assumes you have a connected `Bean` object, like from the [Read device information second](https://github.com/PunchThrough/bean-sdk-android#read-device-information).
 
 Also, you shouldn't `Thread.sleep()`, this is just to show off the `LedColor` and `Bean` API.
 
@@ -133,7 +132,7 @@ try {
 
 This example is not for novice users. Our SDK API does not handle the compilation of sketches from `.ino` files into [Intel Hex format](https://en.wikipedia.org/wiki/Intel_HEX). For this, you can make use of Arduino build tools such as [platformio](http://platformio.org/) or [Arduino Builder](https://github.com/arduino/arduino-builder).
 
-This snippet assumes you have a `Bean` object, like from the [Read device information second](https://github.com/PunchThrough/bean-sdk-android#read-device-information).
+This snippet assumes you have a connected `Bean` object, like from the [Read device information second](https://github.com/PunchThrough/bean-sdk-android#read-device-information).
 
 First, we need to create a `SketchHex` object.
 
