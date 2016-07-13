@@ -3,6 +3,7 @@ package com.punchthrough.bean.sdk;
 import android.util.Log;
 
 import com.punchthrough.bean.sdk.message.BatteryLevel;
+import com.punchthrough.bean.sdk.message.LedColor;
 import com.punchthrough.bean.sdk.message.ScratchBank;
 import com.punchthrough.bean.sdk.message.ScratchData;
 import com.punchthrough.bean.sdk.util.BeanTestCase;
@@ -153,6 +154,21 @@ public class TestBeanSimple extends BeanTestCase {
                 assertThat(result.getPercentage()).isGreaterThan(0);
                 tlatch.countDown();
                 Log.i(TAG, "TEST PASSED: Battery Profile");
+            }
+        });
+        tlatch.await(20, TimeUnit.SECONDS);
+    }
+
+    public void testBeanLeds() throws Exception {
+        final CountDownLatch tlatch = new CountDownLatch(1);
+        final LedColor blue = LedColor.create(0, 0, 255);
+        testBean.setLed(blue);
+        testBean.readLed(new Callback<LedColor>() {
+            @Override
+            public void onResult(LedColor result) {
+                assertThat(result.equals(blue));
+                tlatch.countDown();
+                Log.i(TAG, "TEST PASSED: LEDs");
             }
         });
         tlatch.await(20, TimeUnit.SECONDS);
