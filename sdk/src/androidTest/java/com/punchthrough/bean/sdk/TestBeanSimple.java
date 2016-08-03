@@ -2,6 +2,7 @@ package com.punchthrough.bean.sdk;
 
 import android.util.Log;
 
+import com.punchthrough.bean.sdk.message.Acceleration;
 import com.punchthrough.bean.sdk.message.BatteryLevel;
 import com.punchthrough.bean.sdk.message.LedColor;
 import com.punchthrough.bean.sdk.message.ScratchBank;
@@ -162,6 +163,7 @@ public class TestBeanSimple extends BeanTestCase {
     public void testBeanLeds() throws Exception {
         final CountDownLatch tlatch = new CountDownLatch(1);
         final LedColor blue = LedColor.create(0, 0, 255);
+        final LedColor off = LedColor.create(0, 0, 0);
         testBean.setLed(blue);
         testBean.readLed(new Callback<LedColor>() {
             @Override
@@ -172,5 +174,18 @@ public class TestBeanSimple extends BeanTestCase {
             }
         });
         tlatch.await(20, TimeUnit.SECONDS);
+    }
+
+    public void testBeanAccelerometer() throws Exception {
+        final CountDownLatch tlatch = new CountDownLatch(1);
+        testBean.readAcceleration(new Callback<Acceleration>() {
+            @Override
+            public void onResult(Acceleration result) {
+                tlatch.countDown();
+                Log.i(TAG, "TEST PASSED: Accelerometer");
+            }
+        });
+        tlatch.await(20, TimeUnit.SECONDS);
+
     }
 }
