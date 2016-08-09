@@ -37,6 +37,20 @@ public class GattSerialMessage {
         this.mBuffer = buffer;
     }
 
+    /**
+     * Create a GattSerialMessage from a byte array payload
+     *
+     * In this case, "payload" means the properly packed message ID and message payload.
+     *
+     * Example: For the message CC_LED_WRITE_ALL (0x2001)
+     *
+     * GattSerialMessage.fromPayload(new byte[] {
+     *        0x20, 0x01,                           <--- Message ID big endian
+     *        0x00, 0x00, 0x00,                     <--- Payload data little endian
+     * });
+     *
+     * @param payload    Byte array of the message payload
+     */
     public static GattSerialMessage fromPayload(byte[] payload) {
         Buffer buffer = new Buffer();
         byte[] header = new byte[2];
