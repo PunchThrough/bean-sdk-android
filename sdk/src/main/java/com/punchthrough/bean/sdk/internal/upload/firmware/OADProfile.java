@@ -84,6 +84,7 @@ public class OADProfile extends BaseProfile {
             Log.i(TAG, "Client has allowed the OAD Process to continue.");
             approved = true;
             startOfferingImages();
+            watchdog.start(OAD_TIMEOUT_SECONDS, watchdogListener);
         }
 
         @Override
@@ -384,8 +385,8 @@ public class OADProfile extends BaseProfile {
                     // Does not need update and the client has never approved. This means
                     // no update is required, and no firmware update ever occurred
 
-                    oadListener.updateRequired(false);
                     finishNoUpdateOccurred();
+                    oadListener.updateRequired(false);
 
                 } else if (!updateNeeded && oadApproval.isApproved()) {
                     // Does not need update, and the client has approved. This means that
