@@ -15,6 +15,7 @@ public class Watchdog {
 
     private Handler handler;
     private CountDownTimer timer;
+    private boolean started = false;
     private long lastPoke = 0;
     private boolean paused = false;
 
@@ -31,6 +32,11 @@ public class Watchdog {
     }
 
     public void start(final int timeoutSeconds, final WatchdogListener listener) {
+        if (started) {
+            Log.i(TAG, "Watchdog already started, ignoring .start()");
+            return;
+        }
+
         Log.i(TAG, "Starting watchdog with timeout seconds: " + timeoutSeconds);
 
         handler.post(new Runnable() {
@@ -57,6 +63,7 @@ public class Watchdog {
 
                 };
                 timer.start();
+                started = true;
             }
         });
 
@@ -73,6 +80,7 @@ public class Watchdog {
             Log.i(TAG, "Watchdog has been stopped");
             timer.cancel();
             timer = null;
+            started = false;
         }
     }
 

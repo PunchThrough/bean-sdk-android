@@ -28,6 +28,7 @@ public class TestBeanFirmwareUpdate extends BeanTestCase {
 
     private final String TAG = "TestBeanFirmwareUpdate";
     private final int FW_TEST_MAX_DURATION = 5;  // Minutes
+    private final boolean FORCE_UPDATE = true;
 
     private Bean bean;
     private OADProfile.OADApproval oadApproval;
@@ -134,7 +135,7 @@ public class TestBeanFirmwareUpdate extends BeanTestCase {
 
             @Override
             public void updateRequired(boolean required) {
-                if (required) {
+                if (required || FORCE_UPDATE) {
                     oadApproval.allow();
                 } else {
                     fwLatch.countDown();
