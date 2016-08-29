@@ -1,3 +1,14 @@
+# 2.1.1
+
+2016-08-29
+
+Release Notes - Bean Android SDK - Version 2.1.1
+
+## Features
+
+* Removed ACCESS_FINE_LOCATION
+* Restart OAD Watchdog if a client "force updates" firmware
+
 # 2.1.0
 
 2016-05-31
@@ -79,6 +90,7 @@ Release Notes - Bean Android SDK - Version 1.0.3
 * Fixed an issue causing scratch data reads to come from the wrong scratch bank (thanks @loune)
 
 ## Tests
+
 * Added integration tests:
     * Reading and writing scratch characteristics
     * Scanning for Beans
@@ -87,10 +99,12 @@ Release Notes - Bean Android SDK - Version 1.0.3
 * Added helper functions for finding, connecting to, and interacting with Beans during integration tests
 
 ## Docs
+
 * Improved documentation for users and contributors
 * Moved the SDK from pre-release to release status
 
 ## Build Process
+
 * Added automated command-line tests
 * Added a Gradle task to build Javadocs
 
