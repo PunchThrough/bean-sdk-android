@@ -204,11 +204,11 @@ public class GattSerialTransportProfile extends BaseProfile {
         }
 
         // create packet, add to queue, schedule
-        int packets = (int) (message.size() / PACKET_TX_MAX_PAYLOAD_LENGTH);
+        int packets = (int) ((message.size() + PACKET_TX_MAX_PAYLOAD_LENGTH - 1) / PACKET_TX_MAX_PAYLOAD_LENGTH);
         mOutgoingMessageCount = (mOutgoingMessageCount + 1) % 4;
         int size = (int) message.size();
         for (int i = 0; i < size; i += PACKET_TX_MAX_PAYLOAD_LENGTH) {
-            GattSerialPacket packet = new GattSerialPacket(i == 0, mOutgoingMessageCount, packets--, message);
+            GattSerialPacket packet = new GattSerialPacket(i == 0, mOutgoingMessageCount, --packets, message);
             mPendingPackets.add(packet);
         }
         mHandler.post(mDequeueRunnable);
