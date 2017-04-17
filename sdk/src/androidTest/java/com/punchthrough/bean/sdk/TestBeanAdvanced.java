@@ -262,6 +262,23 @@ public class TestBeanAdvanced extends BeanTestCase {
     }
 
     @Suppress
+    public void testSerialMessages13Bytes() throws Exception {
+        final CountDownLatch testCompletionLatch = new CountDownLatch(1);
+        Bean bean = discoverBean();
+        synchronousConnect(bean);
+        bean.sendSerialMessage(new byte[] { 65, 65, 65, 65, 65, 65, 65,
+                                            65, 65, 65, 65, 65, 65 });
+        bean.readLed(new Callback<LedColor>() {
+            @Override
+            public void onResult(LedColor result) {
+                testCompletionLatch.countDown();
+            }
+        });
+        testCompletionLatch.await(10, TimeUnit.SECONDS);
+        synchronousDisconnect(bean);
+    }
+
+    @Suppress
     public void testFastSerialMessages() throws Exception {
         int times = 100;
         final CountDownLatch testCompletionLatch = new CountDownLatch(times);
